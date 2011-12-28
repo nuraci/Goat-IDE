@@ -1,0 +1,391 @@
+/*
+ * Term.h
+ *
+ *  Created on: 09/dic/2011
+ *      Author: nuccio
+ */
+
+#ifndef TERM_H_
+#define TERM_H_
+
+#define TERM_COL 			80
+#define TERM_ROW 			25
+#define TERM_ESC			0x1b
+#define TERM_CR				13
+#define TERM_LF				10
+#define TERM_TAB			'\t'
+
+#define TAB_SIZE			4
+
+#define TERM_COL_FORE		30
+#define TERM_COL_BACK		40
+
+#define TERM_COL_BLACK 		0
+#define TERM_COL_RED   		1
+#define TERM_COL_GREEN   	2
+#define TERM_COL_YELLOW  	3
+#define TERM_COL_BLUE   	4
+#define TERM_COL_MAGENTA  	5
+#define TERM_COL_CYAN  		6
+#define TERM_COL_WHITE 		7
+
+#define TERM_BUF_SIZE		(4096)
+extern 	UART  	*serial;
+extern	GUI::ScintillaWindow *pWin;
+
+
+/* ---------------------------------------------------------- */
+#define lenof(x) ( (sizeof((x))) / (sizeof(*(x))))
+
+#define poslt(p1,p2) ( (p1).y < (p2).y || ( (p1).y == (p2).y && (p1).x < (p2).x ) )
+#define posle(p1,p2) ( (p1).y < (p2).y || ( (p1).y == (p2).y && (p1).x <= (p2).x ) )
+#define poseq(p1,p2) ( (p1).y == (p2).y && (p1).x == (p2).x )
+#define posdiff(p1,p2) ( ((p1).y - (p2).y) * (term->cols+1) + (p1).x - (p2).x )
+
+/* Product-order comparisons for rectangular block selection. */
+#define posPlt(p1,p2) ( (p1).y <= (p2).y && (p1).x < (p2).x )
+#define posPle(p1,p2) ( (p1).y <= (p2).y && (p1).x <= (p2).x )
+
+#define incpos(p) ( (p).x == term->cols ? ((p).x = 0, (p).y++, 1) : ((p).x++, 0) )
+#define decpos(p) ( (p).x == 0 ? ((p).x = term->cols, (p).y--, 1) : ((p).x--, 0) )
+
+#define VT52_PLUS
+
+#define CL_ANSIMIN	0x0001	       /* Codes in all ANSI like terminals. */
+#define CL_VT100	0x0002	       /* VT100 */
+#define CL_VT100AVO	0x0004	       /* VT100 +AVO; 132x24 (not 132x14) & attrs */
+#define CL_VT102	0x0008	       /* VT102 */
+#define CL_VT220	0x0010	       /* VT220 */
+#define CL_VT320	0x0020	       /* VT320 */
+#define CL_VT420	0x0040	       /* VT420 */
+#define CL_VT510	0x0080	       /* VT510, NB VT510 includes ANSI */
+#define CL_VT340TEXT	0x0100	       /* VT340 extensions that appear in the VT420 */
+#define CL_SCOANSI	0x1000	       /* SCOANSI not in ANSIMIN. */
+#define CL_ANSI		0x2000	       /* ANSI ECMA-48 not in the VT100..VT420 */
+#define CL_OTHER	0x4000	       /* Others, Xterm, linux, putty, dunno, etc */
+
+#define TM_VT100	(CL_ANSIMIN|CL_VT100)
+#define TM_VT100AVO	(TM_VT100|CL_VT100AVO)
+#define TM_VT102	(TM_VT100AVO|CL_VT102)
+#define TM_VT220	(TM_VT102|CL_VT220)
+#define TM_VTXXX	(TM_VT220|CL_VT340TEXT|CL_VT510|CL_VT420|CL_VT320)
+#define TM_SCOANSI	(CL_ANSIMIN|CL_SCOANSI)
+
+#define TM_PUTTY	(0xFFFF)
+
+#define UPDATE_DELAY    ((TICKSPERSEC+49)/50)/* ticks to defer window update */
+#define TBLINK_DELAY    ((TICKSPERSEC*9+19)/20)/* ticks between text blinks*/
+#define CBLINK_DELAY    (CURSORBLINK) /* ticks between cursor blinks */
+#define VBELL_DELAY     (VBELL_TIMEOUT) /* visual bell timeout in ticks */
+
+#define compatibility(x) \
+    if ( ((CL_##x)&term->compatibility_level) == 0 ) { 	\
+       term->termstate=TOPLEVEL;			\
+       break;						\
+    }
+#define compatibility2(x,y) \
+    if ( ((CL_##x|CL_##y)&term->compatibility_level) == 0 ) { \
+       term->termstate=TOPLEVEL;			\
+       break;						\
+    }
+
+
+#define BUFFER_GRANULE  512
+
+struct bufchain_granule {
+    struct bufchain_granule *next;
+    int buflen, bufpos;
+    char buf[BUFFER_GRANULE];
+};
+
+typedef struct bufchain_tag {
+    struct bufchain_granule *head, *tail;
+    int buffersize;		       /* current amount of buffered data */
+} bufchain;
+
+struct beeptime {
+    struct beeptime *next;
+    unsigned long ticks;
+};
+
+typedef struct {
+    int y, x;
+} pos;
+
+typedef struct termchar termchar;
+typedef struct termline termline;
+
+struct termchar {
+    /*
+     * Any code in terminal.c which definitely needs to be changed
+     * when extra fields are added here is labelled with a comment
+     * saying FULL-TERMCHAR.
+     */
+    unsigned long chr;
+    unsigned long attr;
+
+    /*
+     * The cc_next field is used to link multiple termchars
+     * together into a list, so as to fit more than one character
+     * into a character cell (Unicode combining characters).
+     *
+     * cc_next is a relative offset into the current array of
+     * termchars. I.e. to advance to the next character in a list,
+     * one does `tc += tc->next'.
+     *
+     * Zero means end of list.
+     */
+    int cc_next;
+};
+
+struct termline {
+    unsigned short lattr;
+    int cols;			       /* number of real columns on the line */
+    int size;			       /* number of allocated termchars
+					* (cc-lists may make this > cols) */
+    int temporary;		       /* TRUE if decompressed from scrollback */
+    int cc_free;		       /* offset to first cc in free list */
+    struct termchar *chars;
+};
+
+struct bidi_cache_entry {
+    int width;
+    struct termchar *chars;
+    int *forward, *backward;	       /* the permutations of line positions */
+};
+
+struct terminal_tag {
+
+    int compatibility_level;
+#if 0
+    tree234 *scrollback;	       /* lines scrolled off top of screen */
+    tree234 *screen;		       /* lines on primary screen */
+    tree234 *alt_screen;	       /* lines on alternate screen */
+#endif
+    int disptop;		       /* distance scrolled back (0 or -ve) */
+    int tempsblines;		       /* number of lines of .scrollback that
+					  can be retrieved onto the terminal
+					  ("temporary scrollback") */
+
+    termline **disptext;	       /* buffer of text on real screen */
+    int dispcursx, dispcursy;	       /* location of cursor on real screen */
+    int curstype;		       /* type of cursor on real screen */
+
+#define VBELL_TIMEOUT (TICKSPERSEC/10) /* visual bell lasts 1/10 sec */
+
+    struct beeptime *beephead, *beeptail;
+    int nbeeps;
+    int beep_overloaded;
+    long lastbeep;
+
+#define TTYPE termchar
+#define TSIZE (sizeof(TTYPE))
+
+    int default_attr, curr_attr, save_attr;
+    termchar basic_erase_char, erase_char;
+
+    bufchain inbuf;		       /* terminal input buffer */
+    pos curs;			       /* cursor */
+    pos savecurs;		       /* saved cursor position */
+    int marg_t, marg_b;		       /* scroll margins */
+    int dec_om;			       /* DEC origin mode flag */
+    int wrap, wrapnext;		       /* wrap flags */
+    int insert;			       /* insert-mode flag */
+    int cset;			       /* 0 or 1: which char set */
+    int save_cset, save_csattr;	       /* saved with cursor position */
+    int save_utf, save_wnext;	       /* saved with cursor position */
+    int rvideo;			       /* global reverse video flag */
+    unsigned long rvbell_startpoint;   /* for ESC[?5hESC[?5l vbell */
+    int cursor_on;		       /* cursor enabled flag */
+    int reset_132;		       /* Flag ESC c resets to 80 cols */
+    int use_bce;		       /* Use Background coloured erase */
+    int cblinker;		       /* When blinking is the cursor on ? */
+    int tblinker;		       /* When the blinking text is on */
+    int blink_is_real;		       /* Actually blink blinking text */
+    int term_echoing;		       /* Does terminal want local echo? */
+    int term_editing;		       /* Does terminal want local edit? */
+    int sco_acs, save_sco_acs;	       /* CSI 10,11,12m -> OEM charset */
+    int vt52_bold;		       /* Force bold on non-bold colours */
+    int utf;			       /* Are we in toggleable UTF-8 mode? */
+    int utf_state;		       /* Is there a pending UTF-8 character */
+    int utf_char;		       /* and what is it so far. */
+    int utf_size;		       /* The size of the UTF character. */
+    int printing, only_printing;       /* Are we doing ANSI printing? */
+    int print_state;		       /* state of print-end-sequence scan */
+
+    /* ESC 7 saved state for the alternate screen */
+    pos alt_savecurs;
+    int alt_save_attr;
+    int alt_save_cset, alt_save_csattr;
+    int alt_save_utf, alt_save_wnext;
+    int alt_save_sco_acs;
+
+    int rows, cols, savelines;
+    int has_focus;
+    int in_vbell;
+    long vbell_end;
+    int app_cursor_keys, app_keypad_keys, vt52_mode;
+    int repeat_off, cr_lf_return;
+    int seen_disp_event;
+    int big_cursor;
+
+    int xterm_mouse;		       /* send mouse messages to host */
+    int mouse_is_down;		       /* used while tracking mouse buttons */
+
+    int cset_attr[2];
+
+/*
+ * Saved settings on the alternate screen.
+ */
+    int alt_x, alt_y, alt_om, alt_wrap, alt_wnext, alt_ins;
+    int alt_cset, alt_sco_acs, alt_utf;
+    int alt_t, alt_b;
+    int alt_which;
+    int alt_sblines; /* # of lines on alternate screen that should be used for scrollback. */
+
+#define ARGS_MAX 32		       /* max # of esc sequence arguments */
+#define ARG_DEFAULT 0		       /* if an arg isn't specified */
+#define def(a,d) ( (a) == ARG_DEFAULT ? (d) : (a) )
+    int esc_args[ARGS_MAX];
+    int esc_nargs;
+    int esc_query;
+#define ANSI(x,y)	((x)+((y)<<8))
+#define ANSI_QUE(x)	ANSI(x,TRUE)
+
+#define OSC_STR_MAX 2048
+    int osc_strlen;
+    char osc_string[OSC_STR_MAX + 1];
+    int osc_w;
+
+    char id_string[1024];
+
+    unsigned char *tabs;
+
+    enum {
+	TOPLEVEL,
+	SEEN_ESC,
+	SEEN_CSI,
+	SEEN_OSC,
+	SEEN_OSC_W,
+
+	DO_CTRLS,
+
+	SEEN_OSC_P,
+	OSC_STRING, OSC_MAYBE_ST,
+	VT52_ESC,
+	VT52_Y1,
+	VT52_Y2,
+	VT52_FG,
+	VT52_BG
+    } termstate;
+
+    enum {
+	NO_SELECTION, ABOUT_TO, DRAGGING, SELECTED
+    } selstate;
+    enum {
+	LEXICOGRAPHIC, RECTANGULAR
+    } seltype;
+    enum {
+	SM_CHAR, SM_WORD, SM_LINE
+    } selmode;
+    pos selstart, selend, selanchor;
+
+    short wordness[256];
+
+    /* Mask of attributes to pay attention to when painting. */
+    int attr_mask;
+
+    wchar_t *paste_buffer;
+    int paste_len, paste_pos, paste_hold;
+    long last_paste;
+
+    void (*resize_fn)(void *, int, int);
+    void *resize_ctx;
+
+    void *ldisc;
+
+    void *frontend;
+
+    void *logctx;
+
+    //struct unicode_data *ucsdata;
+
+    /*
+     * from_backend calls term_out, but it can also be called from
+     * the ldisc if the ldisc is called _within_ term_out. So we
+     * have to guard against re-entrancy - if from_backend is
+     * called recursively like this, it will simply add data to the
+     * end of the buffer term_out is in the process of working
+     * through.
+     */
+    int in_term_out;
+
+    /*
+     * We schedule a window update shortly after receiving terminal
+     * data. This tracks whether one is currently pending.
+     */
+    int window_update_pending;
+    long next_update;
+
+    /*
+     * Track pending blinks and tblinks.
+     */
+    int tblink_pending, cblink_pending;
+    long next_tblink, next_cblink;
+
+    /*
+     * These are buffers used by the bidi and Arabic shaping code.
+     */
+    termchar *ltemp;
+    int ltemp_size;
+    //bidi_char *wcFrom, *wcTo;
+    int wcFromTo_size;
+    struct bidi_cache_entry *pre_bidi_cache, *post_bidi_cache;
+    int bidi_cache_size;
+};
+
+
+typedef struct terminal_tag Terminal;
+
+
+class Term {
+protected:
+
+	char 	emptyLine[TERM_COL + 2];
+	int 	position;
+	int 	fontSize;
+	bool 	termActive;
+	int 	currentStyle;
+
+public:
+	int  	currentIndex;  	// vecchio len
+	int  	totalChars;    	// vecchio lenght
+	char  	*buf;     		// vecchio s
+
+	Terminal *term;
+
+	Term();
+	~Term();
+	void Clear();
+	void ProcessAnsi(char byte);
+	void DelChars(int posStart, int posEnd);
+	int PositionFromLine(int line);
+	void SetTermWin(GUI::ScintillaWindow *p);
+	void SetSerial(UART *uart) { serial = uart; };
+	void SetAnsiColor(int ansiForeColor, int ansiBackColor, int ansiAttrib);
+	bool isEscape(const char *s,  int len);
+	bool isTermActive() {return termActive; };
+	void setTermActiveOn() { termActive = true; };
+	void setTermActiveOff() { termActive = false; };
+	void CheckThenGet(int len);
+	int  GetIfNumber (const char *p, int *size);
+
+	void TermOut(void);
+};
+
+int ProcessChars(void *data);
+
+
+
+
+#endif /* TERM_H_ */

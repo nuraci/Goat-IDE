@@ -1,0 +1,131 @@
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ScintillaWin.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../src/ScintillaBase.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../src/AutoComplete.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../src/CallTip.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../src/CellBuffer.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexlib/CharacterSet.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../src/CharClassify.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../src/ContractionState.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../src/Decoration.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../src/Document.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../src/Editor.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../src/KeyMap.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../src/Indicator.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../src/LineMarker.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../src/PerLine.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c PlatWin.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../src/PositionCache.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexlib/PropSetSimple.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../src/RESearch.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../src/RunStyles.cxx
+i586-mingw32msvc-windres ScintRes.rc ScintRes.o
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../src/Selection.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../src/Style.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../src/UniConversion.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../src/ViewStyle.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../src/XPM.cxx
+echo Building ../bin/Scintilla.dll
+Building ../bin/Scintilla.dll
+i586-mingw32msvc-g++ -shared -static -Wl,--enable-runtime-pseudo-reloc-v2 -mwindows -Wl,--add-stdcall-alias -o ../bin/Scintilla.dll -s ScintillaWin.o ScintillaBase.o AutoComplete.o CallTip.o CellBuffer.o CharacterSet.o CharClassify.o ContractionState.o Decoration.o Document.o Editor.o KeyMap.o Indicator.o LineMarker.o PerLine.o PlatWin.o PositionCache.o PropSetSimple.o RESearch.o RunStyles.o ScintRes.o Selection.o Style.o UniConversion.o ViewStyle.o XPM.o -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -lstdc++ -limm32 -lole32 -luuid
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexlib/Accessor.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../src/Catalogue.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../src/ExternalLexer.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexlib/LexerBase.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexlib/LexerModule.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexlib/LexerSimple.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -D SCI_LEXER -c ScintillaWin.cxx -o ScintillaWinL.o
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -D SCI_LEXER -c ../src/ScintillaBase.cxx -o ScintillaBaseL.o
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexlib/StyleContext.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexlib/WordList.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexA68k.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexAbaqus.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexAda.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexAPDL.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexAsm.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexAsn1.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexASY.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexAU3.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexAVE.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexBaan.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexBash.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexBasic.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexBullant.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexCaml.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexCLW.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexCmake.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexCOBOL.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexConf.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexCPP.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexCrontab.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexCsound.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexCSS.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexD.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexEiffel.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexErlang.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexEScript.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexFlagship.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexForth.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexFortran.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexGAP.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexGui4Cli.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexHaskell.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexHTML.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexInno.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexKix.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexLisp.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexLout.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexLua.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexMagik.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexMarkdown.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexMatlab.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexMetapost.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexMMIXAL.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexModula.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexMPT.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexMSSQL.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexMySQL.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexNimrod.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexNsis.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexOpal.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexOthers.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexPascal.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexPB.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexPerl.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexPLM.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexPOV.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexPowerPro.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexPowerShell.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexProgress.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexPS.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexPython.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexR.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexRebol.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexRuby.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexScriptol.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexSmalltalk.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexSML.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexSorcus.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexSpecman.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexSpice.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexSQL.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexTACL.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexTADS3.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexTAL.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexTCL.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexTeX.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexTxt2tags.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexVB.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexVerilog.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexVHDL.cxx
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -c ../lexers/LexYAML.cxx
+echo Building ../bin/SciLexer.dll
+Building ../bin/SciLexer.dll
+i586-mingw32msvc-g++ -shared -static -Wl,--enable-runtime-pseudo-reloc-v2 -mwindows -Wl,--add-stdcall-alias -o ../bin/SciLexer.dll -s Accessor.o Catalogue.o ExternalLexer.o LexerBase.o LexerModule.o LexerSimple.o ScintillaWinL.o ScintillaBaseL.o StyleContext.o WordList.o AutoComplete.o CallTip.o CellBuffer.o CharacterSet.o CharClassify.o ContractionState.o Decoration.o Document.o Editor.o KeyMap.o Indicator.o LineMarker.o PerLine.o PlatWin.o PositionCache.o PropSetSimple.o RESearch.o RunStyles.o ScintRes.o Selection.o Style.o UniConversion.o ViewStyle.o XPM.o LexA68k.o LexAbaqus.o LexAda.o LexAPDL.o LexAsm.o LexAsn1.o LexASY.o LexAU3.o LexAVE.o LexBaan.o LexBash.o LexBasic.o LexBullant.o LexCaml.o LexCLW.o LexCmake.o LexCOBOL.o LexConf.o LexCPP.o LexCrontab.o LexCsound.o LexCSS.o LexD.o LexEiffel.o LexErlang.o LexEScript.o LexFlagship.o LexForth.o LexFortran.o LexGAP.o LexGui4Cli.o LexHaskell.o LexHTML.o LexInno.o LexKix.o LexLisp.o LexLout.o LexLua.o LexMagik.o LexMarkdown.o LexMatlab.o LexMetapost.o LexMMIXAL.o LexModula.o LexMPT.o LexMSSQL.o LexMySQL.o LexNimrod.o LexNsis.o LexOpal.o LexOthers.o LexPascal.o LexPB.o LexPerl.o LexPLM.o LexPOV.o LexPowerPro.o LexPowerShell.o LexProgress.o LexPS.o LexPython.o LexR.o LexRebol.o LexRuby.o LexScriptol.o LexSmalltalk.o LexSML.o LexSorcus.o LexSpecman.o LexSpice.o LexSQL.o LexTACL.o LexTADS3.o LexTAL.o LexTCL.o LexTeX.o LexTxt2tags.o LexVB.o LexVerilog.o LexVHDL.o LexYAML.o -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -lstdc++ -limm32 -lole32 -luuid
+echo Make ../bin/Lexers.a
+Make ../bin/Lexers.a
+ar rc ../bin/Lexers.a LexA68k.o LexAbaqus.o LexAda.o LexAPDL.o LexAsm.o LexAsn1.o LexASY.o LexAU3.o LexAVE.o LexBaan.o LexBash.o LexBasic.o LexBullant.o LexCaml.o LexCLW.o LexCmake.o LexCOBOL.o LexConf.o LexCPP.o LexCrontab.o LexCsound.o LexCSS.o LexD.o LexEiffel.o LexErlang.o LexEScript.o LexFlagship.o LexForth.o LexFortran.o LexGAP.o LexGui4Cli.o LexHaskell.o LexHTML.o LexInno.o LexKix.o LexLisp.o LexLout.o LexLua.o LexMagik.o LexMarkdown.o LexMatlab.o LexMetapost.o LexMMIXAL.o LexModula.o LexMPT.o LexMSSQL.o LexMySQL.o LexNimrod.o LexNsis.o LexOpal.o LexOthers.o LexPascal.o LexPB.o LexPerl.o LexPLM.o LexPOV.o LexPowerPro.o LexPowerShell.o LexProgress.o LexPS.o LexPython.o LexR.o LexRebol.o LexRuby.o LexScriptol.o LexSmalltalk.o LexSML.o LexSorcus.o LexSpecman.o LexSpice.o LexSQL.o LexTACL.o LexTADS3.o LexTAL.o LexTCL.o LexTeX.o LexTxt2tags.o LexVB.o LexVerilog.o LexVHDL.o LexYAML.o
+i586-mingw32msvc-ranlib ../bin/Lexers.a
+echo Building ScintillaWinS.o
+Building ScintillaWinS.o
+i586-mingw32msvc-g++ -DNDEBUG -Os -Wall -Wno-missing-braces -Wno-char-subscripts -pedantic -I ../include -I ../src -I../lexlib -fno-rtti -D STATIC_BUILD -c ScintillaWin.cxx -o ScintillaWinS.o
+cp ScintillaWinS.o ../bin/ScintillaWinS.o

@@ -1,0 +1,447 @@
+_VERSION current interpreter version eLua v0.8
+platform_adc_exists( unsigned id ) $id$ - ADC interface IDReturns: 1 if the ADC interface exists, 0 otherwise Checks if the platform has the hardware ADC specified as argument. Implemented in %src/common.c%, it uses the $NUM_ADC$ macro that must be defined in the
+  platform's $platform_conf.h$ file (see @arch_overview.html#platforms@here@ for details). For example:</p>
+  ~#define NUM_ADC   1      $// The platform has 1 ADC interface$~<p> 
+platform_adc_get_maxval( unsigned id ) $id$ - ADC channel IDReturns: the maximum possible conversion value Gets the maximum conversion value the channel may supply (based on channel resolution)
+platform_adc_set_smoothing( unsigned id, u32 length )   $id$ - ADC channel ID.  $length$ - the length of the moving average filter (must be a power of 2). If it is 1, the filter is disabled..  Returns: $PLATFORM_OK$ if the operation succeeded, $PLATFORM_ERR$ otherwise. Sets the length of the moving average smoothing filter
+platform_adc_set_blocking( unsigned id, u32 mode )   $id$ - ADC channel ID.  $mode$ - specifies whether or not sample requests block.  If 1, requests will block until enough samples are available or sampling has ended. If 0, requests will return immediately with up to the number of samples requested..  Returns:nothing. Sets whether or not sample requests should block, waiting for additional samples
+platform_adc_is_done( unsigned id ) $id$ - ADC channel IDReturns: 1 if sampling has completed, 0 if not Checks whether sampling has completed
+platform_adc_set_timer( unsigned id, u32 timer )   $id$ - ADC channel ID.  $timer$ - the ID of the timer to use to control the sampling frequency..  Returns:nothing. Selects a timer to control the sampling frequency
+platform_adc_set_clock( unsigned id, u32 freq )   $id$ - ADC channel ID.  $freq$ - the frequency of sample collection in Hz (number of samples per second). If 0, the timer is not used and samples are acquired as quickly as possible..  Returns: the actual sampling frequency that will be used, which might be different from the requested frequency, depending on the hardware Set the frequency of sample acquisition
+platform_adc_check_timer_id( unsigned id, unsigned timer_id )   $id$ - ADC channel ID.  $timer_id$ - Timer ID.  Returns: 1 if the timer may be used to trigger the ADC channel, 0 if not Checks whether a timer may be used with a particular ADC channel
+platform_can_exists( unsigned id ) $id$ - CAN interface ID.Returns: 1 if the CAN interface exists, 0 otherwise Checks if the platform has the hardware CAN specified as argument. Implemented in %src/common.c%, it uses the $NUM_CAN$ macro that must be defined in the
+  platform's $platform_conf.h$ file (see @arch_overview.html#platforms@here@ for details). For example:</p>
+  ~#define NUM_CAN   1      $// The platform has one CAN interface$~<p> 
+platform_can_setup( unsigned id, u23 clock )   $id$ - CAN interface ID..  $clock$ - the clock of the CAN bus, maximum speed is generally 1000000 (1 Mbit).  Returns: the actual speed set for the CAN interface. Depending on the hardware, this may have a different value than the $clock$ argument. This function is used to initialize the CAN hardware and set the bus clock.
+platform_can_send( unsigned id, u32 canid, u8 idtype, u8 len, const u8 *data )   $id$ - CAN interface ID..  $canid$ - CAN identifier number..  $canidtype$ - identifier type as defined @#can_id_types@here@.  $len$ - message length in bytes (8 or fewer).  $message$ - pointer to message, 8 or fewer bytes in length.  Returns:nothing. Send message over the CAN bus.
+platform_can_recv( unsigned id, u32 *canid, u8 *idtype, u8 *len, u8 *data )   $id$ - CAN interface ID..  $canid$ - pointer where CAN identifier number will be written..  $canidtype$ - pointer where identifier type as defined @#can_id_types@here@ will be written.  $len$ - pointer where message length in bytes will be written.  $message$ - pointer to message buffer (8 bytes in lenth).  Returns: PLATFORM_OK for success, PLATFORM_UNDERFLOW for error. (see @arch_platform_ll.html@here@ for details) Receive CAN bus message.
+platform_cpu_set_global_interrupts( int status ) $status$ - $PLATFORM_CPU_ENABLE$ to set the global interrupt flag or $PLATFORM_CPU_DISABLE$ to clear the global interrupt flag.Returns: the previous value of the global interrupt flag (1 if set, 0 otherwise). Set or clear the global interrupt flag of the CPU.
+platform_cpu_get_global_interrupts() none. Returns: the value of the global interrupt flag (1 if set, 0 otherwise). Get the value of the global interrupt flag of the CPU.
+platform_cpu_set_interrupt( elua_int_id id, elua_int_resnum resnum, int status )   $id$ - the interrupt ID, as defined in %platform_conf.h%..  $resnum$ - the resource ID..  $status$ - $PLATFORM_CPU_ENABLE to enable the interrupt or $PLATFORM_CPU_DISABLE$ to disable the interrupt..  Returns:  $PLATFORM_INT_INVALID$ - invalid interrupt ID.  $PLATFORM_INT_NOT_HANDLED$ - this interrupt cannot be enabled/disabled.  $PLATFORM_INT_BAD_RESNUM$ - this resource ID can't be used to enable/disable the interrupt.  the previous status of the interrupt (1 if enabled, 0 otherwise) if no error occured..  Enable or disable a specific CPU interrupt for a given resource ID.
+platform_cpu_get_interrupt( elua_int_id id, elua_int_resnum resnum )   $id$ - the interrupt ID, as defined in %platform_conf.h%.  $resnum$ - the resource ID.  Returns:  $PLATFORM_INT_INVALID$ - invalid interrupt ID.  $PLATFORM_INT_NOT_HANDLED$ - this interrupt cannot be enabled/disabled.  $PLATFORM_INT_BAD_RESNUM$ - this resource ID can't be used to enable/disable the interrupt.  the status of the interrupt (1 if enabled, 0 otherwise) if no error occured..  Get the interrupt enabled status of a specific CPU interrupt for a given resource ID.
+platform_cpu_get_interrupt_flag( elua_int_id id, elua_int_resnum resnum, int clear )   $id$ - the interrupt ID, as defined in %platform_conf.h%..  $resnum$ - the resource ID..  $clear$ - 1 to clear the interrupt pending flag if it is set, 0 otherwise..  Returns:  $PLATFORM_INT_INVALID$ - invalid interrupt ID..  $PLATFORM_INT_NOT_HANDLED$ - this interrupt's flag cannot be read..  $PLATFORM_INT_BAD_RESNUM$ - this resource ID can't be used to read this interrupt's flag..  the value of the interrupt pending flag if no error occured..  Return the interrupt pending flag of a specific CPU interrupt or a given resource ID and optionally clear it.
+platform_cpu_get_frequency() none. Returns: the CPU $core$ frequency (in Hertz). Get the CPU frequency.
+platform_eth_send_packet( const void* src, u32 size )   $src$ - start address of the Ethernet packet.  $size$ - size of the Ethernet packet.  Returns:nothing. Sends an Ethernet packet to the network
+platform_eth_get_packet_nb( void* buf, u32 maxlen )   $buf$ - start address of the receive buffer.  $maxlen$ - maximum length of the Ethernet packet.  Returns: the size of the read packet or 0 if no packet is available Non-blocking read of an Ethernet packet from the network
+platform_eth_force_interrupt() none. Returns:nothing. Force the Ethernet interrupt on the platform (see @#overview@overview@ above for details)
+platform_eth_get_elapsed_time() none. Returns:  0 if the uIP loop was called because of Ethernet activity, not because a timer expired.  the Ethernet timer period in ms (which indicates timer activity).  Get the elapsed time (in ms) since the last invocation of the uIP main loop ($elua_uip_mainloop$, from which this function is called). See @#overview@overview@ for a possible 
+  implementation of this function).
+platform_i2c_exists( unsigned id ) $id$ - I2C interface ID.Returns: 1 if the I2C interface exists, 0 otherwise Checks if the platform has the hardware I2C specified as argument. Implemented in %src/common.c%, it uses the $NUM_I2C$ macro that must be defined in the
+  platform's $platform_conf.h$ file (see @arch_overview.html#platforms@here@ for details). For example:</p>
+  ~#define NUM_I2C   1      $// The platform has one I2C interface$~<p> 
+platform_i2c_setup( unsigned id, u32 speed )   $id$ - I2C interface ID..  $speed$ - the speed of the interface, can be either $PLATFORM_I2C_SPEED_SLOW$ or $PLATFORM_I2C_SPEED_FAST$ as defined @#i2c_speed@here@.  Returns: the actual speed set for the I2C interface. Depending on the hardware, this may have a different value than the $speed$ argument. This function is used to initialize the parameters of the I2C interface. <span class="warning">NOTE</span>: currently, only master I2C mode is implemented in eLua.
+platform_i2c_send_start( unsigned id ) $id$ - I2C interface ID.Returns:nothing. Send an I2C START condition on the specified interface.
+platform_i2c_send_stop( unsigned id ) $id$ - I2C interface ID.Returns:nothing. Send an I2C STOP condition on the specified interface.
+platform_i2c_send_address( unsigned id, u16 address, int direction )   $id$ - I2C interface ID..  $address$ - I2C peripheral address..  $direction$ - transfer direction, either $PLATFORM_I2C_DIRECTION_TRANSMITTER$ or $PLATFORM_I2C_DIRECTION_RECEIVER$ as defined @#i2c_transfer_direction@here@..  Returns: 1 for success, 0 for error. Send an address on the I2C with the specified transfer direction (transmitter or receiver).
+platform_i2c_send_byte( unsigned id, u8 data )   $id$ - I2C interface ID..  $data$ - the byte to send..  Returns: 1 for success, 0 for error. Send a byte on the I2C interface.
+platform_i2c_recv_byte( unsigned id, int ack )   $id$ - I2C interface ID..  $ack$ - 1 to send ACK, 0 to send NAK. If $ACK$ is 0 a STOP condition will automatically be generated after the NAK..  Returns: 1 for success, 0 for error. Receive a byte from the I2C interface and send a positive (ACK) or negative (NAK) acknowledgement.
+platform_init() none. Returns:  $PLATFORM_OK$ for success.  $PLATFORM_ERR$ if an error occured. If $PLATFORM_ERR$ is returned,  %main% will block in an infinite loop right 
+  after calling this function, so you should return $PLATFORM_ERR$ only for serious errors.  This is the platform-specific initialization code. It is the first function called from %main()% ($src/main.c$) and it should handle
+  all the platform initialization sequence, included (but not limited to) setting up the proper clocks, initializing the interrupt subsystem,
+  setting up various peripherals and so on. Although platform specific, this function has a common part named %cmn_platform_init% (implemented 
+  in $src/common.c$) that initializes terminal support over serial connections, as well as the XMODEM and TERM components 
+  (see @building.html@here@ for details). If you need any of these, you need to call %cmn_platform_init% at the end of your 
+  %platform_init% function, $after$ initializing all the peripherals (in particular the UART used for the serial connection).<br>
+  An implementation skeleton for this function is given below:</p>
+  ~int platform_init()
+  {
+    ............. // perform all your initializations here
+    cmn_platform_init(); // call the common initialiation code
+    return PLATFORM_OK;
+  }~<p>
+platform_get_first_free_ram( unsigned id ) $id$ - the identifier of the RAM areaReturns: the start address of the given memory area Returns the start address of a free RAM area in the system (this is the RAM that will be used by any part of the code that uses malloc(), 
+  a good example being the Lua interpreter itself). There can be multiple free RAM areas in the system (for example the internal MCU RAM and external 
+  RAM chips).  Implemented in $src/common.c$, it uses the the $MEM_START_ADDRESS$ macro that must be defined in the platform's $platform_conf.h$
+  file (see @arch_overview.html#platforms@here@ for details). This macro must be defined as an array that contains all the start addresses of 
+  free RAM in the system. For internal RAM, this is generally handled by a linker exported symbol (named $end$ in many eLua ports) which 
+  points to the first RAM address after all the constant and non-constant program data. An example is given below:</p>
+  ~#define MEM_START_ADDRESS     { ( void* )end }~<p>
+platform_get_last_free_ram( unsigned id ) $id$ - the identifier of the RAM areaReturns: the end address of the given memory area Returns the last address of a free RAM area in the system (this is the RAM that will be used by any part of the code that uses malloc(), 
+  a good example being the Lua interpreter itself). There can be multiple free RAM areas in the system (for example the internal MCU RAM and external 
+  RAM chips). Implemented in $src/common.c$, it uses the the $MEM_END_ADDRESS$ macro that must be defined in the platform's $platform_conf.h$
+  file (see @arch_overview.html#platforms@here@ for details). This macro must be defined as an array that contains all the end addresses of 
+  free RAM in the system. For internal RAM, this is generally set as the last RAM memory address minus the size of the system stack(s). An example is 
+  given below:</p>
+  ~#define MEM_END_ADDRESS       { ( void* )( SRAM_BASE + 0x10000 - STACK_SIZE_TOTAL - 1 ) }~<p>
+platform_pio_has_port( unsigned port ) $port$ - the port IDReturns: 1 if the port exists, 0 otherwise Checks if the platform has the hardware port specified as argument. Implemented in %src/common.c%, it uses the $NUM_PIO$ macro that must be defined in the
+  platform's $platform_conf.h$ file (see @arch_overview.html#platforms@here@ for details). For example:</p>
+  ~#define NUM_PIO   4      $// The platform has 4 hardware PIO ports$~<p> 
+platform_pio_has_pin( unsigned port, unsigned pin )   $port$ - the port ID.  $pin$ - the pin number.  Returns: 1 if the pin exists, 0 otherwise Checks if the platform has the hardware port and pin specified as arguments. Implemented in %src/common.c%, it uses the $NUM_PIO$ macro to check the validity
+  of the port and the $PIO_PINS_PER_PORT$ or $PIO_PIN_ARRAY$ macros to check the validity of the pin. The macros must be defined in the platform's $platform_conf.h$ file
+  (see @arch_overview.html#platforms@here@ for details).</p>
+  <ul>
+    <li>use $PIO_PINS_PER_PORT$ when all the ports of the MCU have the same number of pins. For example:
+      ~#define PIO_PINS_PER_PORT    8   $// Each port has 8 pins$~</li>
+    <li>use $PIO_PIN_ARRAY$ when different ports of the MCU have different number of pins. For example:
+      ~#define PIO_PIN_ARRAY    { 4, 4, 2, 6 } $// Port 0 has 4 pins, port 1 has 4 pins, port 2 has 2 pins, port 3 has 6 pins$~</li>
+  </ul><p>
+platform_pio_get_prefix( unsigned port ) $port$ - the port IDReturns: the port prefix (either '0' or 'A') Get the port prefix. Used to establish if the port notation uses numbers (P0, P1, P2...) or letters (PA, PB, PC...). Implemented in %src/common.c%, it uses the 
+  $PIO_PREFIX$ macro that must be defined in the platform's $platform_conf.h$ file (see @arch_overview.html#platforms@here@ for details). The value of this macro can be either '0' (for
+  numeric notation) or 'A' (for letter notation). For example:</p>
+  ~#define PIO_PREFIX    'A'   $// Use PA, PB, PC ... for port notation$~<p>
+platform_pio_op( unsigned port, pio_type pinmask, int op )   $port$ - the port number.  $pinmask$ - has different meanings:
+  <ul>
+    <li>for $pin operations$ it is the mask of pins in the operation. Each pin on which the function action is executed is encoded with an 1 in the corresponding bit position 
+        of the pinmask.</li>
+    <li>for $port operations$ it is only meaningful for $PLATFORM_IO_PORT_SET_VALUE$ and in this case it specifies the new value of the port.</li>
+  </ul>.  $op$ - specifies the I/O operations, as specified @#pio_operations@here@..  Returns:  an actual value for $PLATFORM_IO_PIN_GET$ (0 or 1) and $PLATFORM_IO_PORT_GET$ (the value of the port)..  an error flag for all the other operations: 1 if the operation succeeded, 0 otherwise. For example, a platform that doesn't have pulldowns on its ports will always return a 0
+        when called with the $PLATFORM_IO_PIN_PULLDOWN$ operation..  This is the function that does the actual I/O work. It is implemented in the platform's own porting layer (%platform.c%, see @arch_overview.html#ports@here@ for more details).
+platform_pwm_exists( unsigned id ) $id$ - PWM channel IDReturns: 1 if the specified PWM channel exists, 0 otherwise Checks if the platform has the PWM channel specified as argument. Implemented in %src/common.c%, it uses the $NUM_PWM$ macro that must be defined in the
+  platform's $platform_conf.h$ file (see @arch_overview.html#platforms@here@ for details). For example:</p>
+  ~#define NUM_PWM   4      $// The platform has 4 PWM channels$~<p> 
+platform_pwm_setup( unsigned id, u32 frequency, unsigned duty )   $id$ - PWM channel ID.  $frequency$ - PWM channel frequency (in hertz).  $duty$ - PWM channel duty cycle, specified as percent (from 0 to 100). Note that some platform don't allow the full 0%-100% duty cycle.  Returns: The actual frequency set on the PWM channel, which might differ from the $frequency$ parameter, depeding on the hardware Sets up a PWM channel
+platform_pwm_start( unsigned id ) $id$ - PWM channel IDReturns:nothing. Starts PWM generation on the specified channel
+platform_pwm_stop( unsigned id ) $id$ - PWM channel IDReturns:nothing. Stops PWM generation on the specified channel
+platform_pwm_set_clock( unsigned id, u32 clock )   $id$ - PWM channel ID.  $clock$ - the desired frequency of the base clock..  Returns: The actual value of the base clock, which might be different
+        from $data$ depending on the hardware Sets the $base$ clock of the specified PWM channel
+        (which will be used to generate the frequencies requested by 
+        @#platform_pwm_setup@platform_pwm_setup@) to $data$ hertz.
+platform_pwm_get_clock( unsigned id )   $id$ - PWM channel ID.  $clock$ - the desired frequency of the base clock..  Returns: the value of the base clock Gets the $base$ clock of the specified PWM channel
+platform_spi_exists( unsigned id ) $id$ - SPI interface IDReturns: 1 if the SPI interface exists, 0 otherwise Checks if the platform has the hardware SPI specified as argument. Implemented in %src/common.c%, it uses the $NUM_SPI$ macro that must be defined in the
+  platform's $platform_conf.h$ file (see @arch_overview.html#platforms@here@ for details). For example:</p>
+  ~#define NUM_SPI   1      $// The platform has 1 SPI interface$~<p> 
+platform_spi_setup( unsigned id, int mode, u32 clock, unsigned cpol, unsigned cpha, unsigned databits )   $id$ - SPI interface ID.  $mode$ - SPI port mode ($PLATFORM_SPI_MASTER$ or $PLATFORM_SPI_SLAVE$, see @#spi_mode@here@..  $clock$ - clock speed for the SPI interface in master mode..  $cpol$ - SPI clock polarity.  $cpha$ - SPI clock phase.  $databits$ - length of the SPI data word in bits (usually 8, but configurable on some platforms)..  Returns: the actual clock set for the SPI interface. Depending on the hardware, this may have a different value than the $clock$ argument. This function is used to initialize the parameters of the SPI interface. <span class="warning">NOTE</span>: currently, only master SPI mode is implemented in eLua.
+platform_spi_send_recv( unsigned id, spi_data_type data )   $id$ - SPI interface ID.  $data$ - data to be sent to the SPI interface.  Returns: data read from the SPI interface Executes a SPI read/write cycle
+platform_spi_select( unsigned id, int is_select )   $id$ - SPI interface ID..  $is_select$ - $PLATFORM_SPI_SELECT_ON$ to select, $PLATFORM_SPI_SELECT_OFF$ to deselect , see @#chip_select@here@..  Returns:nothing. For platforms that have a dedicates SS (Slave Select) pin in master SPI mode that can be controlled manually, this function should enable/disable this pin. If this functionality
+  does not exist in hardware this function does nothing.
+platform_timer_exists( unsigned id ) $id$ - the timer IDReturns: 1 if the timer exists, 0 otherwise Checks if the platform has the timer specified as argument. Implemented in %src/common.c%, it uses the $NUM_TIMER$ macro that must be defined in the
+  platform's $platform_conf.h$ file (see @arch_overview.html#platforms@here@ for details) and the virtual timer configuration (@#virtual@here@ for details). For example:</p>
+  ~#define NUM_TIMER   2      $// The platform has 2 hardware timers$~<p>
+platform_timer_delay( unsigned id, timer_data_type delay_us )   $id$ - the timer ID.  $delay_us$ - the delay time (in microseconds).  Returns:nothing. Waits on a timer, then returns. This function is "split" in two parts: a platform-independent part implemented in %src/common_tmr.c% (that
+  handles virtual timers and the system timer) and a platform-dependent part that must be implemented by each platform in a function named @#platform_s_timer_delay@platform_s_timer_delay@. This function handles both
+  hardware timer IDs and virtual timer IDs.<br>
+  <a name="limitations" /><span class="warning">IMPORTANT NOTE</span>: the real delay after executing this functions depends on a number of variables, most notably the base clock of the timer 
+  and the size of the timer counter register (32 bits on some platforms, 16 bits on most platforms, other values are less common). To ensure that the delay you're requesting is achievable, use 
+  @#platform_timer_op@platform_timer_op@ with $PLATFORM_TIMER_OP_GET_MAX_DELAY$ and $PLATFORM_TIMER_OP_GET_MIN_DELAY$ to obtain the maximum and the minimum 
+  achievable wait times on your timer, respectively. Even if your delay is within these limits, the $precision$ of this function still varies a lot, mainly as a function of 
+  the timer base clock.
+platform_s_timer_delay( unsigned id, timer_data_type delay_us )   $id$ - the timer ID.  $delay_us$ - the delay time (in microseconds).  Returns:nothing. This function is identical in functionality to @#platform_timer_delay@platform_timer_delay@, but this is the function that must actually be implemented by a platform port 
+  and it must never handle virtual timer IDs or the system timer ID, only hardware timer IDs. It has the same @#limitations@limitations@ as @#platform_timer_delay@platform_timer_delay@.
+platform_timer_op( unsigned id, int op, timer_data_type data )   $id$ - the timer ID.  $op$ - the operation. $op$ can take any value from the @#timer_operations@this enum@, as follows:
+  <ul>
+    <li>$PLATFORM_TIMER_OP_START$: start the specified timer by setting its counter register to a predefined value.</li>
+    <li>$PLATFORM_TIMER_OP_READ$: get the value of the specified timer's counter register.</li> 
+    <li>$PLATFORM_TIMER_SET_CLOCK$: set the clock of the specified timer to $data$ (in hertz). You can never set the clock of a virtual timer, which is set at compile time.</li>  
+    <li>$PLATFORM_TIMER_GET_CLOCK$: get the clock of the specified timer.</li>  
+    <li>$PLATFORM_TIMER_OP_GET_MAX_DELAY$: get the maximum achievable timeout on the specified timer (in us).</li>  
+    <li>$PLATFORM_TIMER_OP_GET_MIN_DELAY$: get the minimum achievable timeout on the specified timer (in us).</li>
+    <li>$PLATFORM_TIMER_OP_GET_MAX_CNT$: get the maximum value of the timer's counter register.</li>
+  </ul>.  $data$ - used to specify the timer clock value when $op = PLATFORM_TIMER_SET_CLOCK$, ignored otherwise.  Returns:  the predefined value used when starting the clock if $op = PLATFORM_TIMER_OP_START$.  the timer's counter register if $op = PLATFORM_TIMER_OP_READ$.  the actual clock set on the timer, which might be different than the request clock depending on the hardware if $op = PLATFORM_TIMER_SET_CLOCK$.  the timer clock if $op = PLATFORM_TIMER_GET_CLOCK$.  the maximum achievable delay (in microseconds) if $op = PLATFORM_TIMER_OP_GET_MAX_DELAY$.  the minimum achievable delay (in microseconds) if $op = PLATFORM_TIMER_OP_GET_MIN_DELAY$.  the maximum value of the timer's coutner register if $op == PLATFORM_TIMER_OP_GET_MAX_CNT$.  Executes an operation on a timer. This function is "split" in two parts: a platform-independent part implemented in %src/common_tmr.c% (that handles virtual timers and the system timer) and a 
+  platform-dependent part that must be implemented by each platform in a function named @#platform_s_timer_op@platform_s_timer_op@. This function handles both hardware timer IDs and virtual 
+  timer IDs.
+platform_s_timer_op( unsigned id, int op, timer_data_type data )   $id$ - the timer ID.  $op$ - the operation. $op$ can take any value from the @#opval@this enum@, as follows:
+  <ul>
+    <li>$PLATFORM_TIMER_OP_START$: start the specified timer by setting its counter register to a predefined value.</li>
+    <li>$PLATFORM_TIMER_OP_READ$: get the value of the specified timer's counter register.</li> 
+    <li>$PLATFORM_TIMER_SET_CLOCK$: set the clock of the specified timer to $data$ (in hertz). You can never set the clock of a virtual timer, which is set at compile time.</li>  
+    <li>$PLATFORM_TIMER_GET_CLOCK$: get the clock of the specified timer.</li>  
+    <li>$PLATFORM_TIMER_OP_GET_MAX_DELAY$: get the maximum achievable timeout on the specified timer (in us).</li>  
+    <li>$PLATFORM_TIMER_OP_GET_MIN_DELAY$: get the minimum achievable timeout on the specified timer (in us).</li>
+    <li>$PLATFORM_TIMER_OP_GET_MAX_CNT$: get the maximum value of the timer's counter register.</li>
+  </ul>.  $data$ - used to specify the timer clock value when $op = PLATFORM_TIMER_SET_CLOCK$, ignored otherwise.  Returns:  the predefined value used when starting the clock if $op = PLATFORM_TIMER_OP_START$.  the timer's counter register if $op = PLATFORM_TIMER_OP_READ$.  the actual clock set on the timer, which might be different than the request clock depending on the hardware if $op = PLATFORM_TIMER_SET_CLOCK$.  the timer clock if $op = PLATFORM_TIMER_GET_CLOCK$.  the maximum achievable delay (in microseconds) if $op = PLATFORM_TIMER_OP_GET_MAX_DELAY$.  the minimum achievable delay (in microseconds) if $op = PLATFORM_TIMER_OP_GET_MIN_DELAY$.  the maximum value of the timer's coutner register if $op == PLATFORM_TIMER_OP_GET_MAX_CNT$.  This function is identical in functionality to @#platform_timer_op@platform_timer_op@, but this is the function that must actually be implemented by a platform port and it must 
+  never handle virtual timer IDs or the system timer, only hardware timer IDs.
+platform_timer_get_diff_us( unsigned id, timer_data_type end, timer_data_type start )   $id$ - the timer ID.  $end$ - the final counter value..  $start$ - the initial counter value..  Returns: the time difference (in microseconds) Return the time difference (in us) between two timer values (as returned by calling @refman_gen_tmr.html#platform_timer_op@platform_timer_op@ with $PLATFORM_TIMER_OP_READ$ or $PLATFORM_TIMER_OP_START$. This function 
+is generic, thus it is implemented in %src/common.c%. <span class="warning">NOTE</span>: the order of $end$ and $start$ is important. $end$ must correspond to a moment in time which came after $start$. The function knows how to deal 
+with $a single$ timer overflow condition ($end$ is less than $start$); if the timer overflowed 2 or more times between $start$ and $end$ the result of this function will be incorrect.
+platform_timer_set_match_int( unsigned id, timer_data_type period_us, int type )   $id$ - the timer ID.  $period_us$ - the period (in microseconds) of the timer interrupt. Setting this to 0 disables the timer match interrupt..  $type$ - $PLATFORM_TIMER_INT_ONESHOT$ for an interrupt that occurs only once after $period_us$ microseconds, or $PLATFORM_TIMER_INT_CYCLIC$ for an interrupt that occurs every
+$period_us$ microseconds.  Returns:  $PLATFORM_TIMER_INT_OK$ if the operation was successful..  $PLATFORM_TIMER_INT_TOO_SHORT$ if the specified period is too short..  $PLATFORM_TIMER_INT_TOO_LONG$ if the specified period is too long..  $PLATFORM_TIMER_INT_INVALID_ID$ if the specified timer cannot handle this operation..  Setup the timer match interrupt. Only available if interrupt support is enabled, check @inthandlers.html@here@ for details.This function is "split" in two parts: a platform-independent part 
+implemented in %src/common_tmr.c% (that handles virtual timers and the system timer) and a platform-dependent part that must be implemented by each platform in a function named 
+@#platform_s_timer_set_math_int@platform_s_timer_set_match_int@. This function handles both hardware timer IDs and virtual timer IDs. <span class="warning">NOTE</span>: the @#the_system_timer@system timer@ can't
+generate interrupts.
+platform_s_timer_set_match_int( unsigned id, timer_data_type period_us, int type )   $id$ - the timer ID.  $period_us$ - the period (in microseconds) of the timer interrupt. Setting this to 0 disables the timer match interrupt..  $type$ - $PLATFORM_TIMER_INT_ONESHOT$ for an interrupt that occurs only once after $period_us$ microseconds, or $PLATFORM_TIMER_INT_CYCLIC$ for an interrupt that occurs every
+$period_us$ microseconds.  Returns:  $PLATFORM_TIMER_INT_OK$ if the operation was successful..  $PLATFORM_TIMER_INT_TOO_SHORT$ if the specified period is too short..  $PLATFORM_TIMER_INT_TOO_LONG$ if the specified period is too long..  $PLATFORM_TIMER_INT_INVALID_ID$ if the specified timer cannot handle this operation..  This function is identical in functionality to @#platform_timer_set_match_int@platform_timer_set_match_int@, but this is the function that must actually be implemented by a platform port and it must 
+  never handle virtual timer IDs or the system timer, only hardware timer IDs.
+platform_timer_read_sys() none. Returns: The current value of the system timer. Returns the current value of the system timer, see @#the_system_timer@here@ for more details.
+platform_timer_sys_available() none. Returns: 1 if the system timer is implemented, 0 otherwise. Used to check the availability of the system timer. This function is platform independent and is implemented in %src/common_tmr.c%. It returns the value of the $PLATFORM_HAS_SYSTIMER$ macro, check
+@#the_system_timer@here@ for more details.
+platform_timer_sys_raw_read() none. Returns: The counter of the timer used to implement the system timer. Return the counter of the timer used to implement the system timer. Needs to be implemented only if eLua's generic system timer mechanism is used, check @#the_system_timer@here@ for details.
+platform_timer_sys_enable_int() none. Returns:nothing. Enable the overflow/match interrupt of the timer used to implement the system timer. Needs to be implemented only if eLua's generic system timer mechanism is used, check @#the_system_timer@here@ for details.
+platform_timer_sys_disable_int() none. Returns:nothing. Disable the overflow/match interrupt of the timer used to implement the system timer. Needs to be implemented only if eLua's generic system timer mechanism is used, check @#the_system_timer@here@ for details.
+platform_uart_exists( unsigned id ) $id$ - UART interface IDReturns: 1 if the specified UART exists, 0 otherwise Checks if the platform has the hardware UART specified as argument. Implemented in %src/common.c%, it uses the $NUM_UART$ macro that must be defined in the
+  platform's $platform_conf.h$ file (see @arch_overview.html#platforms@here@ for details). For example:</p>
+  ~#define NUM_UART   2      $// The platform has 2 UART interfaces$~<p>
+platform_uart_setup( unsigned id, u32 baud, int databits, int parity, int stopbits )   $id$ - UART interface ID..  $baud$ - baud rate..  $databits$ - number of databits (maximum 8)..  $parity$ - parity type (can be either $PLATFORM_UART_PARITY_EVEN$, $PLATFORM_UART_PARITY_ODD$ or $PLATFORM_UART_PARITY_NONE$, see @#uart_parity@here@)..  $stopbits$ - number of stop bits (can be either $PLATFORM_UART_STOPBITS_1$, $PLATFORM_UART_STOPBITS_1_5$ or $PLATFORM_UART_STOPBITS_2$, see
+           @#uart_stop_bits@here@)..  Returns: the actual baud rate. Depending on the hardware, this may have a different value than the $baud$ argument. This function is used to initialize the parameters of the UART interface.
+platform_uart_send( unsigned id, u8 data )   $id$ - UART interface ID..  $data$ - data to be sent..  Returns:nothing. Send data to an UART interface. This is a blocking operation (it doesn't return until the data was sent).<br>
+      This function is "split" in two parts: a platform-independent part that is implemented in %src/common.c% and a platform-dependent part that must be implemented
+      by each platform in a function named @#platform_s_uart_send@platform_s_uart_send@.
+platform_s_uart_send( unsigned id, u8 data )   $id$ - UART interface ID..  $data$ - data to be sent..  Returns:nothing. This is the platform-dependent part of @#platform_uart_send@platform_uart_send@. It doesn't need to take care of @sermux.html@virtual UARTs@ or other system
+      configuration parameters, it just needs to instruct the CPU to send the data on the specified ID. This function will always be called with a physical uart ID.
+platform_uart_recv( unsigned id, unsigned timer_id, timer_data_type timeout )   $id$ - UART interface ID..  $timer_id$ - the ID of the timer used in this operation (see @arch_platform_timers.html@here@ for details). See also the description of the $timeout$ argument..  $timeout$ - specifies a timeout for the receive operation as follows:
+  <ul>
+    <li>$timeout > 0$: the timer with the specified $timer_id$ will be used to timeout the receive operation after $timeout$ microseconds.</li>
+    <li>$timeout = 0$: the function returns immediately regardless of data being available or not. $timer_id$ is ignored.</li>
+    <li>$timeout = PLATFORM_TIMER_INF_TIMEOUT$: the function waits indefinitely for UART data to be available and returns it. In this mode the function doesn't 
+        time out, so $timer_id$ is ignored.</li>
+  </ul>.  Returns:  if $timeout > 0$ and data from the UART is available in $timeout$ microseconds of less it is returned, otherwise -1 is returned.  if $timeout = 0$ and data from the UART is available when the function is called it is returned, otherwise -1 is returned.  if $timeout = PLATFORM_TIMER_INF_TIMEOUT$ it returns the data read from the UART after it becomes available.  Receive data from the UART interface (blocking/non blocking with timeout/immediate).<br>
+  This function is "split" in two parts: a platform-independent part that is implemented in %src/common.c% and a platform-dependent part that must be implemented by each
+  platform in a function named @#platform_s_uart_recv@platform_s_uart_recv@.
+platform_s_uart_recv( unsigned id, timer_data_type timeout )   $id$ - UART interface ID..  $timeout$ - specifies a timeout for the receive operation as follows:
+  <ul>
+    <li>$timeout = 0$: the function returns immediately regardless of data being available or not.</li>
+    <li>$timeout = PLATFORM_TIMER_INF_TIMEOUT$: the function waits indefinitely for UART data to be available and returns it.</li>
+  </ul>.  Returns:  if $timeout = 0$ and data from the UART is available when the function is called it is returned, otherwise -1 is returned.  if $timeout = PLATFORM_TIMER_INF_TIMEOUT$ it returns the data read from the UART after it becomes available.  This is the platform-dependent part of the UART receive function @#platform_uart_recv@platform_uart_recv@ and is in fact a "subset" of the full function 
+  (thus being easier to implement by each platform in part). In particular, it never needs to deal with the $timeout &gt; 0$ case, which is handled by @#platform_uart_recv@platform_uart_recv@.
+platform_uart_set_buffer( unsigned id, unsigned log2size )   $id$ - UART interface ID..  $data$ - the base 2 logarithm of the buffer size or 0 to disable buffering on the UART. Note that disabling buffering on a virtual UART is an invalid operation..  Returns: $PLATFORM_OK$ if the operation succeeded, $PLATFORM_ERR$ otherwise. Sets the buffer for the specified UART. This function is fully implemented in %src/common.c%.
+platform_uart_set_flow_control( unsigned id, int type )   $id$ - UART interface ID..  $type$ - the desired flow control. It can be either $PLATFORM_UART_FLOW_NONE$, $PLATFORM_UART_FLOW_RTS$ or $PLATFORM_UART_FLOW_CTS$ or a bitwise combination of these constants
+        (see @#flow_control_type@here@ for details)..  Returns: $PLATFORM_OK$ if the operation succeeded, $PLATFORM_ERR$ otherwise. Sets the flow control type.<br>
+      This function is "split" in two parts: a platform independent part that is implemented in %src/common.c% and a platform-dependent part that must be implemented by each
+      platform in a function named @#platform_s_uart_set_flow_control@platform_s_uart_set_flow_control@.
+platform_s_uart_set_flow_control( unsigned id, int type )   $id$ - UART interface ID..  $type$ - the desired flow control. It can be either $PLATFORM_UART_FLOW_NONE$, $PLATFORM_UART_FLOW_RTS$ or $PLATFORM_UART_FLOW_CTS$ or a bitwise combination of these constants
+        (see @#flow_control_type@here@ for details)..  Returns: $PLATFORM_OK$ if the operation succeeded, $PLATFORM_ERR$ otherwise. This is the platform-dependent part of the UART set flow control function @#platform_uart_set_flow_control@platform_uart_set_flow_control@ and is in fact a "subset" of the
+      full function (thus being easier to implement by each platform in part). In particular, it never needs to deal with virtual UARTs.
+adc.sample( id, count )   $id$ - ADC channel ID. Optionally, this may be a table containing a list of channel IDs (i.e.: {0, 2, 3}), allowing synchronization of acquisition. NOTE: This acceptance of mixed types is only for the sample function..  $count$ - number of samples to acquire and place in buffer..  Returns:nothing. Initiate conversion and buffering of samples on an ADC channel.
+adc.getsample( id ) $id$ - ADC channel ID.Returns: $sample$ - numeric value of conversion, or nil if sample was not available. Get a single conversion value from the buffer associated with a given channel.
+adc.getsamples( id, count )   $id$ - ADC channel ID..  $count$ - optional parameter to indicate number of samples to return. If not included, all available samples are returned..  Returns: $samples$ - table containing integer conversion values. If not enough samples are available, remaining indices will be nil. Get multiple conversion values from the buffer associated with a given channel.
+adc.insertsamples( id, table, idx, count )   $id$ - ADC channel ID..  $table$ - table to write samples to. Values at $table$[$idx$] to $table$[$idx$ + $count$ -1] will be overwritten with samples (or nil if not enough samples are available)..  $idx$ - first index to use in the table for writing samples..  $count$ - number of samples to return. If not enough samples are available (after blocking, if enabled) remaining values will be nil..  Returns:nothing. Get multiple conversion values from a channel's buffer, and write them into a table.
+adc.maxval( id ) $id$ - ADC channel ID.Returns: $maxval$ - maximum integer conversion value (based on channel resolution) Get the maximum value (corresponding to the maximum voltage) that can be returned on a given channel.
+adc.setclock( id, clock, timer_id )   $id$ - ADC channel ID..  $clock$ - frequency to acquire samples at in Hz (number of samples per second), 0 to acquire as fast as possible..  $timer_id$ - Timer channel ID to use to control ADC conversion. <strong>Note:</strong> At this time, a timer selection will apply to all channels on a given ADC peripheral..  Returns: $clock$ - actual acquisition frequency that was set Set the frequency (number of samples per second) at which voltages will be converted into samples.
+adc.isdone( id ) $id$ - ADC channel ID.Returns: $status$ - 1 if no samples are being acquired, 0 if samples are pending acquisition. Check whether samples are still being acquired on a channel.
+adc.setblocking( id, mode )   $id$ - ADC channel ID..  $mode$ - 1 if requests to get samples should block until requested samples are available or sampling has completed, 0 to return immediately with available samples.  Returns:nothing. Set whether or not functions that request converted samples should wait for requested samples or return immediately with what is available. If this function is not called, each channel starts in blocking mode.
+adc.setsmoothing( id, length )   $id$ - ADC channel ID..  $length$ - number of preceding samples to include in moving average filter (must be a power of 2). If 1, filter is disabled. When enabled, a filter buffer is filled before the main conversion buffer, so that averages are always over the same number of samples..  Returns:nothing. Set the length of the moving average filter. When $length$ is greater than 1, samples pulled from the conversion buffer will be averaged with the preceding $length$ - 1 buffered values.
+bit.bit( position ) $position$ - position of the bit that will be set to 1.Returns: $number$ - a number with only one 1 bit at $position$ (the rest are set to 0). Generate a number with a 1 bit (used for mask generation). Equivalent to %1 <<<< position% in C.
+bit.isset( value, position )   $value$ - the value to test..  $position$ - bit position to test..  Returns: $boolean$ - true if the bit at the given position is 1, false otherwise. Test if a given bit is set.
+bit.isclear( value, position )   $value$ - the value to test..  $position$ - bit position to test..  Returns: $boolean$ - true if the bit at the given position is 0, false othewise. Test if a given bit is cleared.
+bit.set( value, pos1, pos2, ..., posn )   $value$ - the base number..  $pos1$ - position of the first bit to set..  $pos2$ - position of the second bit to set..  $posn$ - position of the nth bit to set..  Returns: $number$ - the number with the bit(s) set in the given position(s). Set bits in a number.
+bit.clear( value, pos1, pos2, ..., posn )   $value$ - the base number..  $pos1$ - position of the first bit to clear..  $pos2$ - position of the second bit to clear..  $posn$ - position of thet nth bit to clear..  Returns: $number$ - the number with the bit(s) cleared in the given position(s). Clear bits in a number.
+bit.bnot( value ) $value$ - the number to negate.Returns: $number$ - the bitwise negated value of the number. Bitwise negation, equivalent to %~~value% in C.
+bit.band( val1, val2, ... valn )   $val1$ - first AND argument..  $val2$ - second AND argument..  $valn$ - nth AND argument..  Returns: $number$ - the bitwise AND of all the arguments. Bitwise AND, equivalent to %val1 & val2 & ... & valn% in C.
+bit.bor( val1, val2, ... valn )   $val1$ - first OR argument..  $val2$ - second OR argument..  $valn$ - nth OR argument..  Returns: $number$ - the bitwise OR of all the arguments. Bitwise OR, equivalent to %val1 | val2 | ... | valn% in C.
+bit.bxor( val1, val2, ... valn )   $val1$ - first XOR argument..  $val2$ - second XOR argument..  $valn$ - nth XOR argument..  Returns: $number$ - the bitwise exclusive OR of all the arguments. Bitwise exclusive OR (XOR), equivalent to %val1 ^^ val2 ^^ ... ^^ valn% in C.
+bit.lshift( value, shift )   $value$ - the value to shift..  $shift$ - positions to shift..  Returns: $number$ - the number shifted left Left-shift a number, equivalent to %value << shift% in C.
+bit.rshift( value, shift )   $value$ - the value to shift..  $shift$ - positions to shift..  Returns: $number$ - the number shifted right (logically). Logical right shift a number, equivalent to %( unsigned )value >>>> shift% in C.
+bit.arshift( value, shift )   $value$ - the value to shift..  $shift$ - positions to shift..  Returns: $number$ - the number shifted right (arithmetically). Arithmetic right shift a number equivalent to %value >>>> shift% in C.
+can.setup( id, clock )   $id$ - the ID of the CAN interface..  $clock$ - the clock of the CAN interface..  Returns: The actual clock set on the CAN interface. Depending on the hardware, this might have a different value than the $clock$ parameter. Setup the CAN interface
+can.send( id, canid, canidtype, message )   $id$ - the ID of the CAN interface..  $canid$ - CAN identifier number..  $canidtype$ - identifier type as defined @#can_id_types@here@..  $message$ - message in string format, 8 or fewer bytes..  Returns:nothing. Send message over the CAN bus.
+can.recv( id ) $id$ - the ID of the CAN interface.Returns:  $canid$ - CAN identifier number..  $canidtype$ - identifier type as defined @#can_id_types@here@..  $message$ - message in string format, 8 or fewer bytes..  Receive CAN bus message.
+cpu.w32( address, data )   $address$ - the memory address..  $data$ - the 32-bit data to write..  Returns:nothing. Writes a 32-bit word to memory.
+cpu.r32( address ) $address$ - the memory address.Returns: $data$ - the 32-bit word read from memory. Read a 32-bit word from memory.
+cpu.w16( address, data )   $address$ - the memory address..  $data$ - the 16-bit data to write..  Returns:nothing. Writes a 16-bit word to memory.
+cpu.r16( address ) $address$ - the memory address.Returns: $data$ - the 16-bit word read from memory. Reads a 16-bit word from memory.
+cpu.w8( address, data )   $address$ - the memory address..  $data$ - the byte to write..  Returns:nothing. Writes a byte to memory.
+cpu.r8( address ) $address$ - the memory addressReturns: $data$ - the byte read from memory. Reads a byte from memory.
+cpu.cli( [id], [resnum1], [resnum2], ... [resnumn])   $id$ - the interrupt ID. If specified, at least one resource ID must also be specified..  $resnum1$ - the first resource ID, required if $id$ is specified..  $resnum2 (optional)$ - the second resource ID..  $resnumn (optional)$ - the $n$-th resource ID..  Returns:nothing. Disables the global CPU interrupt flag if called without arguments, or a specific interrupt for a list of resource IDs if called with arguments.
+cpu.sei( [id], [resnum1], [resnum2], ... [resnumn])   $id$ - the interrupt ID. If specified, at least one resource ID must also be specified..  $resnum1$ - the first resource ID, required if $id$ is specified..  $resnum2 (optional)$ - the second resource ID..  $resnumn (optional)$ - the $n$-th resource ID..  Returns:nothing. Enables the global CPU interrupt flag if called without arguments, or a specific interrupt for a list of resource IDs if called with arguments.
+cpu.clock() none. Returns: $clock$ - the CPU clock (in Hertz). Get the CPU core frequency.
+cpu.set_int_handler( id, handler )   $id$ - the interrupt ID..  $handler$ - the Lua interrupt handler function, or $nil$ to disable the Lua interrupt handler feature..  Returns: $prev_handler$ - the previous interrupt handler for interrupt $id$, or $nil$ if an interrupt handler was not set for interrupt $id$. Sets the Lua interrupt handler for interrupt $id$ to function $handler$. $handler$ can be $nil$ to disable the interrupt handler. Only available if interrupt support is enabled, check @inthandlers.html@here@ for details.
+cpu.get_int_handler( id ) $id$ - the interrupt ID.Returns: $handler$ - the interrupt handler for interrupt $id$, or $nil$ if an interrupt handler is not set for interrupt $id$. Returns the Lua interrupt handler for interrupt $id$
+cpu.get_int_flag( id, resnum, [clear] )   $id$ - the interrupt ID..  $resnum$ - the resource ID..  $clear (optional)$ - $true$ to clear the interrupt pending flag or $false$ to leave the interrupt pending flag untouched. Defaults to $true$ if not specified..  Returns:nothing. Get the interrupt pending flag of an interrupt ID/resource ID combination, and optionally clear the pending flag. Only available if interrupt support is enabled, check @inthandlers.html@here@ for details.
+elua.egc_setup( mode, [memlimit] )   $mode$ - the EGC operation mode. Can be either $elua.EGC_NOT_ACTIVE$, $elua.EGC_ON_ALLOC_FAILURE$, $elua.EGC_ON_MEM_LIMIT$, $elua.EGC_ALWAYS$ or a combination between the last 3 modes in this list (they can be combined both with bitwise OR operations, using the @refman_gen_bit.html@bit@ module, or simply by adding them)..  $memlimit$ - required only when $elua.EGC_ON_MEM_LIMIT$ is specified in $mode$, specifies the EGC upper memory limit..  Returns:nothing. Change the emergency garbage collector operation mode and memory limit (see @elua_egc.html@here@ for details).
+elua.save_history( filename ) $filename$ - the name of the file where the history will be saved. $CAUTION$: the file will be overwritten.Returns:nothing. Save the interpreter line history. Only available if linenoise is enabled, check @linenoise.html@here@ for details.
+elua.version() none. Returns: the eLua version currently running. Returns the current eLua version as a string
+i2c.setup( id, speed )   $id$ - the ID of the I2C interface..  $speed$ - the clock frequency of the I2C interface. It can be $i2c.FAST$ (400KHz), $i2c.SLOW$ (100KHz) or a number giving the required I2C bus clock speed in Hz..  Returns: the actual speed of the I2C interface. Setup the I2C interface.
+i2c.start( id ) $id$ - the ID of the I2C interface.Returns:nothing. Send a START on the specified I2C interface.
+i2c.stop( id ) $id$ - the ID of the I2C interface.Returns:nothing. Send a STOP on the specified I2C interface.
+i2c.address( id, address, direction )   $id$ - the ID of the I2C interface..  $address$ - the address..  $direction$ - $i2c.TRANSMITTER$ if the master wants to send data, or $i2c.RECEIVER$ if the master wants to receive data..  Returns: $true$ if the address was acknowledged by an I2C slave, $false$ otherwise. Send an address on the I2C interface.
+i2c.write( id, data1, [data2], ..., [datan] )   $id$ - the ID of the I2C interface..  $data1$ - the data to send. It can be either a number between 0 and 255, a string or a table (array) of numbers..  $data2 (optional)$ - the second data to send..  $datan (optional)$ - the %n%-th data to send..  Returns: the number of bytes actually written. Writes data to a slave that has already acknowledged an @#i2c.address@i2c.address@ call.
+i2c.read( id, numbytes )   $id$ - the ID of the I2C interface..  $numbytes$ - the number of bytes to read..  Returns: a string with all the data read from the I2C interface. Reads a number of bytes from a slave that has already acknowledged an @#i2c.address@i2c.address@ call. It acknowledges all the bytes received except for the last one.
+print(e1, e2, ...))   $e1$ - desc.  $e2$ - desc.  Returns:  .   .  prints values to stdout using tostring
+net.packip( ip1, ip2, ip3, ip4 )   $ip1$ - the first part of the IP address..  $ip2$ - the second part of the IP address..  $ip3$ - the third part of the IP address..  $ip4$ - the fourth part of the IP address..  Returns: An integer that encodes the IP address in an internal format. Returns an internal representation of an IP address that can be used with all function from the $net$ module that expect an IP address
+argument. The IP is considered to be in the format %ip1.ip2.ip3.ip4%.
+net.packip( 'ip' ) $ip$ - the IP address in string format.Returns: An integer that encodes the IP address in an internal format. Returns an internal representation of an IP address that can be used with all function from the $net$ module that expect an IP address
+argument. The IP is given as a string.
+net.unpackip( ip, '*n' ) $ip$ - the encoded IP address.Returns:  $ip1$ - the first part of the IP address..  $ip2$ - the second part of the IP address..  $ip3$ - the third part of the IP address..  $ip4$ - the fourth part of the IP address..  Returns an unpacked representation of an IP address encoded by @#net.packip@net.packip@.
+net.unpackip( ip, '*s' ) $ip$ - the encoded IP address.Returns: The IP address in string format. Returns an unpacked representation of an IP address encoded by @#net.packip@net.packip@.
+net.lookup( hostname ) $hostname$ - the name of the computer.Returns: The IP address of the computer. Does a DNS lookup.
+net.socket( type ) $type$ - can be either $net.SOCK_STREAM$ for TCP sockets or $net.SOCK_DGRAM$ for UDP sockets (<span class="warning">not yet supported</span>).Returns: The socket that will be used in subsequent operations. Create a socket for TCP/IP communication.
+net.close( socket ) $socket$ - the socket to close.Returns: An error code, as defined @#error_codes@here@. Close a socket.
+net.connect( sock, ip, port )   $sock$ - a socket obtained from @#net.socket@net.socket@..  $ip$ - the IP address obtained from @#net.packip@net.packip@..  $port$ - the port to connecto to..  Returns: $err$ - the error code, as defined @#error_codes@here@. Connect a socket to a remote system.
+net.accept( port, [timeout], [timer_id] )   $port$ - the port to wait for connections from the remote system..  $timeout (optional)$ - timeout of the operation, can be either $net.NO_TIMEOUT$ or 0 for non-blocking operation, $net.INF_TIMEOUT$ for 
+blocking operation, or a positive number that specifies the timeout in microseconds. The default value of this argument is $unet.INF_TIMEOUT$..  $timer_id (optional)$ - the ID of the timer used for measuring the timeout. If not specified it defaults to the @arch_platform_timers.html#the_system_timer@system timer@..  Returns:  $socket$ - the socket created after accepting the remote connection..  $remoteip$ - the IP of the remote system..  $err$ - an error code, as defined @#error_codes@here@..  Accept a connection from a remote system with an optional timeout.
+net.send( sock, str )   $sock$ - the socket..  $str$ - the data to send..  Returns:  $res$ - the number of bytes actually sent or -1 for error..  $err$ - the error code, as defined @#error_codes@here@..  Send data to a socket.
+net.recv( sock, format, [timeout], [timer_id] )   $sock$ - the socket..  $format$ - how to read the data. This can be either:
+<ul>
+  <li>$"*l"$: read a line (until the next '\n' character).</li>
+  <li>$an integer$: read up to that many bytes.</li>
+</ul>.  $timeout (optional)$ - timeout of the operation, can be either $net.NO_TIMEOUT$ or 0 for non-blocking operation, $net.INF_TIMEOUT$ for 
+blocking operation, or a positive number that specifies the timeout in microseconds. The default value of this argument is $unet.INF_TIMEOUT$..  $timer_id (optional)$ - the ID of the timer used for measuring the timeout. If not specified it defaults to the @arch_platform_timers.html#the_system_timer@system timer@..  Returns:  $res$ - the number of bytes read..  $err$ - the error code, as defined @#error_codes@here@..  Read data from a socket.
+pack.pack( format, val1, val2, ..., valn )   $format$ - format specifier (as described @#overview@here@)..  $val1$ - first variable to pack..  $val2$ - second variable to pack..  $valn$ - nth variable to pack..  Returns: $packed$ - a string containing the packed representation of all variables according to the format. Packs variables in a string.
+pack.unpack( string, format, [ init ] )   $string$ - the string to unpack..  $format$ - format specifier (as described @#overview@here@)..  $init$ - $(optional)$ marks where in $string$ the unpacking should start (1 if not specified)..  Returns:  $nextpos$ - the position in the string after unpacking..  $val1$ - the first unpacked value..  $val2$ - the second unpacked value..  $valn$ - the nth unpacked value..  Unpacks a string
+pd.platform() none. Returns: $platform$ - the name of the platform on which eLua is running. Get platform name.
+pd.cpu() none. Returns: $cpu$ - the name of the CPU of the platform on which eLua is running. Get CPU name.
+pd.board() none. Returns: $board$ - the name of the board on which eLua is running. Get board name.
+pio.pin.setdir( direction, pin1, pin2, ..., pinn )   $direction$ - the pin direction, can be either $pio.INPUT$ or $pio.OUTPUT$.  $pin1$ - the first pin.  $pin2 (optional)$ - the second pin.  $pinn (optional)$ - the %n%-th pin.  Returns:nothing. Set pin(s) direction
+pio.pin.setpull( type, pin1, pin2, ..., pinn )   $type$ - 'pull' type, can be either $pio.PULLUP$ to enable pullups, $pio.PULLDOWN$ to enable pulldowns, or $pio.NOPULL$ to disable both pullups and
+        pulldowns.  $pin1$ - the first pin.  $pin2 (optional)$ - the second pin.  $pinn (optional)$ - the %n%-th pin.  Returns:nothing. Enable/disable pullups/pulldowns on the specified pin(s)
+pio.pin.setval( value, pin1, pin2, ..., pinn )   $value$ - pin value, can be either 0 or 1.  $pin1$ - the first pin.  $pin2 (optional)$ - the second pin.  $pinn (optional)$ - the %n%-th pin.  Returns:nothing. Set pin(s) value
+pio.pin.getval( pin1, pin2, ..., pinn )   $pin1$ - the first pin.  $pin2 (optional)$ - the second pin.  $pinn (optional)$ - the %n%-th pin.  Returns: The value(s) of the pin(s), either 0 or 1 Get value of pin(s)
+pio.pin.sethigh( pin1, pin2, ..., pinn )   $pin1$ - the first pin.  $pin2 (optional)$ - the second pin.  $pinn (optional)$ - the %n%-th pin.  Returns:nothing. Set pin(s) to 1 (high)
+pio.pin.setlow( pin1, pin2, ..., pinn )   $pin1$ - the first pin.  $pin2 (optional)$ - the second pin.  $pinn (optional)$ - the %n%-th pin.  Returns:nothing. Set pin(s) to 0 (low)
+pio.port.setdir( direction, port1, port2, ..., portn )   $direction$ - the port direction, can be either $pio.INPUT$ or $pio.OUTPUT$.  $port1$ - the first port.  $port2 (optional)$ - the second port.  $portn (optional)$ - the %n%-th port.  Returns:nothing. Set port(s) direction
+pio.port.setpull( type, port1, port2, ..., portn )   $type$ - 'pull' type, can be either $pio.PULLUP$ to enable pullups, $pio.PULLDOWN$ to enable pulldowns, or $pio.NOPULL$ to disable both pullups and
+        pulldowns.  $port1$ - the first port.  $port2 (optional)$ - the second port.  $portn (optional)$ - the %n%-th port.  Returns:nothing. Enable/disable pullups/pulldowns on the specified port(s)
+pio.port.setval( value, port1, port2, ..., portn )   $value$ - port value.  $port1$ - the first port.  $port2 (optional)$ - the second port.  $portn (optional)$ - the %n%-th port.  Returns:nothing. Set port(s) value
+pio.port.getval( port1, port2, ..., portn )   $port1$ - the first port.  $port2 (optional)$ - the second port.  $portn (optional)$ - the %n%-th port.  Returns: The value(s) of the port(s) Get value of port(s)
+pio.port.sethigh( port1, port2, ..., portn )   $port1$ - the first port.  $port2 (optional)$ - the second port.  $portn (optional)$ - the %n%-th port.  Returns:nothing. Set port(s) to all 1 (high)
+pio.port.setlow( port1, port2, ..., portn )   $port1$ - the first port.  $port2 (optional)$ - the second port.  $portn (optional)$ - the %n%-th port.  Returns:nothing. Set port(s) to all 0 (low)
+pwm.setup( id, frequency, duty )   $id$ - the ID of the PWM module..  $frequency$ - the frequency of the PWM module (in Hz)..  $duty$ - the duty cycle of the PWM module given in percents. This must be an integer between 0 and 100. $NOTE$: depending on the hardware, some
+duty cycles (particulary 0 and 100) might not be achievable..  Returns: The actual frequency set on the PWM module. Depending on the hardware, this might have a different value than the $frequency$ argument. Setup the PWM modules.
+pwm.start( id ) $id$ - the ID of the PWM module.Returns:nothing. Start the PWM signal on the given module.
+pwm.stop( id ) $id$ - the ID of the PWM module.Returns:nothing. Stop the PWM signal on the given module.
+pwm.setclock( id, clock )   $id$ - the ID of the PWM module..  $clock$ - the desired base clock..  Returns: The actual base clock set on the PWM module.  Depending on the hardware, this might have a different value than the $clock$ argument. Set the base clock of the given PWM module.
+pwm.getclock( id ) $id$ - the ID of the PWM module.Returns: The base clock of the PWM module. Get the base clock of the given PWM module.
+rpc.connect( transport_identifiers ) $transport_identifiers$ - platform-specific serial port identification (see @#overview@overview@)Returns: $handle$ - handle used to interact with the remote Lua state.  Usage styles are as follows:</p>
+    <table style="text-align: left; margin-left: 2em;">
+    <tbody>
+    <tr>
+      <th style="text-align: left; width: 20em;">Usage Style</th>
+      <th style="text-align: left;">Meaning</th>
+    </tr>
+    <tr>
+      <td>$handle$.$remote_var$ = $local_var$</td>
+      <td>send contents of $local_var$ to remote host and assign to $remote_var$ (registered on global table). This also works where the destination variable is nested within tables.</td>
+    </tr>
+    <tr>
+      <td>$local_var$ = $handle$.$remote_var$:get()</td>
+      <td>get contents of $remote_var$ from remote global table and assign to $local_var$.</td>
+    </tr>
+    <tr>
+      <td>$val1$, $val2$, $valn$ = $handle$.$remote_func$()</td>
+      <td>call $remote_func$ on the server side, and return values to local state</td>
+    </tr>
+    <tr>
+      <td>$helper$ = $handle$.$remote_var$</td>
+      <td>create a $helper$ which points to $remote_var$, and can be used as shorthand later (e.g.: $helper$:get() would get the contents of the remote variable. If $remote_var$ were a table with functions on it: $helper$.$funcname$() would call $funcname$, on table $remote_var$ on the server, and return any results.)</td>
+    </tr>
+    </tbody>
+    </table>
+    <p> Initiate connection from client to server.
+rpc.close( handle ) $handle$ - handle associated with the connection.Returns:nothing. Close an active RPC session.
+rpc.server( transport_identifiers ) $transport_identifiers$ - platform-specific serial port identification (see @#overview@overview@)Returns:nothing. Start a blocking/captive RPC server, which will wait for incoming connections.
+rpc.on_error( err_handler ) $err_handler$ - function to handle error messages. string error messages may be passed to this function.Returns:nothing. Define client-side error handler to deal with server-side error responses.
+rpc.listen( transport_identifiers ) $transport_identifiers$ - platform-specific serial port identification (see @#overview@overview@)Returns: server handle to use with @#rpc.peek@rpc.peek@ and @#rpc.dispatch@rpc.dispatch@ Open a listener on transport and await incoming connections.
+rpc.peek( server_handle ) $server_handle$ - handle to refer to server session, created by @#rpc.listen@rpc.listen@Returns: $data_available$ - 1 if data are available, 0 if data are unavailable Check if data are available to read on transport.
+rpc.dispatch( server_handle ) $server_handle$ - handle to refer to server session, created by @#rpc.listen@rpc.listen@Returns:nothing. Read transport and handle incoming command.
+spi.setup( id, type, clock, cpol, cpha, databits )   $id$ - the ID of the SPI interface..  $type$ - SPI interface type, can be either $spi.MASTER$ or $spi.SLAVE$. $NOTE: currently, only master SPI mode is supported$..  $clock$ - the clock of the SPI interface..  $cpol$ - the clock polarity (0 or 1)..  $cpha$ - the clock phase (0 or 1)..  $databits$ - the length of the SPI data word..  Returns: The actual clock set on the SPI interface. Depending on the hardware, this might have a different value than the $clock$ parameter. Setup the SPI interface
+spi.sson( id ) $id$ - the ID of the SPI interface.Returns:nothing. Select the SS line (Slave Select) of the SPI interface. This is only applicable for SPI interfaces with a dedicated SS pin.
+spi.ssoff( id ) $id$ - the ID of the SPI interface.Returns:nothing. Deselect the SS line (Slave Select) of the SPI interface. This is only applicable for SPI interfaces with a dedicated SS pin.
+spi.write( id, data1, [data2], ..., [datan] )   $id$ - the ID of the SPI interface..  $data1$ - the first string/number to send..  $data2 (optional)$ - the second string/number to send..  $datan (optional)$ - the %n%-th string/number to send..  Returns:nothing. Write one or more strings/numbers to the SPI interface.
+spi.readwrite( id, data1, [data2], ..., [datan] )   $id$ - the ID of the SPI interface..  $data1$ - the first string/number to send..  $data2 (optional)$ - the second string/number to send..  $datan (optional)$ - the %n%-th string/number to send..  Returns: An array with all the data read from the SPI interface. Write one or more strings/numbers to the SPI interface and return the data read from the same interface.
+term.clrscr() none. Returns:nothing. Clear the screen
+term.clreol() none. Returns:nothing. Clear from the current cursor position to the end of the line
+term.moveto( x, y )   $x$ - the column (starting with 1).  $y$ - the line (starting with 1).  Returns:nothing. Move the cursor to the specified coordinates
+term.moveup( delta ) $delta$ - number of lines to move the cursor upReturns:nothing. Move the cursor up
+term.movedown( delta ) $delta$ - number of lines to move the cursor downReturns:nothing. Move the cursor down
+term.moveleft( delta ) $delta$ - number of columns to move the cursor leftReturns:nothing. Move the cursor left
+term.moveright( delta ) $delta$ - number of columns to move the cursor rightReturns:nothing. Move the cursor right
+term.getlines() none. Returns: The number of lines in the terminal Get the number of lines in the terminal
+term.getcols() none. Returns: The number of columns in the terminal Get the number of columns in the terminal
+term.print( [ x, y ], str1, [ str2, ..., strn ] )   $x (optional)$ - write the string at this column. If $x$ is specified, $y$ must also be specified.  $y (optional)$ - write the string at this line. If $y$ is specified, $x$ must also be specified.  $str1$ - the first string to write.  $str2 (optional)$ - the second string to write.  $strn (optional)$ - the nth string to write.  Returns:nothing. Write one or more strings in the terminal
+term.getcx() none. Returns: The column of the cursor Get the current column of the cursor
+term.getcy() none. Returns: The line of the cursor Get the current line of the cursor
+term.getchar( [ mode ] ) $mode (optional)$ - terminal input mode. It can be either:</p>
+  <ul>
+    <li>$term.WAIT$ - wait for a key to be pressed, then return it. This is the default behaviour if $mode$ is not specified. </li>
+    <li>$term.NOWAIT$ - if a key was pressed on the terminal return it, otherwise return -1.</li>
+  </ul><p>Returns: The char read from a terminal or -1 if no char is available. The 'char' can be an actual ASCII char, or a 'pseudo-char' which encodes special keys on
+  the keyboard. The list of the special chars and their meaning is given in the table below:</p>
+<table style="text-align: left; margin-left: 2em;">
+<tbody>
+<tr>
+  <th style="text-align: left;">Key code</th>
+  <th style="text-align: left;">Meaning</th>
+</tr>
+<tr>
+  <td>$term.KC_UP$</td>
+  <td>the UP key on the terminal</td>
+</tr>
+<tr>
+  <td>$term.KC_DOWN$</td>
+  <td>the DOWN key on the terminal</td>
+</tr>
+<tr>
+  <td>$term.KC_LEFT$</td>
+  <td>the LEFT key on the terminal</td>
+</tr>
+<tr>
+  <td>$term.KC_RIGHT$</td>
+  <td>the RIGHT key on the terminal</td>
+</tr>
+<tr>
+  <td>$term.KC_HOME$</td>
+  <td>the HOME key on the terminal</td>
+</tr>
+<tr>
+  <td>$term.KC_END$</td>
+  <td>the END key on the terminal</td>
+</tr>
+<tr>
+  <td>$term.KC_PAGEUP$</td>
+  <td>the PAGE UP key on the terminal</td>
+</tr>
+<tr>
+  <td>$term.KC_PAGEDOWN$</td>
+  <td>the PAGE DOWN key on the terminal</td>
+</tr>
+<tr>
+  <td>$term.KC_ENTER$</td>
+  <td>the ENTER (CR) key on the terminal</td>
+</tr>
+<tr>
+  <td>$term.KC_TAB$</td>
+  <td>the TAB key on the terminal</td>
+</tr>
+<tr>
+  <td>$term.KC_BACKSPACE$</td>
+  <td>the BACKSPACE key on the terminal</td>
+</tr>
+<tr>
+  <td>$term.KC_ESC$</td>
+  <td>the ESC (escape) key on the terminal</td>
+</tr>
+</tbody>
+</table>
+<p> Read a char (a key press) from the terminal
+tmr.delay( period, [id] )   $period$ - how long to wait (in us)..  $id (optional)$ - the timer ID. If not specified it defaults to the @arch_platform_timers.html#the_system_timer@system timer@..  Returns:nothing. Waits for the specified period, then returns.
+tmr.read( [id] ) $id (optional)$ - the timer ID. If not specified it defaults to the @arch_platform_timers.html#the_system_timer@system timer@.Returns: The value of the timer counter register. Reads the timer counter register.
+tmr.start( [id] ) $id (optional)$ - the timer ID. If not specified it defaults to the @arch_platform_timers.html#the_system_timer@system timer@.Returns: The value of the timer counter register when the timer started. Starts the specified timer.
+tmr.gettimediff( end, start, [id] )   $end$ - the final counter value..  $start$ - the initial counter value..  $id (optional)$ - the timer ID. If not specified it defaults to the @arch_platform_timers.html#the_system_timer@system timer@..  Returns: The time difference (in us). Computes the time difference between two timer counter values (obtained by calling @#tmr.read@tmr.read@ or @#tmr.start@tmr.start@). <span class="warning">NOTE</span>: the order 
+of $end$ and $start$ is important. $end$ must correspond to a moment in time which came after $start$. The function knows how to deal with $a single$ timer overflow condition ($end$ is less than $start$); if the timer overflowed 2 or more times between $start$ and $end$ the result of this function will be incorrect.
+tmr.getdiffnow( start, [id] )   $start$ - the initial counter value..  $id (optional)$ - the timer ID. If not specified it defaults to the @arch_platform_timers.html#the_system_timer@system timer@..  Returns: The time difference (in us). Computes the time difference between a counter value from the past (obtained by calling @#tmr.read@tmr.read@ or @#tmr.start@tmr.start@) and the counter value corresponding to the current time.
+tmr.getmindelay( [id] ) $id (optional)$ - the timer ID. If not specified it defaults to the @arch_platform_timers.html#the_system_timer@system timer@.Returns: The minimum achievable delay on the specified timer (in us). Get the minimum achievable delay on the specified timer.
+tmr.getmaxdelay( [id] ) $id (optional)$ - the timer ID. If not specified it defaults to the @arch_platform_timers.html#the_system_timer@system timer@.Returns: The maximum achievable delay on the specified timer (in us). Get the maximum achievable delay on the specified timer.
+tmr.setclock( clock, [id] )   $clock$ - the timer clock (in Hz). .  $id (optional)$ - the timer ID. If not specified it defaults to the @arch_platform_timers.html#the_system_timer@system timer@..  Returns: The actual clock set on the timer (in Hz). Depending on the hardware, this might have a different value than the $clock$ argument. 
+$NOTE:$ this function does not work with virtual timers or with the system timer. Set the timer clock (the clock used to increment the timer counter register).
+tmr.getclock( [id] ) $id (optional)$ - the timer ID. If not specified it defaults to the @arch_platform_timers.html#the_system_timer@system timer@.Returns: The timer clock (in Hz). Get the timer clock (the clock used to increment the timer counter register).
+tmr.set_match_int( period, type, [id] )   $period$ - the interrupt period in microseconds. Setting this to 0 disabled the timer match interrupt..  $type$ - $tmr.INT_ONESHOT$ to generate a single interrupt after *period* microseconds, or $tmr.INT_CYCLIC$ to generate interrupts every $period$ microseconds..  $id (optional)$ - the timer ID. If not specified it defaults to the @arch_platform_timers.html#the_system_timer@system timer@ (but note that this happens only for consistency, as the system timer can't generate interrupts)..  Returns:nothing. Setup the timer match interrupt. Only available if interrupt support is enabled, check @inthandlers.html@here@ for details.
+uart.setup( id, baud, databits, parity, stopbits )   $id$ - the ID of the serial port.  $baud$ - serial baud rate.  $databits$ - number of data bits.  $parity$ - parity type, can be either $uart.PAR_EVEN$, $uart.PAR_ODD$ or $uart.PAR_NONE$.  $stopbits$ - the number of stop bits, can be either $uart.STOP_1$ (for 1 stop bit), $uart.STOP_1_5$ (for 1.5 stop bits) or $uart.STOP_2$ 
+(for 2 stop bits).  Returns: The actual baud rate set on the serial port. Depending on the hardware, this might have a different value than the $baud$ parameter Setup the serial port. Note that you can't call this function for a @sermux.html@virtual UART@.
+uart.write( id, data1, [data2], ..., [datan] )   $id$ - the ID of the serial port..  $data1$ - the first string/8-bit integer to write..  $data2 (optional)$ - the second string/8-bit integer to write..  $datan (optional)$ - the %n%-th string/8-bit integer to write..  Returns:nothing. Write one or more strings or 8-bit integers (raw data) to the serial port. If writing raw data, its value (represented by an integer) must be between 0 and 255.
+uart.getchar( id, [timeout], [timer_id] )   $id$ - the ID of the serial port.  $timeout (optional)$ - timeout of the operation, can be either $uart.NO_TIMEOUT$ or 0 for non-blocking operation, $uart.INF_TIMEOUT$ for 
+blocking operation, or a positive number that specifies the timeout in microseconds. The default value of this argument is $uart.INF_TIMEOUT$..  $timer_id (optional)$ - the ID of the timer used for measuring the timeout. If not specified it defaults to the @arch_platform_timers.html#the_system_timer@system timer@..  Returns: The character read from the serial port as a string, or the empty string it timeout occured while waiting for the character. Read a single character from the serial port
+uart.read( id, format, [timeout], [timer_id] )   $id$ - the ID of the serial port.  $format$ - format of data to read. This can be either:
+<ul>
+  <li>$'*l'$ - read until an end of line character (a $\n$) is found (the $\n$ is not returned) or a timeout occurs.</li>
+  <li>$'*n'$ - read an integer. The integer can optionally have a sign. Reading continues until the first non-digit character is detected or a timeout occurs. This is the only case in which $read$ returns a number instead of an integer.</li>
+  <li>$'*s'$ - read until a spacing character (like a space or a TAB) is found (the spacing character is not returned) or a timeout occurs.</li>
+  <li>$a positive number$ - read at most this many characters before returning (reading can stop earlier if a timeout occurs).</li>
+</ul>.  $timeout (optional)$ - timeout of the operation, can be either $uart.NO_TIMEOUT$ or 0 for non-blocking operation, $uart.INF_TIMEOUT$ for 
+blocking operation, or a positive number that specifies the timeout in microseconds. The default value of this argument is $uart.INF_TIMEOUT$..  $timer_id (optional)$ - the ID of the timer used for measuring the timeout. If not specified it defaults to the @arch_platform_timers.html#the_system_timer@system timer@..  Returns: The data read from the serial port as a string (or as a number if $format$ is $'*n'$). If a timeout occures, only the data read before the timeout is returned. If the function times out while trying to read the first character, the empty string is returned Reads one or more characters from the serial port according to a format specifier
+uart.set_buffer( id, bufsize )   $id$ - the ID of the serial port.  $bufsize$ - the size of the buffer (must be a power of 2) or 0 to disable buffering on the specified UART..  Returns:nothing. Sets the size of the UART buffer. Note that calling this function with bufsize = 0 for a @sermux.html@virtual UART@ is not allowed.
+uart.set_flow_control( id, type )   $id$ - the ID of the serial port..  $type$ - the flow control type, it can be either $uart.FLOW_NONE$ (no flow control), $uart.FLOW_RTS$ for RTS flow control, $uart.FLOW_CTS$ for CTS flow control or 
+          $uart.FLOW_RTS + uart.FLOW_CTS$ for full RTS/CTS flow control..  Returns:nothing. Sets the flow control on the UART. Note that this function works only on physical ports, it will return an error if called on a virtual UART.
+lm3s.disp.init( frequency ) $frequency$ - Number, the clock frequency (in Hertz) of the SSI interface used to control the display.Returns:nothing. Initialize the display.
+lm3s.disp.enable( frequency ) $frequency$ - Number, the clock frequency (in Hertz) of the SSI interface used to control the display.Returns:nothing. Enable the display.
+lm3s.disp.disable() none. Returns:nothing. Disable the display.
+lm3s.disp.on() none. Returns:nothing. Turn the display on.
+lm3s.disp.off() none. Returns:nothing. Turn the display off.
+lm3s.disp.clear() none. Returns:nothing. Clear the display.
+lm3s.disp.print( str, x, y, col )   $str$ - String, the text to be written on the display..  $x$ - Number [0-127], the horizonal position of the text (specified in columns)..  $y$ - Number [0-95], the vertical position of the text (specified in lines)..  $col$ - Number [0-15], the 4-bit gray scale value to be used for the text..  Returns:nothing. Write a string on the display. A 5x7 font (in a 6x8 cell) is used for drawing the text.
+lm3s.disp.draw( img, x, y, width, height )   $img$ - String, the image to draw in string format..  $x$ - Number [0-127], the horizontal position of the image (specified in pixels)..  $y$ - Number [0-95], the vertical position of the image (specified in pixels)..  $width$ - Number [1-127], the width of the image..  $height$ - Number [1-95], the height of the image..  Returns:nothing. Draw an image on the display.
+str9.pio.setpin( pin, direction, type, ipconnected, alternate )   $pin$ - the pin, as encoded in the @refman_gen_pio.html@pio@ module..  $direction$ - the pin direction, can be either $str9.pio.INTPUT$ or $str9.pio.OUTPUT$,.  $type$ - the type of the pin, can be either $str9.pio.OUTPUT_PUSHPULL$ (push-pull) or $str9.pio.OUTPUT_OC$ (open collector)..  $ipconnected$ - $true$ to connect the pin to its corresponding peripheral(s), $false$ otherwise..  $alternate$ - alternate pin function. Must be either $str9.pio.ALT_INPUT$, $str9.pio.ALT_OUTPUT1$, $str9.pio.ALT_OUTPUT2$, $str9.pio.ALT_OUTPUT3$..  Returns:nothing. Setup the pin.
+mbed.pio.configpin( pin, function, mode, resistor)   $pin$ - the pin, as encoded in the @refman_gen_pio.html@pio@ or $mbed.pio$ module..  $function$ - alternate pin function, Must be either $mbed.pio.FUNCTION_0 (default)$, $mbed.pio.FUNCTION_1$, $mbed.pio.FUNCTION_2$, or $mbed.pio.FUNCTION_3$.  $mode$ - open drain mode, can be either $mbed.pio.MODE_DEFAULT$ (no open drain) or $mbed.pio.MODE_OD$ (open drain)..  $resistor$ - alternate pin function. Must be either $mbed.pio.RES_PULLUP$ (default), $mbed.pio.RES_TRISTATE$, $mbed.pio.RES_PULLDOWN$..  Returns:nothing. Configure the pin.
+mizar32.lcd.reset() none. Returns:nothing. Initialises the display, resetting everything to as initial state: clear screen, no cursor, displaying columns 1-16 of the 40-column memory, ready to print at (1,1), writing text from left to right and moving the cursor one place right after each character. You don't %have% to call $reset$ at the start of your program, but doing so does will ensure that your program still works if the display has been left in a funny state by some previous run.
+mizar32.lcd.setup( display_shift, right_to_left )   $display_shift$ - If $true$, then with each character you subsequently print, the cursor will move by one place in the character memory as usual but the display's contents will also move by one position horizontally in the opposite direction so that the cursor remains in the same column of the physical display. This can be used to achieve "scrolling text" effects. Note, however, that when the cursor passes from column 40 to column 1 or vice versa, it flips over to the other row..  $right_to_left$ - If $true$, text will be printed right-to-left: the cursor will move one position to the left in the character memory and, if display shifting is also enabled, the contents of the display will shift to the right so that the cursor stays in the same column on the screen..  Returns:nothing. This can be used to set some of the stranger operating modes of the LCD display. Both parameters are optional and if you omit them, they default to $false$, which sets sensible mode.
+mizar32.lcd.clear() none. Returns:nothing. Clears the display, moves the cursor to the top left (position 1,1) and resets the display shift to show columns 1 to 16.
+mizar32.lcd.home() none. Returns:nothing. Moves the cursor to the top left (position 1,1) and resets the display shift.
+mizar32.lcd.goto( row, column )   $row$ - A number (1 or 2) giving the row you want to move to..  $column$ - A number (1 to 40) giving the position within that row in the character memory..  Returns:nothing. Moves the cursor to the specified row and column.
+mizar32.lcd.getpos() none. Returns:  $row$ - A number (1 or 2) giving the current row..  $column$ - A number (1 to 40) giving the current column in the character memory..  Returns the current cursor position.
+mizar32.lcd.print( [data1] [, data2] ... [datan] ) $data$ - Each item of data can be a string or an integer. Strings are the normal way to display messages of ASCII text. An integer parameter should have a value from 0 to 255 to display a single character, which can be one of the user-defined characters 0-7, the regular ASCII characters 32-125 plus 126 and 127 for right- and left-pointing arrows and the chinese, greek and mathematical symbols with codes 160-255.Returns:nothing. Writes into the LCD character memory starting at the current cursor position. The cursor will advance by one position for each character printed. When it goes past column 40, it moves to column 1 of the other line, (and vice versa when printing right-to-left).
+mizar32.lcd.cursor( what ) $what$ - A string to say what should be done:
+          <p>$"none"$, $"line"$ or $"block"$ will display, respectively, no visible cursor, a constant underline or a blinking solid block at the cursor position.
+          <p>$"left"$ or $"right"$ move the cursor one position left or right in the character memory and on the display without changing the underlying characters. The display never shifts in this case and, as usual, the cursor wraps between column 40 of one row and column 1 of the other.Returns:nothing. Sets the type of cursor that is displayed at the cursor position or move the cursor left or right.
+mizar32.lcd.display( what ) $what$ - A string to say what should be done:
+          <p>$"off"$ and $"on"$ turn the physical display off or back on again. While the display is off it appears blank but the contents of the character memory, the position and type of cursor, user-defined characters and setup mode are all remembered and you can write to the character memory and perform all other operations while the display is off. This allows you to update the display without the viewer seeing too much flickering.
+        <p>$"left"$ or $"right"$ shift the displayed characters one place left or right. For example, if it was displaying the usual columns 1-16 and you say %mizar32.lcd.display("left")%, it will then display columns 2-17: the visible characters move left but the window onto the character memory moves right. Returns:nothing. Turns the physical display on or off, or shifts the displayed characters left or right.
+mizar32.lcd.definechar( code, glyph )   $code$ - A number (0 to 7) saying which of the characters you wish to redefine..  $glyph$ - A table of up to eight numbers giving the bit-patterns for the eight rows of the character, in order from top to bottom. Each of these number is a value from 0 to 31, to define which of the 5 bits in the row should be black. The pixels' values from left to right are 16, 8, 4, 2 and 1. For example, { 1, 3, 7, 15, 31, 15, 7, 3, 1, 0 } would define a left-pointing solid triangle in the top 7 rows. Extra rows are ignored, and missing rows are blanked..  Returns:nothing. Programs one of the eight user-definable characters whose codes are 0 to 7. When it has been defined, a character can be displayed using $mizar32.lcd.print(n)$, where $n$ is a number from 0 to 7. If the character in question is already being displayed, its visible form will change immediately on the display. At power-on, the 8 characters are defined as random garbage.
+mizar32.lcd.buttons() none. Returns: $buttons$ - A string containing up to five of the characters $L$, $R$, $U$, $D$ and $S$ to say whether the Left, Right, Up, Down and Select buttons are currently held down. If none are pressed, an empty string is returned. The hardare allows Select to be detected reliably and up to two of the other four: if three of Left, Right, Up and Down are being held, all four are returned. Tells which of the five user buttons are currently pressed.
