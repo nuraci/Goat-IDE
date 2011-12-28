@@ -2,14 +2,14 @@
 
 some features:
 
-* His editor (which is based on the wonderful library spark) is lightweight and powerful.
+* His editor (which is based on the wonderful library "scintilla" http://www.scintilla.org/) is lightweight and powerful.
 * It has additional features such as "syntax highlighting", "code folding" and "code completion" based on the eLua API.
 * It includes the  capability to connect with the real hardware (through the serial or the USB port) obtaining the eLua prompt Elua inside it.
 * Also it supports some terminal commands (standard ansi/vt100), so it's able to play games like "hanoi" or "hungman"
 
 
 
-## How to install it on Linux:
+## How to build and install it on Linux:
 
 * $ cd $HOME
 * $ git clone git@github.com:nuccioraciti/Goat-IDE.git
@@ -21,7 +21,7 @@ some features:
 * $ make all
 * $ sudo make install
 
-## How to install it on Windows:
+## How to build and install it on Windows:
 Not yet ready, I hope that it will be soon...
 
 
@@ -34,7 +34,7 @@ Not yet ready, I hope that it will be soon...
 * Using the menu: "Tools" -> "Compile", let's Goat build the program for you.
 * The last step, press "F5" or menu "Tools" -> "Send & Run on Ram" will send the "hello.lc" directly on memory of eLua board and will run it.
 
-(*) just a note, some eLua examples ("hanoi" and "hunman") requiring a special configuration of the "eLua's Console" window, so don't forget to select the menu: "Tools" -> "mode Terminal".
+(*) just a note, some eLua examples ("hanoi" and "hunman") requiring a special configuration of the "eLua's Console" window, so don't forget to select the menu: "Tools" -> "Mode Terminal".
 
 Enjoy with the "Go @ IDE" and thank you for testing, improving and leaving your feedback for it.
 
