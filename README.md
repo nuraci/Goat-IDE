@@ -8,6 +8,8 @@ some features:
 * It's able to build the sources and also is able to send the built file on the Hardware (using the xmodem protocol). 
 * Also it supports some terminal commands (standard ansi/vt100), so it's able to play games like "hanoi" or "hungman".
 
+## Videos:
+http://www.youtube.com/watch?v=kUmujKemFjA&feature=youtu.be
 
 
 ## How to build and install it on Linux:
@@ -34,7 +36,7 @@ Not yet ready, I hope that it will be soon...
 * #define BUILD_XMODEM
 * #define BUILD_SHELL
 * #define BUILD_TERM
-** and if it is avaliable on our hardware:
+and if it is avaliable on our hardware:
 * #define BUILD_MMCFS
 
 ## Quick start.
