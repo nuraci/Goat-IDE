@@ -131,7 +131,7 @@ install:
 	$(INSTALL) -m 755 $(PROG) $(bindir)
 	$(INSTALL) -m 755 $(ELUAC) $(bindir)
 	
-	for files in ../properties/*.properties; \
+	for files in ../properties/*.*; \
 	do \
 		$(INSTALL) -m 777 $$files $(propdir); \
 	done
