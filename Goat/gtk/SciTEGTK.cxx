@@ -4744,9 +4744,9 @@ void SciTEGTK::CreateUI() {
 	gtk_widget_hide(PWidget(findStrip));
 	gtk_widget_hide(PWidget(replaceStrip));
 
-	GtkWidget *tablabel1   = gtk_label_new(localiser.Text("eLua's Console").c_str());
+	GtkWidget *tablabel1   = gtk_label_new(localiser.Text("eLua Console").c_str());
 	GtkWidget *tabcontent1 = PWidget(wConsole);
-	GtkWidget *tablabel2   = gtk_label_new(localiser.Text("System's Console").c_str());
+	GtkWidget *tablabel2   = gtk_label_new(localiser.Text("System Console").c_str());
 	GtkWidget *tabcontent2 = PWidget(wOutput);
 
 	gtk_widget_show(tablabel1);

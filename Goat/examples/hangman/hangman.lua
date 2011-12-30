@@ -17,7 +17,7 @@ local words = { "simple", "hangman", "guess", "elua", "inane", "serial",
 
 -- Build our hanging site :)
 local function hang()
-  term.setcolor( 14, term.COL_DONT_CHANGE )
+  term.print("\27[31;31m")
   if tries == 0 then
     -- Build the basic structure
     term.print( 5, 1, string.rep( '_', 6 ) )
@@ -29,7 +29,7 @@ local function hang()
     term.print( 3, 8, '|      |___')
     term.print( 3, 9, '|__________|') 
     
-  elseif tries == 1 then
+	elseif tries == 1 then
     -- Draw the head
     term.print( 10, 3, "O" )
     
@@ -45,17 +45,18 @@ local function hang()
     -- Second hand / second leg
     term.print( 11, tries == 7 and 6 or 4, "\\" )
   end  
-  term.setcolor( term.COL_DEFAULT, term.COL_DONT_CHANGE )  
+  term.print("\27[0;0m")
 end
 
 local total, guessed = 0, 0
 
+
 -- Show the game statistics
 local function stats()
-  term.setcolor( 9, term.COL_DONT_CHANGE )
+  term.print("\27[35;0m")
   term.print( w - 20, 5, "Total words: ", tostring( total ) )
   term.print( w - 20, 6, "Guessed words: ", tostring( guessed ) )
-  term.setcolor( term.COL_DEFAULT, term.COL_DEFAULT )     
+  term.print("\27[0;0m")
 end
 
 while true do
@@ -89,14 +90,14 @@ while true do
       else
         key = key:byte()
         if tried[ key ] ~= nil then
-          term.setcolor( 12, term.COL_DONT_CHANGE )
+		   term.print("\27[3;0m")
           term.print( "Already tried this key" )
-          term.setcolor( term.COL_DEFAULT, term.COL_DEFAULT )          
+		     term.print("\27[0;0m")
         else
           tried[ key ] = true
           local i
           local ok = false
-          term.setcolor( 10, term.COL_DONT_CHANGE )
+		  term.print("\27[32;32m")
           for i = 1, #lword do
             if key == lword:byte( i ) then
               ok = true
@@ -104,7 +105,7 @@ while true do
               nguess = nguess + 1
             end
           end
-          term.setcolor( term.COL_DEFAULT, term.COL_DONT_CHANGE )          
+		  term.print("\27[0;0m")
           if not ok then
             tries = tries + 1
             hang()
@@ -114,7 +115,7 @@ while true do
       term.moveto( 9, h - 2 )
     end
   end
-  if key == term.KC_ESC then break end 
+   if key == term.KC_ESC then break end 
   
   term.moveto( 2, h - 1 )
   total = total + 1

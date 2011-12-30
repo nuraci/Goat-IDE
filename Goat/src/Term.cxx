@@ -58,7 +58,7 @@ Term::Term() {
 	termActive = false;
 	col = TERM_COL;
 	row = TERM_ROW;
-	fontSize = 12;
+	fontSize = 10;
 	currentStyle = 0;
 	state = STATE_NORMAL;
 	buffer1 = (char *) malloc(TERM_BUF_SIZE+1);
@@ -290,9 +290,11 @@ void Term::ProcessAnsi(char byte) {
 		num[1] = number;
 		number = 0;
 		SetAnsiColor(num[0],num[1],0);
-	} else if (state == STATE_NORMAL && byte == TERM_CR) {
+	} else if (state == STATE_NORMAL && byte == TERM_CR) { /* \r */
+		int current_line = pWin->Send(SCI_LINEFROMPOSITION, position);
 		number = 0;
-	} else if (state == STATE_NORMAL && byte == TERM_LF) {
+		position 		 = pWin->Send(SCI_POSITIONFROMLINE, current_line);
+	} else if (state == STATE_NORMAL && byte == TERM_LF) { /* \n */
 		int current_line 		= pWin->Send(SCI_LINEFROMPOSITION, position);
 		int pos_on_next_line 	= PositionFromLine(1);
 		number = 0;
@@ -332,8 +334,8 @@ void Term::ProcessAnsi(char byte) {
 }
 
 int Term::ProcessChars(void *data) {
-	bool scrollConsole = true;
 	int in,out,num_bytes;
+	int line, lineStart;
 	char byte;
 
 	if (serial->IsXmodemOn()) return true;
@@ -352,17 +354,15 @@ int Term::ProcessChars(void *data) {
 
 		for (in=0,out=0; in < num_bytes; in++) {
 			term->buffer2[out] = term->buffer1[in];
-			if (term->buffer1[in] != TERM_CR)
+			if (term->buffer1[in] != TERM_CR  /* \r */)
 				out++;
 		}
 
 		pWin->Call(SCI_HOME,0,0);
 		pWin->Call(SCI_APPENDTEXT, out, reinterpret_cast<sptr_t>(term->buffer2));
-		if (scrollConsole) {
-			int line = pWin->Call(SCI_GETLINECOUNT, 0, 0);
-			int lineStart = pWin->Call(SCI_POSITIONFROMLINE, line);
-			pWin->Call(SCI_GOTOPOS, lineStart);
-		}
+		line = pWin->Call(SCI_GETLINECOUNT);
+		lineStart = pWin->Call(SCI_POSITIONFROMLINE, line);
+		pWin->Call(SCI_GOTOPOS, lineStart);
 	}
 
 	return true;

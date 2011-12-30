@@ -5,6 +5,7 @@ some features:
 * Its editor (which is based on the wonderful library "scintilla" http://www.scintilla.org/), is lightweight and powerful.
 * It has additional features such as "syntax highlighting", "code folding" and "code completion" based on the eLua API.
 * It includes the  capability to connect with the real hardware (through the serial or the USB port) obtaining the prompt of Elua inside it.
+* It's able to build the sources and also is able to send the built file on the Hardware (using the xmodem protocol). 
 * Also it supports some terminal commands (standard ansi/vt100), so it's able to play games like "hanoi" or "hungman".
 
 
@@ -26,6 +27,15 @@ some features:
 ## How to build and install it on Windows:
 Not yet ready, I hope that it will be soon...
 
+## What it requires on the eLua side...
+
+* It requires some optionali modules included inside the eLua core:
+
+* #define BUILD_XMODEM
+* #define BUILD_SHELL
+* #define BUILD_TERM
+** and if it is avaliable on our hardware:
+* #define BUILD_MMCFS
 
 ## Quick start.
 * If your Linux is "Ubuntu" you can find "Goat" on menu: applications for development

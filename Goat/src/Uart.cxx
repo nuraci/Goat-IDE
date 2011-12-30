@@ -181,7 +181,7 @@ int UART::XmodemTransmitFile(const char *name) {
 	/* the whole file is now loaded in the memory buffer. */
 	// terminate
 	fclose(pFile);
-	waitMs(50);
+	waitMs(1000);
 	XmodemOn(true);
 	XmodemTransmit(buf, lSize);
 	XmodemOn(false);

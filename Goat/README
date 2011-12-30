@@ -1,7 +1,7 @@
-README for building of Scintilla and SciTE
+README for building of Scintilla and Goat
 
 Scintilla can be built by itself.
-To build SciTE, Scintilla must first be built.
+To build Goat, Scintilla must first be built.
 
 
 *** GTK+/Linux version ***
@@ -15,27 +15,27 @@ To build Scintilla, use the makefile located in the scintilla/gtk directory
 	make
 	cd ../..
 
-To build and install SciTE, use the makefile located in the scite/gtk directory
-	cd scite/gtk
+To build and install Goat, use the makefile located in the scite/gtk directory
+	cd Goat/gtk
 	make
 	make install
 
-This installs SciTE into $prefix/bin. The value of $prefix is determined from
+This installs Goat into $prefix/bin. The value of $prefix is determined from
 the location of Gnome if it is installed. This is usually /usr if installed
 with Linux or /usr/local if built from source. If Gnome is not installed
 /usr/bin is used as the prefix. The prefix can be overridden on the command
 line like "make prefix=/opt" but the same value should be used for both make
 and make install as this location is compiled into the executable. The global
-properties file is installed at $prefix/share/scite/SciTEGlobal.properties.
+properties file is installed at $prefix/share/goat/properties/GoatGlobal.properties.
 The language specific properties files are also installed into this directory.
 
-To remove SciTE
+To remove Goat
 	make uninstall
 
 To clean the object files which may be needed to change $prefix
 	make clean
 
-The current make file only supports static linking between SciTE and Scintilla.
+The current make file only supports static linking between Goat and Scintilla.
 
 
 *** Windows version ***
@@ -49,21 +49,18 @@ GCC:		mingw32-make
 VS .NET:	nmake -f scintilla.mak
 		cd ..\..
 
-To build SciTE, use the makefiles located in the scite/win32 directory
-		cd scite\win32
+To build Goat, use the makefiles located in the Goat/win32 directory
+		cd Goat\win32
 GCC:		mingw32-make
-VS .NET: 	nmake -f scite.mak
+VS .NET: 	nmake -f Goat.mak
 
-An executable SciTE will now be in scite\bin.
-
-The Visual C++ 6.0 project (.dsp) and make files are no longer supported but are left
-in the download for people that are prepared to update them.
+An executable Goat will now be in Goat\bin.
 
 *** GTK+/Windows version ***
 
 Mingw32 is known to work. Other compilers will probably not work.
 
-Only Scintilla will build with GTK+ on Windows. SciTE will not work.
+Only Scintilla will build with GTK+ on Windows. Goat will not work.
 
 To build Scintilla, make in the scintilla/gtk directory
 	cd scintilla\gtk
