@@ -137,13 +137,8 @@ int UART::check(int crc, const unsigned char *buf, int sz) {
 }
 
 void UART::flushinput(void) {
-#if 0
-	while (InByte(((DLY_1S)*3)>>1) >= 0)
-			KeepGuiLive();
-#else
 	KeepGuiLive();
 	return;
-#endif
 }
 
 int UART::XmodemTransmitFile(const char *name) {
@@ -181,7 +176,7 @@ int UART::XmodemTransmitFile(const char *name) {
 	/* the whole file is now loaded in the memory buffer. */
 	// terminate
 	fclose(pFile);
-	waitMs(1000);
+	waitMs(600);
 	XmodemOn(true);
 	XmodemTransmit(buf, lSize);
 	XmodemOn(false);
@@ -324,23 +319,19 @@ DWORD WINAPI ListenPort(LPVOID lpParam) {
 #else
 int UART::ListenPort() {
 	static char Buffer[BUFFER_RX + 1];
-	int bytes = 0;
-	int totBytes = 0;
-	int timeout = 20;
+	int bytes;
 
-	while (timeout--) {
-		msSleep(1);
-		bytes = read((int) portFd , Buffer, BUFFER_RX);
-		if(bytes > 0) {
-			timeout++;
-			for (int cc=0; cc < bytes; cc++) {
-				PutCharToBuffer((char) Buffer[cc]);
-			}
-			totBytes += bytes;
+	bytes = read((int) portFd , Buffer, BUFFER_RX);
+	if(bytes > 0) {
+		for (int cc=0; cc < bytes; cc++) {
+			PutCharToBuffer((char) Buffer[cc]);
 		}
+	} else {
+		bytes = 0;
 	}
 
-	return totBytes;
+
+	return bytes;
 }
 #endif
 
@@ -504,7 +495,7 @@ bool UART::OpenPort(const char *portName) {
 	portHandle = CreateFile(tmpPortName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
 	if (portHandle != INVALID_HANDLE_VALUE)  portOpened = TRUE;
 #else
-	portFd = open(portName, O_RDWR | O_NOCTTY | O_NDELAY);
+	portFd = open(portName, O_RDWR | O_NOCTTY);
 
 	if (portFd > 0)
 		portOpened = true;

@@ -338,6 +338,9 @@ int Term::ProcessChars(void *data) {
 	int line, lineStart;
 	char byte;
 
+	/* This msSleep() here, keeps the cpu usage low :-o */
+	msSleep(1);
+
 	if (serial->IsXmodemOn()) return true;
 
 	if (term->isTermActive()) {

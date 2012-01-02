@@ -2658,13 +2658,10 @@ void SciTEGTK::Execute() {
 }
 
 void SciTEGTK::ExecuteOnConsole() {
-	//int bytes;
-
 	while (serial->IsAlive()) {
 		msSleep(100);
 		while (serial->IsConnected() && serial->IsAlive()) {
 			serial->ListenPort();
-			msSleep(10);
 		}
 	}
 }
@@ -3083,6 +3080,9 @@ void SciTEGTK::DestroyFindReplace() {
 }
 
 int SciTEGTK::WindowMessageBox(GUI::Window &w, const GUI::gui_string &msg, int style) {
+	GtkWidget *image;
+	GdkPixbuf *pixbuf;
+
 	if (!messageBoxDialog) {
 		SString sMsg(msg.c_str());
 		dialogsOnScreen++;
@@ -3117,16 +3117,26 @@ int SciTEGTK::WindowMessageBox(GUI::Window &w, const GUI::gui_string &msg, int s
 			GUI::ScintillaWindow scExplanation;
 			scExplanation.SetID(explanation);
 			scintilla_set_id(SCINTILLA(explanation), 0);
+			pixbuf = gdk_pixbuf_new_from_xpm_data((const char **)(char **)goat_big_xpm);
+			image = gtk_image_new_from_pixbuf(pixbuf);
+
 #if GTK_CHECK_VERSION(3,0,0)
 			gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(messageBoxDialog))),
 			                   explanation, TRUE, TRUE, 0);
+			gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(messageBoxDialog))),
+								image, TRUE, TRUE, 0);
 #else
 			gtk_box_pack_start(GTK_BOX(GTK_DIALOG(messageBoxDialog)->vbox),
 			                   explanation, TRUE, TRUE, 0);
+			gtk_box_pack_start(GTK_BOX(GTK_DIALOG(messageBoxDialog)->vbox),
+				                   image, TRUE, TRUE, 0);
 #endif
-			gtk_widget_set_size_request(GTK_WIDGET(explanation), 480, 380);
+			gtk_widget_set_size_request(GTK_WIDGET(explanation), 580, 480);
+			gtk_widget_set_size_request(GTK_WIDGET(image), 128, 180);
 			gtk_widget_show_all(explanation);
+			gtk_widget_show_all(image);
 			SetAboutMessage(scExplanation, APP_NAME_TITLE);
+
 		} else {
 			GtkWidget *label = gtk_label_new(sMsg.c_str());
 			gtk_misc_set_padding(GTK_MISC(label), 10, 10);
@@ -5090,8 +5100,6 @@ void SciTEGTK::Run(int argc, char *argv[]) {
 		tmp.append(DOCS_DIR_NAME);
 		props.Set(DOCS_PROPS_DIR_NAME,tmp.c_str());
 
-    } else {
-      printf("root string is empty\n");
     }
 
 	gtk_widget_grab_focus(GTK_WIDGET(PWidget(wSciTE)));
