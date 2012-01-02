@@ -9,8 +9,8 @@ some features:
 * Also it supports some terminal commands (standard ansi/vt100), so it's able to play games like "hanoi" or "hungman".
 
 ## Videos:
-http://www.youtube.com/watch?v=kUmujKemFjA&feature=youtu.be
-
+* http://www.youtube.com/watch?v=kUmujKemFjA
+* http://www.youtube.com/watch?v=Z3g2Hu_FC3Q
 
 ## How to build and install it on Linux:
 
