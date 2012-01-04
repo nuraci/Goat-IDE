@@ -3459,7 +3459,6 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		break;
 		
 	case IDM_CLEARCONSOLE:
-		//wConsole.Send(SCI_CLEARALL);
 		term.Clear();
 		break;		
 
@@ -3556,8 +3555,13 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		break;
 
 	case IDM_SEND_MMC: {
-			std::string cmd = "recv /mmc/";
+			std::string cmd = "recv ";
 			std::string name;
+			SString extfs = props.Get("elua.extfs");
+			if (extfs.size())
+				cmd += props.Get("elua.extfs").c_str();
+			else
+				cmd += "/mmc/";
 			if (SaveIfUnsureForBuilt() != IDCANCEL) {
 				SelectionIntoProperties();
 				cmd += FileNameExt().BaseName().AsUTF8();
@@ -3575,7 +3579,13 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		}
 		break;
 	case IDM_RUN_MMC: {
-			std::string ss = "lua /mmc/";
+			SString extfs = props.Get("elua.extfs");
+			std::string ss = "lua ";
+			if (extfs.size())
+				ss += props.Get("elua.extfs").c_str();
+			else
+				ss += "/mmc/";
+
 			if (SaveIfUnsureForBuilt() != IDCANCEL) {
 				SelectionIntoProperties();
 				ss += FileNameExt().BaseName().AsUTF8();
