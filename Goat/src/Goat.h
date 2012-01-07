@@ -12,8 +12,8 @@
 #define APP_NAME "Goat"
 #define APP_NAME_TITLE "Go @ IDE"
 #define APP_NAME_STATIC_BUILD "GoatIDE"
-#define VERSION_GOAT "0.0.4.0"
-#define VERSION_GOAT_WORDS 0, 0,4, 1
+#define VERSION_GOAT "0.0.4.2"
+#define VERSION_GOAT_WORDS 0, 0,4, 2
 #define COPYRIGHT_GOAT_DATES "January 2012"
 #define COPYRIGHT_GOAT_YEARS "2012"
 // Version numbers and dates
@@ -254,7 +254,7 @@ void __cdecl myDbgPrint(const char *s, ...);
 // Help
 #define IDM_HELP			901
 #define IDM_ABOUT			902
-#define IDM_HELP_SCITE		903
+#define IDM_HELP_GOAT		903
 
 // Windows specific windowing options
 #define IDM_ONTOP			960

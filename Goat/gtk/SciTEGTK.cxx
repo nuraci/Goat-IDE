@@ -4049,7 +4049,8 @@ void SciTEGTK::CreateMenu() {
 
 	SciTEItemFactoryEntry menuItemsHelp[] = {
 	                                          {"/_Help", NULL, NULL, 0, "<Branch>"},
-	                                          {"/Help/_Help", "F1", menuSig, IDM_HELP, 0},
+	                                          {"/Help/Help", "F1", menuSig, IDM_HELP, 0},
+	                                          {"/Help/"APP_NAME" _Help " , "", menuSig, IDM_HELP_GOAT, 0},
 	                                          {"/Help/_About " APP_NAME, "", menuSig, IDM_ABOUT, 0},
 	                                      };
 

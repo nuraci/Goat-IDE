@@ -175,13 +175,13 @@ END
 
 POPUP "&Help"
 BEGIN
-	MENUITEM "&Help\tF1", 				IDM_HELP
+	MENUITEM "Help\tF1", 				IDM_HELP
 #ifdef STATIC_BUILD
-	MENUITEM "&Goat Help",			IDM_HELP_SCITE
-	MENUITEM "&About Go@IDE",				IDM_ABOUT
+	MENUITEM "Goat &Help",			IDM_HELP_GOAT
+	MENUITEM "&About Goat",				IDM_ABOUT
 #else
-	MENUITEM "&Goat Help",			IDM_HELP_SCITE
-	MENUITEM "&About Goat IDE",			IDM_ABOUT
+	MENUITEM "Goat &Help",			IDM_HELP_GOAT
+	MENUITEM "&About Goat",			IDM_ABOUT
 #endif
 END
 

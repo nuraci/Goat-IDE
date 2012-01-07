@@ -3787,10 +3787,10 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		}
 		break;
 
-	case IDM_HELP_SCITE: {
+	case IDM_HELP_GOAT: {
 			SelectionIntoProperties();
-			AddCommand(props.Get("command.scite.help"), "",
-			        SubsystemType(props.Get("command.scite.help.subsystem")[0]));
+			AddCommand(props.Get("command.goat.help"), "",
+			        SubsystemType(props.Get("command.goat.help.subsystem")[0]));
 			if (jobQueue.commandCurrent > 0) {
 				jobQueue.isBuilding = true;
 				Execute();

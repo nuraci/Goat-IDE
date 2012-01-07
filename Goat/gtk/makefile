@@ -43,7 +43,7 @@ pixmapdir=$(datadir)/pixmaps
 APPDIR=$(prefix)/share/goat
 
 bindir=$(APPDIR)/bin
-docdir=$(APPDIR)/doc
+docdir=$(APPDIR)/docs
 propdir=$(APPDIR)/properties
 examplesdir=$(APPDIR)/examples
 
@@ -136,7 +136,7 @@ install:
 		$(INSTALL) -m 777 $$files $(propdir); \
 	done
 
-	for files in ../doc/*;  \
+	for files in ../docs/*;  \
 	do \
 		$(INSTALL) -m 644 $$files $(docdir); \
 	done

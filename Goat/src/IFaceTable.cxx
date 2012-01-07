@@ -196,7 +196,7 @@ static IFaceConstant ifaceConstants[] = {
 	{"IDM_GO",303},
 	{"IDM_GOTO",220},
 	{"IDM_HELP",901},
-	{"IDM_HELP_SCITE",903},
+	{"IDM_HELP_GOAT",903},
 	{"IDM_IMPORT",1300},
 	{"IDM_INCSEARCH",252},
 	{"IDM_INS_ABBREV",247},
