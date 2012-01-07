@@ -52,6 +52,7 @@ INSTALL=install
 PROG_EXE = Goat 
 PROG	 = ../bin/$(PROG_EXE)
 ELUAC	 = ../bin/eluac
+DFU-P	 = ../bin/dfu-programmer-0-5-4
 
 all: $(PROG)
 
@@ -130,6 +131,7 @@ install:
 
 	$(INSTALL) -m 755 $(PROG) $(bindir)
 	$(INSTALL) -m 755 $(ELUAC) $(bindir)
+	$(INSTALL) -m 755 $(DFU-P) $(bindir)
 	
 	for files in ../properties/*.*; \
 	do \

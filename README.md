@@ -7,6 +7,7 @@ some features:
 * It includes the capability to connect with the real hardware (through the serial or the USB port) obtaining the prompt of Elua inside it.
 * It's able to build the sources and also is able to send the built file on the Hardware (using the xmodem protocol). 
 * Also it supports some terminal commands (standard ansi/vt100), so it's able to play games like "hanoi" or "hungman".
+* Starting from now, an experimental support for the DFU bootloader programmer.
 
 ## Videos:
 * http://www.youtube.com/watch?v=kUmujKemFjA
@@ -25,6 +26,9 @@ some features:
 * $ cd Goat/gtk
 * $ make all
 * $ sudo make install
+
+* In order to support the "dfu-programmer" the libusb1.0 library is required:
+* $ sudo apt-get install libusb-1.0
 
 ## How to build and install it on Windows:
 Not yet ready, I hope that it will be soon...

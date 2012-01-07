@@ -146,7 +146,6 @@ SciTEBase::SciTEBase(Extension *ext) : apis(true), extender(ext) {
 	topMost = false;
 	wrap = false;
 	wrapOutput = false;
-	wrapConsole = false;
 	wrapStyle = SC_WRAP_WORD;
 	isReadOnly = false;
 	openFilesHere = false;
@@ -3037,6 +3036,15 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		// TODO WIN32
 		OpenDialog(filePath.Directory(), GUI::StringFromUTF8(props.GetExpanded("open.filter").c_str()).c_str());
 #endif
+
+		break;
+	case IDM_FLASH_IMGS__OPEN:
+#ifndef  WIN32
+		OpenDialog(FilePath(props.Get(ROOT_PROPS_DIR_NAME).c_str()), GUI::StringFromUTF8(props.GetExpanded("flash.filter").c_str()).c_str());
+#else
+		// TODO WIN32
+		OpenDialog(filePath.Directory(), GUI::StringFromUTF8(props.GetExpanded("flash.filter").c_str()).c_str());
+#endif
 		WindowSetFocus(wEditor);
 		break;
 	case IDM_OPENSELECTED:
@@ -3428,12 +3436,6 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		CheckMenus();
 		break;
 		
-	case IDM_WRAPCONSOLE:
-		wrapConsole = !wrapConsole;
-		wConsole.Call(SCI_SETWRAPMODE, wrapConsole ? wrapStyle : SC_WRAP_NONE);
-		CheckMenus();
-		break;
-
 	case IDM_READONLY:
 		isReadOnly = !isReadOnly;
 		wEditor.Call(SCI_SETREADONLY, isReadOnly);
@@ -3674,19 +3676,12 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 
 	    break;
 	case IDM_CLOSE_UART:
+		term.setTermActiveOff();
 		serial->Stop();
 	 	props.Set("SerialMsg",serial->GetStartMessage());
 		CheckMenus();
 		term.Clear();
 		break;
-#if 0
-	case IDM_RESET_UART:
-		AddCommand(props.GetWild("tty ", FileNameExt().AsUTF8().c_str()), "",
-		        SubsystemType("command.go.subsystem."), "", flags);
-		if (jobQueue.commandCurrent > 0)
-			Execute();
-		break;
-#endif
 	case IDM_NEXTMSG:
 		GoMessage(1);
 		break;
@@ -3810,6 +3805,8 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		        (cmdID < importCmdID + importMax)) {
 			ImportMenu(cmdID - importCmdID);
 		} else if (cmdID >= IDM_TOOLS && cmdID < IDM_TOOLS + toolMax) {
+			gtk_notebook_set_current_page(GTK_NOTEBOOK(wGroupTab.GetID()),SYS_CONSOLE_TAB);
+			WindowSetFocus(wOutput);
 			ToolsMenu(cmdID - IDM_TOOLS);
 		} else if (cmdID >= IDM_LANGUAGE && cmdID < IDM_LANGUAGE + 100) {
 			SetOverrideLanguage(cmdID - IDM_LANGUAGE);
@@ -4217,7 +4214,6 @@ void SciTEBase::CheckMenus() {
 	CheckAMenuItem(IDM_OPENFILESHERE, openFilesHere);
 	CheckAMenuItem(IDM_WRAP, wrap);
 	CheckAMenuItem(IDM_WRAPOUTPUT, wrapOutput);
-	CheckAMenuItem(IDM_WRAPCONSOLE, wrapConsole);
 	CheckAMenuItem(IDM_READONLY, isReadOnly);
 	CheckAMenuItem(IDM_FULLSCREEN, fullScreen);
 	CheckAMenuItem(IDM_VIEWTOOLBAR, tbVisible);
@@ -4258,9 +4254,8 @@ void SciTEBase::CheckMenus() {
 
 	EnableAMenuItem(IDM_OPEN_UART, !serial->IsConnected());
 	EnableAMenuItem(IDM_CLOSE_UART, serial->IsConnected());
+	CheckAMenuItem(IDM_MODE_TERMINAL, serial->IsConnected() && term.isTermActive());
 	EnableAMenuItem(IDM_MODE_TERMINAL, serial->IsConnected());
-	CheckAMenuItem(IDM_MODE_TERMINAL, term.isTermActive());
-
 
 	EnableAMenuItem(IDM_OPENDIRECTORYPROPERTIES, props.GetInt("properties.directory.enable") != 0);
 	for (int toolItem = 0; toolItem < toolMax; toolItem++)

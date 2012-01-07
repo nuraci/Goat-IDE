@@ -33,6 +33,9 @@
 #define PROPERTIES_PROPS_DIR_NAME  	"GoatDir"
 #define USER_PROPS_DIR_NAME  		"GoatUserDir"
 
+#define PROPERTIES_BOARD_NAME 		"TargetBOARD"
+#define PROPERTIES_CPU_NAME			"TargetCPU"
+
 #define BOARD_CONSOLE_TAB 	0
 #define SYS_CONSOLE_TAB 	1
 
@@ -219,7 +222,7 @@ void __cdecl myDbgPrint(const char *s, ...);
 #define IDM_CONSOLEWIN			475
 #define IDM_OUT_CONSOLE 		476
 #define IDM_OUT_SYSTEM 			477
-#define IDM_WRAPCONSOLE			478
+#define IDM_FLASH_IMGS__OPEN	478
 #define IDM_VIEWGROUPTAB        479
 #define IDM_CLEARCONSOLE		480
 #define IDM_OPEN_UART			481

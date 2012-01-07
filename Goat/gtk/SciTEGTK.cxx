@@ -3825,6 +3825,7 @@ void SciTEGTK::CreateMenu() {
 	                                      {"/File/_New", "<control>N", menuSig, IDM_NEW, 0},
 	                                      {"/File/_Open...", "<control>O", menuSig, IDM_OPEN, 0},
 	                                      {"/File/Open _Example", NULL, menuSig, IDM_EXAMPLE_OPEN, 0},
+	                                      {"/File/Open Flash Image", NULL, menuSig, IDM_FLASH_IMGS__OPEN, 0},
 	                                      {"/File/Open Selected _Filename", "<control><shift>O", menuSig, IDM_OPENSELECTED, 0},
 	                                      {"/File/_Revert", "<control>R", menuSig, IDM_REVERT, 0},
 	                                      {"/File/_Close", "<control>W", menuSig, IDM_CLOSE, 0},
@@ -3936,7 +3937,8 @@ void SciTEGTK::CreateMenu() {
 	                                      {"/Tools/Port", NULL, NULL, 0, "<Separator>"},
 	                                      {"/Tools/Open Serial Port", NULL, menuSig, IDM_OPEN_UART, 0},
 	                                      {"/Tools/Close Serial Port", NULL, menuSig, IDM_CLOSE_UART, 0},
-	                                      {"/Tools/Mode Terminal", NULL, menuSig, IDM_MODE_TERMINAL, "<CheckItem>"},
+	                                      {"/Tools/_Send <Ctrl+Z>", "<control>.", menuSig, IDM_STOPEXECUTE, NULL},
+	                                      {"/Tools/Tool", NULL, NULL, 0, "<Separator>"},
 	                                      {"/Tools/Tool0", NULL, menuSig, IDM_TOOLS + 0, 0},
 	                                      {"/Tools/Tool1", NULL, menuSig, IDM_TOOLS + 1, 0},
 	                                      {"/Tools/Tool2", NULL, menuSig, IDM_TOOLS + 2, 0},
@@ -3991,9 +3993,6 @@ void SciTEGTK::CreateMenu() {
 	                                      {"/Tools/Tool47", NULL, menuSig, IDM_TOOLS + 47, 0},
 	                                      {"/Tools/Tool48", NULL, menuSig, IDM_TOOLS + 48, 0},
 	                                      {"/Tools/Tool49", NULL, menuSig, IDM_TOOLS + 49, 0},
-
-
-	                                      {"/Tools/_Send <Ctrl+Z>", "<control>.", menuSig, IDM_STOPEXECUTE, NULL},
 	                                      {"/Tools/sep1", NULL, NULL, 0, "<Separator>"},
 	                                      {"/Tools/_Next Message", "F4", menuSig, IDM_NEXTMSG, 0},
 	                                      {"/Tools/_Previous Message", "<shift>F4", menuSig, IDM_PREVMSG, 0},
@@ -4007,8 +4006,9 @@ void SciTEGTK::CreateMenu() {
 	            {"/Options/Vertical _Split", "", menuSig, IDM_SPLITVERTICAL, "<CheckItem>"},
 	            {"/Options/_Wrap", "", menuSig, IDM_WRAP, "<CheckItem>"},
 	            {"/Options/Wrap Out_put", "", menuSig, IDM_WRAPOUTPUT, "<CheckItem>"},
-    	            {"/Options/Wrap _Console", "", menuSig, IDM_WRAPCONSOLE, "<CheckItem>"},
 	            {"/Options/_Read-Only", "", menuSig, IDM_READONLY, "<CheckItem>"},
+	            {"/Options/sep1", NULL, NULL, 0, "<Separator>"},
+	            {"/Options/Mode Terminal", NULL, menuSig, IDM_MODE_TERMINAL, "<CheckItem>"},
 	            {"/Options/sep1", NULL, NULL, 0, "<Separator>"},
 	            {"/Options/_Line End Characters", "", 0, 0, "<Branch>"},
 	            {"/Options/Line End Characters/CR _+ LF", "", menuSig, IDM_EOL_CRLF, "<RadioItem>"},
@@ -5102,6 +5102,17 @@ void SciTEGTK::Run(int argc, char *argv[]) {
 		props.Set(DOCS_PROPS_DIR_NAME,tmp.c_str());
 
     }
+
+    if (props.Get("target.board").size() != 0)
+    	props.Set(PROPERTIES_BOARD_NAME,props.Get("target.board").c_str());
+    else
+    	props.Set(PROPERTIES_BOARD_NAME,"none");
+
+    if (props.Get("target.cpu").size() != 0)
+    	props.Set(PROPERTIES_CPU_NAME,props.Get("target.cpu").c_str());
+    else
+    	props.Set(PROPERTIES_CPU_NAME,"none");
+
 
 	gtk_widget_grab_focus(GTK_WIDGET(PWidget(wSciTE)));
 	gdk_threads_enter();

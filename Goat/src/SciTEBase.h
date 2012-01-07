@@ -441,7 +441,6 @@ protected:
 	bool topMost;
 	bool wrap;
 	bool wrapOutput;
-	bool wrapConsole;
 	int wrapStyle;
 	bool isReadOnly;
 	bool openFilesHere;
