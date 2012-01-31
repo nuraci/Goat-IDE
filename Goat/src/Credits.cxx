@@ -37,7 +37,7 @@
 const char License [] = { "\nLicense:\n\
 Copyright 2012 by Nuccio Raciti <raciti.nuccio@gmail.com>\n\
 All Rights Reserved.\n\n\
-Permission to use, copy, modify, and distribute this software and its\n\ 
+Permission to use, copy, modify, and distribute this software and its\n\
 documentation for any purpose and without fee is hereby granted, \n\
 provided that the above copyright notice appear in all copies and that\n\
 both that copyright notice and this permission notice appear in \n\
@@ -81,7 +81,13 @@ void SciTEBase::SetAboutMessage(GUI::ScintillaWindow &wsci, const char *appTitle
 	if (wsci.Created()) {
 		wsci.Send(SCI_SETSTYLEBITS, 7, 0);
 		wsci.Send(SCI_STYLERESETDEFAULT, 0, 0);
-		int fontSize = 15;
+		int fontSize = 14;
+
+#if defined(WIN32)
+		wsci.Send(SCI_STYLESETFONT, STYLE_DEFAULT,
+		        reinterpret_cast<uptr_t>("!Verdana"));
+		fontSize = 10;
+#endif
 #if defined(GTK)
 		wsci.Send(SCI_STYLESETFONT, STYLE_DEFAULT,
 		        reinterpret_cast<uptr_t>("!Serif"));

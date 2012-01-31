@@ -338,8 +338,10 @@ int Term::ProcessChars(void *data) {
 	int line, lineStart;
 	char byte;
 
+#ifdef GTK
 	/* This msSleep() here, keeps the cpu usage low :-o */
 	msSleep(1);
+#endif
 
 	if (serial->IsXmodemOn()) return true;
 

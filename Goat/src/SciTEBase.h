@@ -926,7 +926,6 @@ public:
 	virtual bool PerformOnNewThread(Worker *pWorker) = 0;
 	virtual void PostOnMainThread(int cmd, Worker *pWorker) = 0;
 	virtual void WorkerCommand(int cmd, Worker *pWorker);
-	//virtual void WorkerCommandConsole(const char *buf, int len, Worker *pWorker);
 
 private:
 	// un-implemented copy-constructor and assignment operator

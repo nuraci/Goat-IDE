@@ -323,7 +323,7 @@ struct Band {
 
 /** Windows specific stuff.
  **/
-class SciTEWin : public SciTEBase {
+class SciTEWin : public SciTEBase, public Worker {
 	friend class ContentWin;
 	friend class Strip;
 	friend class SearchStrip;
@@ -532,10 +532,12 @@ public:
 	void ProcessExecute();
 	void ShellExec(const SString &cmd, const char *dir);
 	virtual void Execute();
+	virtual void ExecuteOnConsole();
 	virtual void StopExecute();
 	virtual void AddCommand(const SString &cmd, const SString &dir, JobSubsystem jobType, const SString &input = "", int flags=0);
 
 	virtual bool PerformOnNewThread(Worker *pWorker);
+	virtual bool PerformOnNewThreadOnConsole(Worker *pWorker);
 	virtual void PostOnMainThread(int cmd, Worker *pWorker);
 	virtual void WorkerCommand(int cmd, Worker *pWorker);
 

@@ -1218,6 +1218,16 @@ void SciTEWin::Execute() {
 	}
 }
 
+
+void SciTEWin::ExecuteOnConsole() {
+	while (serial->IsAlive()) {
+		msSleep(100);
+		while (serial->IsConnected() && serial->IsAlive()) {
+			serial->ListenPort();
+		}
+	}
+}
+
 void SciTEWin::StopExecute() {
 	if (hWriteSubProcess && (hWriteSubProcess != INVALID_HANDLE_VALUE)) {
 		char stop[] = "\032";
@@ -1271,8 +1281,18 @@ static void WorkerThread(void *ptr) {
 	pWorker->Execute();
 }
 
+static void WorkerThreadOnConsole(void *ptr) {
+	Worker *pWorker = static_cast<Worker *>(ptr);
+	pWorker->ExecuteOnConsole();
+}
+
 bool SciTEWin::PerformOnNewThread(Worker *pWorker) {
 	uintptr_t result = _beginthread(WorkerThread, 1024 * 1024, reinterpret_cast<void *>(pWorker));
+	return result != static_cast<uintptr_t>(-1);
+}
+
+bool SciTEWin::PerformOnNewThreadOnConsole(Worker *pWorker) {
+	uintptr_t result = _beginthread(WorkerThreadOnConsole, 1024 * 1024, reinterpret_cast<void *>(pWorker));
 	return result != static_cast<uintptr_t>(-1);
 }
 
@@ -1468,7 +1488,15 @@ void SciTEWin::Run(const GUI::gui_char *cmdLine) {
     serial->SetNumBits(props.GetInt("serial.nbits",8));
     serial->SetNumStop(props.GetInt("serial.nstop",1));
     serial->SetParity(props.GetInt("serial.parity",0));
-    serial->SetDisplayFunc(WriteOnConsole);
+
+    term.SetSerial(serial);
+   	term.SetTermWin(&wConsole, props.GetInt("term.columns") ,props.GetInt("term.lines"));
+
+	PerformOnNewThreadOnConsole(this);
+
+	//g_idle_add_full (G_PRIORITY_DEFAULT_IDLE, &ProcessChars, NULL, NULL);
+
+	term.Clear();
 
     rootExe = GetExeDirectory();
     rootExe.erase(rootExe.find_last_of(pathSepChar),rootExe.length());
@@ -1488,6 +1516,17 @@ void SciTEWin::Run(const GUI::gui_char *cmdLine) {
 	strncpy(tmp, root,MAX_PATH);
 	strcat(tmp,DOCS_DIR_NAME);
 	props.Set(DOCS_PROPS_DIR_NAME,tmp);
+
+	if (props.Get("target.board").size() != 0)
+	   	props.Set(PROPERTIES_BOARD_NAME,props.Get("target.board").c_str());
+	else
+	   	props.Set(PROPERTIES_BOARD_NAME,"none");
+
+	if (props.Get("target.cpu").size() != 0)
+	  	props.Set(PROPERTIES_CPU_NAME,props.Get("target.cpu").c_str());
+	else
+	  	props.Set(PROPERTIES_CPU_NAME,"none");
+
 
 	if (bBatchProcessing) {
 		// Reprocess the command line and read the files
@@ -3604,14 +3643,10 @@ uptr_t SciTEWin::EventLoop() {
 				}
 			}
 		}
+		if (!serial->RingBufferIsEmpty() && !serial->IsXmodemOn())
+			term.ProcessChars(NULL);
 	}
 	return msg.wParam;
-}
-
-
-/* This function write on console characters coming from serial port */
-void SciTEWin::WriteOnConsole(char *s, unsigned int len) {
-	app->ConsoleInsertLine(s,len);
 }
 
 DWORD WINAPI SciTEWin::DoItLater(LPVOID lparam)
@@ -3626,10 +3661,6 @@ DWORD WINAPI SciTEWin::DoItLater(LPVOID lparam)
 	}
 
 	if(goat->serial->Start()) {
-		if ((goat->props.Get("serial.vieweol").size() != 0) &&
-						goat->props.GetInt ("serial.vieweol") == 1) {
-			goat->wConsole.Call(SCI_SETVIEWEOL,1);
-		}
 		if ((goat->props.Get("serial.tx1cr").size() != 0) &&
 						goat->props.GetInt ("serial.tx1cr") == 1) {
 			char lf = '\r';
@@ -3637,21 +3668,29 @@ DWORD WINAPI SciTEWin::DoItLater(LPVOID lparam)
 		}
 	}
 	goat->props.Set("SerialMsg",goat->serial->GetStartMessage());
+	if ((goat->props.Get("term.terminal").size() != 0) &&
+			goat->props.GetInt ("term.terminal") == 1) {
+		goat->term.setTermActiveOn();
+		goat->term.Clear();
+	}
+
 	return FALSE;
 }
 
 
 int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
-    HANDLE uartThread, doItLaterThread;
+    HANDLE doItLaterThread;
 
 	typedef BOOL (WINAPI *SetDllDirectorySig)(LPCTSTR lpPathName);
 	SetDllDirectorySig SetDllDirectoryFn = (SetDllDirectorySig)::GetProcAddress(
 		::GetModuleHandle(TEXT("kernel32.dll")), "SetDllDirectoryW");
+#if 0
 	if (SetDllDirectoryFn) {
 		// For security, remove current directory from the DLL search path
 		//TODO Nuccio SetDllDirectoryFn(TEXT(""));
 		SetDllDirectoryFn(TEXT("C:/Users/nuccio/workspace/scintilla/bin/")); // FIXME
 	}
+#endif
 
 #ifdef NO_EXTENSIONS
 	Extension *extender = 0;
@@ -3701,7 +3740,7 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 		UART serial;
 		MainWind.serial = serial.instance;
 
-		uartThread = CreateThread(NULL, 0, ListenPort, NULL, 0, NULL);
+		//uartThread = CreateThread(NULL, 0, ListenPort, NULL, 0, NULL);
 		doItLaterThread = CreateThread(NULL, 0, SciTEWin::DoItLater, (DWORD*) &MainWind, 0, NULL);
 
 		MainWind.Run(lptszCmdLine);

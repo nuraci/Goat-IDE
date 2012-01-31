@@ -112,6 +112,7 @@ private:
 #define FALSE 			0
 #define TRUE 			1
 #define KeepGuiLive()
+#define waitMs(ms) { for (unsigned int a=0; a<ms ; a++) { msSleep(1);}}
 DWORD WINAPI ListenPort(LPVOID lpParam);
 #else
 #define KeepGuiLive() { gtk_main_iteration_do(false); }
