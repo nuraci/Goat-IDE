@@ -287,34 +287,25 @@ start_trans:
 }
 
 #ifdef WIN32
-DWORD WINAPI ListenPort(LPVOID lpParam) {
-	DWORD  	bytesRead;
-	HANDLE 	portFD;
-	BOOL	retR;
-	DWORD 	err;
+int UART::ListenPort() {
+	static char Buffer[BUFFER_RX + 1];
+	DWORD bytes = 0;
 
-	while (UART::instance->IsAlive()) {
-		Sleep(100);
-		UART::instance->numChReceived = 0;
-		if (!UART::instance->IsConnected()) continue;
-		portFD = UART::instance->GetSerialPortFD();
-		if (portFD == INVALID_HANDLE_VALUE) continue;
-		//retR = ClearCommError( portFD, &err, NULL);
-		//retR = PurgeComm( portFD, PURGE_RXABORT | PURGE_RXCLEAR | PURGE_TXABORT | PURGE_TXCLEAR);
-		while (UART::instance->IsConnected() && UART::instance->IsAlive()) {
-			if (!ReadFile(portFD, UART::instance->buffer, BUFFER_RECEPTION-1, &bytesRead, NULL)) {
-				printf("error in ListenPort()\n");
-				MYDEBUG("error in ListenPort()");
-				continue;
-			}
-			if (bytesRead > 0)
-				UART::instance->ReadChars(UART::instance->buffer, bytesRead);
-			UART::instance->numChReceived = bytesRead;
-			MYDEBUG("bytes=%d",bytesRead);
-			//if(UART::instance->IsConnected() && UART::instance->IsAlive()) Sleep(1);
-		}
+	if (portHandle == INVALID_HANDLE_VALUE) return 0;
+
+	if (!ReadFile(portHandle, Buffer, BUFFER_RX, &bytes, NULL)) {
+		MYDEBUG("error in ListenPort()");
 	}
-	return true;
+
+	if (bytes > 0) {
+		for (DWORD cc=0; cc < bytes; cc++) {
+			PutCharToBuffer((char) Buffer[cc]);
+		}
+	} else {
+		bytes = 0;
+	}
+
+	return bytes;
 }
 #else
 int UART::ListenPort() {
@@ -326,10 +317,9 @@ int UART::ListenPort() {
 		for (int cc=0; cc < bytes; cc++) {
 			PutCharToBuffer((char) Buffer[cc]);
 		}
-	} else {
-		bytes = 0;
+	} else if (bytes < 0){
+		portOpened = 0;
 	}
-
 
 	return bytes;
 }
@@ -729,8 +719,8 @@ bool UART::Start(void) {
 	GetCommTimeouts(portHandle, &CommTimeouts);
 	memset(&CommTimeouts, 0x00, sizeof(CommTimeouts));
 	CommTimeouts.ReadIntervalTimeout = MAXDWORD;
-	CommTimeouts.ReadTotalTimeoutMultiplier = 0;
-	CommTimeouts.ReadTotalTimeoutConstant = 0;
+	CommTimeouts.ReadTotalTimeoutMultiplier = MAXDWORD;
+	CommTimeouts.ReadTotalTimeoutConstant = 100;
 	CommTimeouts.WriteTotalTimeoutConstant = 0;
 	CommTimeouts.WriteTotalTimeoutMultiplier = 0;
 
