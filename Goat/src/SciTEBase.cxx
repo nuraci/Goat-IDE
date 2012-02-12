@@ -3465,10 +3465,9 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		break;		
 
 	case IDM_SWITCHPANE: {
-#ifndef WIN32 // TODO WIN32
 		int wGroupTabCurrentPage = 0;
 			if ( wGroupTab.GetID())
-				wGroupTabCurrentPage = gtk_notebook_get_current_page(GTK_NOTEBOOK(wGroupTab.GetID()));
+				wGroupTabCurrentPage = GroupGetCurrentTab();
 			if (wEditor.HasFocus()) {
 				if (wGroupTabCurrentPage == BOARD_CONSOLE_TAB)
 					WindowSetFocus(wConsole);
@@ -3476,24 +3475,19 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 					WindowSetFocus(wOutput);
 			} else
 				WindowSetFocus(wEditor);
-#endif
 		}
 		break;
 	case IDM_OUT_CONSOLE:
-#ifndef WIN32 // TODO WIN32
 		if (wGroupTab.GetID()) {
-			gtk_notebook_set_current_page(GTK_NOTEBOOK(wGroupTab.GetID()),BOARD_CONSOLE_TAB);
+			GroupSetCurrentTab(BOARD_CONSOLE_TAB);
 			WindowSetFocus(wConsole);
 		}
-#endif
 		break;
 	case IDM_OUT_SYSTEM:
-#ifndef WIN32		// TODO WIN32
 		if (wGroupTab.GetID()) {
-			gtk_notebook_set_current_page(GTK_NOTEBOOK(wGroupTab.GetID()),SYS_CONSOLE_TAB);
+			GroupSetCurrentTab(SYS_CONSOLE_TAB);
 			WindowSetFocus(wOutput);
 		}
-#endif
 		break;
 
 	case IDM_EOL_CRLF:
@@ -3540,7 +3534,7 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 			}
 		}
 		break;
-
+#if 0
 	case IDM_BUILD: {
 			if (SaveIfUnsureForBuilt() != IDCANCEL) {
 				SelectionIntoProperties();
@@ -3555,7 +3549,7 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 			}
 		}
 		break;
-
+#endif
 	case IDM_SEND_MMC: {
 			std::string cmd = "recv ";
 			std::string name;
