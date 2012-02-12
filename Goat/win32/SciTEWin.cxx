@@ -404,21 +404,27 @@ void SciTEWin::ReadProperties() {
 	SciTEBase::ReadProperties();
 }
 
-//XXX obtain the exec path
+// obtain the exec path
 static GUI::gui_string GetExeDirectory() {
-	GUI::gui_char path[MAX_PATH];
-	static bool flag = FALSE;
+	static bool flag = false;
 	static GUI::gui_string root;
 
 	if (!flag) {
-		::GetModuleFileNameW(0, path, ELEMENTS(path));
-		// Remove the Goat.exe
-		GUI::gui_char *lastSlash = wcsrchr(path, pathSepChar);
-		if (lastSlash)
-			*lastSlash = '\0';
-		flag = TRUE;
+		TCHAR  path[MAX_PATH];
+		if (! ::GetModuleFileNameW(0, path, MAX_PATH)) {
+		        printf("Cannot GetModuleFileNameW (%ld)\n", GetLastError());
+		        return root;
+		}
+
 		root = path;
+
+		// Remove the "Goat.exe" string
+		root.erase(root.find_last_of(pathSepChar)); // remove ...\Goat.exe
+		root.erase(root.find_last_of(pathSepChar)); // remote ...\bin
+		root.append(1,pathSepChar); // Append ...
+		flag = true;
 	}
+
 	return root;
 }
 
@@ -426,8 +432,6 @@ FilePath SciTEWin::GetDefaultDirectory() {
 	GUI::gui_string root;
 
 	root = GetExeDirectory();
-	root.erase(root.find_last_of(pathSepChar),root.length());
-	root.append(1,pathSepChar);
 	root.append(TEXT(PROPERTIES_DIR_NAME));
 	return FilePath(root);
 }
@@ -436,8 +440,6 @@ FilePath SciTEWin::GetScitePropertiesHome() {
 	GUI::gui_string root;
 
 	root = GetExeDirectory();
-	root.erase(root.find_last_of(pathSepChar),root.length());
-	root.append(1,pathSepChar);
 	root.append(TEXT(PROPERTIES_DIR_NAME));
 	return FilePath(root);
 }
@@ -446,8 +448,6 @@ FilePath SciTEWin::GetSciteUserHome() {
 	GUI::gui_string root;
 
 	root = GetExeDirectory();
-	root.erase(root.find_last_of(pathSepChar),root.length());
-	root.append(1,pathSepChar);
 	root.append(TEXT(PROPERTIES_DIR_NAME));
 	return FilePath(root);
 }
@@ -1501,15 +1501,15 @@ void SciTEWin::Run(const GUI::gui_char *cmdLine) {
 
 	PerformOnNewThreadOnConsole(this);
 
-	//g_idle_add_full (G_PRIORITY_DEFAULT_IDLE, &ProcessChars, NULL, NULL);
-
 	term.Clear();
 
     rootExe = GetExeDirectory();
+#if 0
     rootExe.erase(rootExe.find_last_of(pathSepChar),rootExe.length());
     rootExe.append(1,pathSepChar);
+#endif
 
-    ::WideCharToMultiByte(CP_UTF8, 0, rootExe.c_str(), static_cast<int>(rootExe.size()), root, MAX_PATH, NULL, NULL);
+    ::WideCharToMultiByte(CP_UTF8, 0, rootExe.c_str(), -1, root, MAX_PATH, NULL, NULL);
 	props.Set(ROOT_PROPS_DIR_NAME, root);
 
 	strncpy(tmp, root,MAX_PATH);
@@ -3688,10 +3688,11 @@ DWORD WINAPI SciTEWin::DoItLater(LPVOID lparam)
 int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
     HANDLE doItLaterThread;
 
+#if 0
 	typedef BOOL (WINAPI *SetDllDirectorySig)(LPCTSTR lpPathName);
 	SetDllDirectorySig SetDllDirectoryFn = (SetDllDirectorySig)::GetProcAddress(
 		::GetModuleHandle(TEXT("kernel32.dll")), "SetDllDirectoryW");
-#if 0
+
 	if (SetDllDirectoryFn) {
 		// For security, remove current directory from the DLL search path
 		//TODO Nuccio SetDllDirectoryFn(TEXT(""));
@@ -3747,7 +3748,6 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 		UART serial;
 		MainWind.serial = serial.instance;
 
-		//uartThread = CreateThread(NULL, 0, ListenPort, NULL, 0, NULL);
 		doItLaterThread = CreateThread(NULL, 0, SciTEWin::DoItLater, (DWORD*) &MainWind, 0, NULL);
 
 		MainWind.Run(lptszCmdLine);

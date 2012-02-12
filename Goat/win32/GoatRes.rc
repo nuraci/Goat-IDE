@@ -16,7 +16,9 @@ BEGIN
 POPUP "&File"
 BEGIN
 	MENUITEM "&New\tCtrl+N",		IDM_NEW
-	MENUITEM "&Open...\tCtrl+O",		IDM_OPEN
+	MENUITEM "&Open...\tCtrl+O",	IDM_OPEN
+	MENUITEM "Open &Example",       IDM_EXAMPLE_OPEN
+	MENUITEM "Open Flash Image",    IDM_FLASH_IMGS__OPEN
 	MENUITEM "Open Selected &Filename\tCtrl+Shift+O",	IDM_OPENSELECTED
 	MENUITEM "&Revert\tCtrl+R",		IDM_REVERT
 	MENUITEM "&Close\tCtrl+W",		IDM_CLOSE
@@ -121,9 +123,13 @@ END
 POPUP "&Tools"
 BEGIN
 	MENUITEM "&Compile\tCtrl+F7",		IDM_COMPILE
-	MENUITEM "&Build\tF7",				IDM_BUILD
-	MENUITEM "&Go\tF5",					IDM_GO
-	MENUITEM "&Stop Executing\tCtrl+Break",IDM_STOPEXECUTE
+	MENUITEM "&Send to MMC", IDM_SEND_MMC
+	MENUITEM "&Run from MMC",  IDM_RUN_MMC
+	MENUITEM "Send & Run on RAM",  IDM_RUN_RAM
+	MENUITEM SEPARATOR
+	MENUITEM "Open Serial Port",  IDM_OPEN_UART
+	MENUITEM "Close Serial Port", IDM_CLOSE_UART
+	MENUITEM "Send <Ctrl+Z>",    IDM_STOPEXECUTE
 	MENUITEM SEPARATOR
 	MENUITEM "&Next Message\tF4",		IDM_NEXTMSG
 	MENUITEM "&Previous Message\tShift+F4",IDM_PREVMSG
@@ -136,9 +142,11 @@ BEGIN
 	MENUITEM "&Always On Top",			IDM_ONTOP
 	MENUITEM "Open Files &Here",		IDM_OPENFILESHERE
 	MENUITEM "Vertical &Split",			IDM_SPLITVERTICAL
-	MENUITEM "&Wrap",			IDM_WRAP
+	MENUITEM "&Wrap",			        IDM_WRAP
 	MENUITEM "Wrap Out&put",			IDM_WRAPOUTPUT
 	MENUITEM "&Read-Only",				IDM_READONLY
+	MENUITEM SEPARATOR
+	MENUITEM "Mode Terminal",           IDM_MODE_TERMINAL
 	MENUITEM SEPARATOR
 	POPUP "&Line End Characters"
 	BEGIN
@@ -160,10 +168,13 @@ BEGIN
 	MENUITEM SEPARATOR
 END // used: abcghlmoprstux
 
-POPUP "&Language"
+#ifdef NOT_DEF
+
+POPUP "&Languages"
 BEGIN
 	MENUITEM "", IDM_LANGUAGE
 END
+#endif
 
 POPUP "&Buffers"
 BEGIN
@@ -177,11 +188,11 @@ POPUP "&Help"
 BEGIN
 	MENUITEM "&Help\tF1", 				IDM_HELP
 #ifdef STATIC_BUILD
-	MENUITEM "&Goat Help",			IDM_HELP_SCITE
-	MENUITEM "&About Go@IDE",				IDM_ABOUT
+	MENUITEM "&Goat Help",			IDM_HELP_GOAT
+	MENUITEM "&About Go@",				IDM_ABOUT
 #else
-	MENUITEM "&Goat Help",			IDM_HELP_SCITE
-	MENUITEM "&About Goat IDE",			IDM_ABOUT
+	MENUITEM "&Goat Help",			IDM_HELP_GOAT
+	MENUITEM "&About Goat",			IDM_ABOUT
 #endif
 END
 
