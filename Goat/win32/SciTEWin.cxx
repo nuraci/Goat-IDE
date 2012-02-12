@@ -686,6 +686,13 @@ void SciTEWin::Command(WPARAM wParam, LPARAM lParam) {
 	}
 }
 
+void SciTEWin::GroupSetCurrentTab(int tab){
+	GroupTabSelect(tab);
+}
+int SciTEWin::GroupGetCurrentTab() {
+	return GroupTabSelected;
+}
+
 // from ScintillaWin.cxx
 static UINT CodePageFromCharSet(DWORD characterSet, UINT documentCodePage) {
 	CHARSETINFO ci = { 0, 0, { { 0, 0, 0, 0 }, { 0, 0 } } };

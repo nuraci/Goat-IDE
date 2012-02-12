@@ -450,7 +450,9 @@ protected:
 	virtual void TabSelect(int index);
 	virtual void GroupTabInsert(int index, const GUI::gui_char *title);
 	virtual void GroupTabSelect(int index);
-	virtual int GetGroupTabSelected();
+	virtual int  GetGroupTabSelected();
+	virtual void GroupSetCurrentTab(int tab);
+	virtual int  GroupGetCurrentTab();
 	virtual void RemoveAllTabs();
 
 	/// Warn the user, by means defined in its properties.

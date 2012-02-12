@@ -817,6 +817,9 @@ protected:
 	virtual void CheckMenusClipboard();
 	virtual void CheckMenus();
 	virtual void AddToPopUp(const char *label, int cmd = 0, bool enabled = true) = 0;
+	virtual void GroupSetCurrentTab(int tab = BOARD_CONSOLE_TAB ) = 0;
+	virtual int  GroupGetCurrentTab() = 0;
+
 	void ContextMenu(GUI::ScintillaWindow &wSource, GUI::Point pt, GUI::Window wCmd);
 
 	void DeleteFileStackMenu();

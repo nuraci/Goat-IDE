@@ -599,6 +599,8 @@ protected:
 	virtual void SetStatusBarText(const char *s);
 	virtual void TabInsert(int index, const GUI::gui_char *title);
 	virtual void TabSelect(int index);
+	void GroupSetCurrentTab(int tab);
+	int  GroupGetCurrentTab();
 	virtual void RemoveAllTabs();
 	virtual void SetFileProperties(PropSetFile &ps);
 	virtual void UpdateStatusBar(bool bUpdateSlowData);
@@ -4553,6 +4555,16 @@ void SciTEGTK::LayoutUI() {
 #endif
 
 	gtk_widget_show_all(GTK_WIDGET(splitPane));
+}
+void SciTEGTK::GroupSetCurrentTab(int tab) {
+	if(wGroupTab.GetID())
+		gtk_notebook_set_current_page(GTK_NOTEBOOK(wGroupTab.GetID()),tab);
+}
+int SciTEGTK::GroupGetCurrentTab() {
+	if( wGroupTab.GetID())
+		return  gtk_notebook_get_current_page(GTK_NOTEBOOK(wGroupTab.GetID()));
+	else
+		return 0;
 }
 
 void SciTEGTK::CreateUI() {
