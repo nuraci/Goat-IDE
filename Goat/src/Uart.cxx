@@ -227,12 +227,12 @@ start_trans:
 			c = srcsz - len;
 			if (c > bufsz) c = bufsz;
 			if (c >= 0) {
-				memset(&xbuff[3], 0, bufsz);
+				memset(&xbuff[3], CTRLZ, bufsz);
 				if (c == 0) {
 					xbuff[3] = CTRLZ;
 				} else {
 					memcpy(&xbuff[3], &src[len], c);
-					if (c < bufsz) xbuff[3+c] = CTRLZ;
+					//if (c < bufsz) xbuff[3+c] = CTRLZ; // now useless, see the memset() before.
 				}
 				if (crc) {
 					unsigned short ccrc = crc16_ccitt(&xbuff[3], bufsz);
@@ -720,7 +720,7 @@ bool UART::Start(void) {
 	memset(&CommTimeouts, 0x00, sizeof(CommTimeouts));
 	CommTimeouts.ReadIntervalTimeout = MAXDWORD;
 	CommTimeouts.ReadTotalTimeoutMultiplier = MAXDWORD;
-	CommTimeouts.ReadTotalTimeoutConstant = 100;
+	CommTimeouts.ReadTotalTimeoutConstant = 100; /* wait 100ms before escape from Readfile() */
 	CommTimeouts.WriteTotalTimeoutConstant = 0;
 	CommTimeouts.WriteTotalTimeoutMultiplier = 0;
 
