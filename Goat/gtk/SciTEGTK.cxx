@@ -3937,7 +3937,7 @@ void SciTEGTK::CreateMenu() {
 	                                      {"/Tools/Port", NULL, NULL, 0, "<Separator>"},
 	                                      {"/Tools/Open Serial Port", NULL, menuSig, IDM_OPEN_UART, 0},
 	                                      {"/Tools/Close Serial Port", NULL, menuSig, IDM_CLOSE_UART, 0},
-	                                      {"/Tools/_Send <Ctrl+Z>", "<control>.", menuSig, IDM_STOPEXECUTE, NULL},
+	                                      {"/Tools/_Send <Ctrl+Z>", "<control>z", menuSig, IDM_STOPEXECUTE, NULL},
 	                                      {"/Tools/Tool", NULL, NULL, 0, "<Separator>"},
 	                                      {"/Tools/Tool0", NULL, menuSig, IDM_TOOLS + 0, 0},
 	                                      {"/Tools/Tool1", NULL, menuSig, IDM_TOOLS + 1, 0},
