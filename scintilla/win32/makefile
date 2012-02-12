@@ -6,7 +6,7 @@
 
 .SUFFIXES: .cxx
 
-CROSSWIN32PREFIX=i586-mingw32msvc-
+#CROSSWIN32PREFIX=i586-mingw32msvc-
 DEBUG=1
 
 
