@@ -31,7 +31,25 @@ some features:
 * $ sudo apt-get install libusb-1.0
 
 ## How to build and install it on Windows:
-Not yet ready, I hope that it will be soon...
+
+* Install the "Mingw/Msys" packages:
+  http://sourceforge.net/projects/mingw/files/latest/download?source=files
+* Launch the setup "mingw-get-inst-xxxxxxxx.exe" and choice the "Download
+  latest repository catalogues"
+* Selecting following components: C and C++ compilers, "MSYS Basic System" and 
+  "Mingw Developer ToolKit".
+* Donwnload Go@ sources from here: 
+  https://github.com/nuccioraciti/Goat-IDE/zipball/master
+* Now unzip source inside a directory eg. the temp directory
+* Open the mingw shell and go on sources directory:
+  $ cd /c/temp/nuccioraciti-Goat-IDE-d2a3fce
+* Build the scintilla library:
+  $ cd /c/temp/nuccioraciti-Goat-IDE-d2a3fce/scintilla/win32
+  $ make
+* Build Goat:
+  $ cd /c/temp/nuccioraciti-Goat-IDE-d2a3fce/Goat/win32
+  $ make
+
 
 ## What it requires on the eLua side...
 
