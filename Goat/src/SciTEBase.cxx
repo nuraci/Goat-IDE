@@ -3553,6 +3553,8 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 	case IDM_SEND_MMC: {
 			std::string cmd = "recv ";
 			std::string name;
+			std::string str1=".lc";
+
 			SString extfs = props.Get("elua.extfs");
 			if (extfs.size())
 				cmd += props.Get("elua.extfs").c_str();
@@ -3561,14 +3563,14 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 			if (SaveIfUnsureForBuilt() != IDCANCEL) {
 				SelectionIntoProperties();
 				cmd += FileNameExt().BaseName().AsUTF8();
-				cmd += ".lc\n";
 				name = filePath.AbsolutePath().AsUTF8();
-#ifndef WIN32 //TODO WIN32
-				Substitute(name,".lua",".lc");
-				if (wGroupTab.GetID()) {
-					gtk_notebook_set_current_page(GTK_NOTEBOOK(wGroupTab.GetID()), BOARD_CONSOLE_TAB);
+				if(props.GetWild("command.compile.", FileNameExt().AsUTF8().c_str()).size() != 0) {
+					cmd += ".lc\n";
+					name.replace(name.end()-strlen(".lua"),name.end(),str1);
+				} else {
+					cmd += ".lua\n";
 				}
-#endif
+				GroupSetCurrentTab(BOARD_CONSOLE_TAB);
 				serial->Send(cmd.c_str(),-1);
 				serial->XmodemTransmitFile(name.c_str());
 			}
@@ -3576,23 +3578,22 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		break;
 	case IDM_RUN_MMC: {
 			SString extfs = props.Get("elua.extfs");
-			std::string ss = "lua ";
+			std::string cmd = "lua ";
 			if (extfs.size())
-				ss += props.Get("elua.extfs").c_str();
+				cmd += props.Get("elua.extfs").c_str();
 			else
-				ss += "/mmc/";
+				cmd += "/mmc/";
 
 			if (SaveIfUnsureForBuilt() != IDCANCEL) {
 				SelectionIntoProperties();
-				ss += FileNameExt().BaseName().AsUTF8();
-				ss += ".lc\n";
-				serial->Send(ss.c_str(),-1);
-#ifndef WIN32 //TODO WIN32
-				/* An error here, shows the system tab */
-				if (wGroupTab.GetID()) {
-					gtk_notebook_set_current_page(GTK_NOTEBOOK(wGroupTab.GetID()), BOARD_CONSOLE_TAB);
+				cmd += FileNameExt().BaseName().AsUTF8();
+				if(props.GetWild("command.compile.", FileNameExt().AsUTF8().c_str()).size() != 0) {
+					cmd += ".lc\n";
+				} else {
+					cmd += ".lua\n";
 				}
-#endif
+				serial->Send(cmd.c_str(),-1);
+				GroupSetCurrentTab(BOARD_CONSOLE_TAB);
 				WindowSetFocus(wConsole);
 			}
 		}
@@ -3600,16 +3601,16 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 	case IDM_RUN_RAM: {
 			std::string cmd = "recv\n";
 			std::string name;
+			std::string str1=".lc";
+
 			if (SaveIfUnsureForBuilt() != IDCANCEL) {
 				SelectionIntoProperties();
 				name = filePath.AbsolutePath().AsUTF8();
-#ifndef WIN32 //TODO WIN32
-				Substitute(name,".lua",".lc");
-				serial->Send(cmd.c_str(),-1);
-				if (wGroupTab.GetID()) {
-					gtk_notebook_set_current_page(GTK_NOTEBOOK(wGroupTab.GetID()), BOARD_CONSOLE_TAB);
+				if(props.GetWild("command.compile.", FileNameExt().AsUTF8().c_str()).size() != 0) {
+					name.replace(name.end()-strlen(".lua"),name.end(),str1);
 				}
-#endif
+				serial->Send(cmd.c_str(),-1);
+				GroupSetCurrentTab(BOARD_CONSOLE_TAB);
 				serial->XmodemTransmitFile(name.c_str());
 				WindowSetFocus(wConsole);
 			}
@@ -4233,18 +4234,12 @@ void SciTEBase::CheckMenus() {
 	        props.GetWild("command.go.", FileNameExt().AsUTF8().c_str()).size() != 0);
 #endif
 	EnableAMenuItem(IDM_SEND_MMC, !jobQueue.IsExecuting() &&
-	        props.GetWild("command.compile.", FileNameExt().AsUTF8().c_str()).size() != 0 &&
-			/* TODO Exit Status !jobQueue.GetExitStatus()  && */
 			serial->IsConnected() &&
 			!CurrentBuffer()->isDirty);
 	EnableAMenuItem(IDM_RUN_MMC,!jobQueue.IsExecuting() &&
-	        props.GetWild("command.compile.", FileNameExt().AsUTF8().c_str()).size() != 0 &&
-			/* TODO Exit Status !jobQueue.GetExitStatus() && */
 			serial->IsConnected() &&
 			!CurrentBuffer()->isDirty);
 	EnableAMenuItem(IDM_RUN_RAM, !jobQueue.IsExecuting() &&
-	        props.GetWild("command.compile.", FileNameExt().AsUTF8().c_str()).size() != 0 &&
-			/* TODO Exit Status !jobQueue.GetExitStatus() && */
 			serial->IsConnected() &&
 			!CurrentBuffer()->isDirty);
 
