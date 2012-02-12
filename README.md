@@ -33,27 +33,27 @@ some features:
 ## How to build and install it on Windows:
 
 * Install the "Mingw/Msys" packages:
-  http://sourceforge.net/projects/mingw/files/latest/download?source=files
+*    http://sourceforge.net/projects/mingw/files/latest/download?source=files
 * Launch the setup "mingw-get-inst-xxxxxxxx.exe" and choice the "Download
   latest repository catalogues"
 * Selecting following components: C and C++ compilers, "MSYS Basic System" and 
-  "Mingw Developer ToolKit".
+*    "Mingw Developer ToolKit".
 * Donwnload Go@ sources from here: 
-  https://github.com/nuccioraciti/Goat-IDE/zipball/master
-* Now unzip source inside a directory eg. the temp directory
+*     https://github.com/nuccioraciti/Goat-IDE/zipball/master
+* Now unzip sources inside a directory for example inside the c:\temp directory
 * Open the mingw shell and go on sources directory:
-  $ cd /c/temp/nuccioraciti-Goat-IDE-xxxxxxx
+* $ cd /c/temp/nuccioraciti-Goat-IDE-xxxxxxx
 * Build the scintilla library:
-  $ cd /c/temp/nuccioraciti-Goat-IDE-xxxxxxx/scintilla/win32
-  $ make
+* $ cd /c/temp/nuccioraciti-Goat-IDE-xxxxxxx/scintilla/win32
+* $ make
 * Build Goat:
-  $ cd /c/temp/nuccioraciti-Goat-IDE-xxxxxxx/Goat/win32
-  $ make
+* $ cd /c/temp/nuccioraciti-Goat-IDE-xxxxxxx/Goat/win32
+* $ make
 * Copy runtime libraries:
-  $ cp /mingw/bin/libgcc_s_dw2-1.dll /c/temp/nuccioraciti-Goat-IDE-xxxxxxx/Goat/bin/
-  $ cp /mingw/bin/libstdc++-6.dll /c/temp/nuccioraciti-Goat-IDE-xxxxxxx/Goat/bin/
+* $ cp /mingw/bin/libgcc_s_dw2-1.dll /c/temp/nuccioraciti-Goat-IDE-xxxxxxx/Goat/bin/
+* $ cp /mingw/bin/libstdc++-6.dll /c/temp/nuccioraciti-Goat-IDE-xxxxxxx/Goat/bin/
 * Launch the Go@ editor:
-  Use the windows explorer, localise Goat.exe and double click on it.
+* Use the windows explorer, localise Goat.exe and double click on it.
 * Later, I will provide an installation program without needs of build.
 
 
@@ -73,8 +73,7 @@ and if it is avaliable on our hardware:
 * After each change to the settings, you need to exit and reopen Goat again...
 * Now you should have the eLua prompt on the "eLua's Console" window.
 * Well, try to use the menu: "Open Example" and load some elua program (eg. hello.lua)
-* Using the menu: "Tools" -> "Compile", let's Goat build the program for you.
-* The last step, press "F5" or menu "Tools" -> "Send & Run on Ram" will send the "hello.lc" directly on memory of eLua board and will run it.
+* The last step, press "F5" or menu "Tools" -> "Send & Run on Ram" will send the "hello.lua" directly on memory of eLua board and will run it.
 
 (*) just a note, some eLua examples ("hanoi" and "hungman") requiring a special configuration of the "eLua Console" window, so don't forget to select the menu: "Tools" -> "Mode Terminal".
 
