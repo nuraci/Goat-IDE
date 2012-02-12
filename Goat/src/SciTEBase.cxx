@@ -3036,7 +3036,7 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		// TODO WIN32
 		OpenDialog(filePath.Directory(), GUI::StringFromUTF8(props.GetExpanded("open.filter").c_str()).c_str());
 #endif
-
+		WindowSetFocus(wEditor);
 		break;
 	case IDM_FLASH_IMGS__OPEN:
 #ifndef  WIN32
