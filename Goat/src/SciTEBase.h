@@ -49,11 +49,19 @@ inline Colour ColourRGB(unsigned int red, unsigned int green, unsigned int blue)
  * The order of menus on Windows - the Buffers menu may not be present
  * and there is a Help menu at the end.
  */
+#ifdef HAVE_MENU_LANGUAGES
 enum {
     menuFile = 0, menuEdit = 1, menuSearch = 2, menuView = 3,
     menuTools = 4, menuOptions = 5, menuLanguage = 6, menuBuffers = 7,
     menuHelp = 8
 };
+#else
+enum {
+    menuFile = 0, menuEdit = 1, menuSearch = 2, menuView = 3,
+    menuTools = 4, menuOptions = 5, menuBuffers = 6,
+    menuHelp = 7
+};
+#endif
 
 struct SelectedRange {
 	int position;

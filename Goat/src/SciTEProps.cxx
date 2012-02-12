@@ -94,6 +94,7 @@ void SciTEBase::ImportMenu(int pos) {
 }
 
 void SciTEBase::SetLanguageMenu() {
+#ifdef HAVE_MENU_LANGUAGES
 	for (int i = 0; i < 100; i++) {
 		DestroyMenuItem(menuLanguage, languageCmdID + i);
 	}
@@ -112,6 +113,7 @@ void SciTEBase::SetLanguageMenu() {
 			SetMenuItem(menuLanguage, item, itemID, entry.c_str());
 		}
 	}
+#endif
 }
 
 const GUI::gui_char propLocalFileName[] = GUI_TEXT("Goat.properties");
@@ -1581,7 +1583,7 @@ void SciTEBase::ReadPropertiesInitial() {
 	wEditor.Call(SCI_SETWRAPMODE, wrap ? wrapStyle : SC_WRAP_NONE);
 	wOutput.Call(SCI_SETWRAPMODE, wrapOutput ? wrapStyle : SC_WRAP_NONE);
 
-
+#ifdef HAVE_MENU_LANGUAGES
 	SString menuLanguageProp = props.GetNewExpand("menu.language");
 	languageItems = 0;
 	for (unsigned int i = 0; i < menuLanguageProp.length(); i++) {
@@ -1602,7 +1604,7 @@ void SciTEBase::ReadPropertiesInitial() {
 		sMenuLanguage += strlen(sMenuLanguage) + 1;
 	}
 	SetLanguageMenu();
-
+#endif
 	// load the user defined short cut props
 	SString shortCutProp = props.GetNewExpand("user.shortcuts");
 	if (shortCutProp.length()) {
