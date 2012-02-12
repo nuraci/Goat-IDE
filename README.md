@@ -42,13 +42,19 @@ some features:
   https://github.com/nuccioraciti/Goat-IDE/zipball/master
 * Now unzip source inside a directory eg. the temp directory
 * Open the mingw shell and go on sources directory:
-  $ cd /c/temp/nuccioraciti-Goat-IDE-d2a3fce
+  $ cd /c/temp/nuccioraciti-Goat-IDE-xxxxxxx
 * Build the scintilla library:
-  $ cd /c/temp/nuccioraciti-Goat-IDE-d2a3fce/scintilla/win32
+  $ cd /c/temp/nuccioraciti-Goat-IDE-xxxxxxx/scintilla/win32
   $ make
 * Build Goat:
-  $ cd /c/temp/nuccioraciti-Goat-IDE-d2a3fce/Goat/win32
+  $ cd /c/temp/nuccioraciti-Goat-IDE-xxxxxxx/Goat/win32
   $ make
+* Copy runtime libraries:
+  $ cp /mingw/bin/libgcc_s_dw2-1.dll /c/temp/nuccioraciti-Goat-IDE-xxxxxxx/Goat/bin/
+  $ cp /mingw/bin/libstdc++-6.dll /c/temp/nuccioraciti-Goat-IDE-xxxxxxx/Goat/bin/
+* Launch the Go@ editor:
+  Use the windows explorer, localise Goat.exe and double click on it.
+* Later, I will provide an installation program without needs of build.
 
 
 ## What it requires on the eLua side...
