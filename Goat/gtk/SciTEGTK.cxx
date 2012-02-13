@@ -3928,14 +3928,10 @@ void SciTEGTK::CreateMenu() {
 	                                      {"/View/_Parameters", NULL, menuSig, IDM_TOGGLEPARAMETERS, "<CheckItem>"},
 
 	                                      {"/_Tools", NULL, NULL, 0, "<Branch>"},
+	                                      {"/Tools/Send & Run on RAM", "F5", menuSig, IDM_RUN_RAM, 0},
 	                                      {"/Tools/_Compile", "<control>F7", menuSig, IDM_COMPILE, 0},
-#if 0 // TODO Later manage build of project
-									 	  {"/Tools/_Build", "F7", menuSig, IDM_BUILD, 0},	                                      
-	                                      {"/Tools/_Go", "F5", menuSig, IDM_GO, 0},
-#endif
  										  {"/Tools/_Send to MMC", NULL, menuSig, IDM_SEND_MMC, 0},
 	                                      {"/Tools/_Run from MMC", NULL, menuSig, IDM_RUN_MMC, 0},
-	                                      {"/Tools/Send & Run on RAM", "F5", menuSig, IDM_RUN_RAM, 0},
 	                                      {"/Tools/Port", NULL, NULL, 0, "<Separator>"},
 	                                      {"/Tools/Open Serial Port", NULL, menuSig, IDM_OPEN_UART, 0},
 	                                      {"/Tools/Close Serial Port", NULL, menuSig, IDM_CLOSE_UART, 0},
