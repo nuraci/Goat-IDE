@@ -75,6 +75,7 @@ public:
 
 	int Send(const char *string, int length);
 	bool Start(void);
+	bool Status(void);
 	bool IsConnected() { return portOpened;	}
 	void Stop(void);
 	void ConfigureclrfAuto(bool clrfAuto);
@@ -86,7 +87,7 @@ public:
 	void SetNumStop(unsigned char n = 1);
 	void SetParity(unsigned char n = 0);
 	void SetPort(const char *s = DEF_PORT_NAME);
-	char *GetStartMessage() { return message; }
+	char *GetMessage(void);
 	bool IsAlive(void) { return isAlive; }
 	void KillMe(void) { isAlive = FALSE; Stop(); }
 	int GetCopyOfBuffer(char *s, int len);

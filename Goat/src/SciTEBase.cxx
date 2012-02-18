@@ -3662,7 +3662,11 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		break;
 	case IDM_OPEN_UART:
 		serial->Start();
-	 	props.Set("SerialMsg",serial->GetStartMessage());
+		{
+			char *mesg;
+			if((mesg=serial->GetMessage()) != 0)
+				props.Set("SerialMsg",mesg);
+		}
 		CheckMenus();
 		term.Clear();
 		if ((props.Get("serial.tx1cr").size() != 0) && props.GetInt ("serial.tx1cr") == 1) {
@@ -3673,7 +3677,11 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 	case IDM_CLOSE_UART:
 		term.setTermActiveOff();
 		serial->Stop();
-	 	props.Set("SerialMsg",serial->GetStartMessage());
+		{
+			char *mesg;
+			if((mesg=serial->GetMessage()) != 0)
+				props.Set("SerialMsg",mesg);
+		}
 		CheckMenus();
 		term.Clear();
 		break;

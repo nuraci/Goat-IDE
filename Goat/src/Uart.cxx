@@ -303,6 +303,7 @@ int UART::ListenPort() {
 		}
 	} else {
 		bytes = 0;
+		Stop();
 	}
 
 	return bytes;
@@ -310,15 +311,37 @@ int UART::ListenPort() {
 #else
 int UART::ListenPort() {
 	static char Buffer[BUFFER_RX + 1];
+	struct timeval tv;
+	fd_set fds;
 	int bytes;
+	int n;
+	int tmout = 1000;
 
-	bytes = read((int) portFd , Buffer, BUFFER_RX);
+	if (!Status() ) {
+		msSleep(1000);
+		Start();
+		return 0;
+	}
+
+	tv.tv_sec = tmout / 1000;
+	tv.tv_usec = (tmout % 1000) * 1000L;
+	FD_ZERO(&fds);
+	FD_SET(portFd, &fds);
+
+	if (select(portFd+1, &fds, NULL, NULL, &tv) > 0)
+	    n = 1 * (FD_ISSET(portFd, &fds) > 0) + 2 * (FD_ISSET(0, &fds) > 0);
+
+	bytes = 0;
+	if ((n & 1) == 1) {
+		bytes = read((int) portFd , Buffer, BUFFER_RX);
+	}
+
 	if(bytes > 0) {
 		for (int cc=0; cc < bytes; cc++) {
 			PutCharToBuffer((char) Buffer[cc]);
 		}
-	} else if (bytes < 0){
-		portOpened = 0;
+	} else {
+		bytes = 0;
 	}
 
 	return bytes;
@@ -485,7 +508,7 @@ bool UART::OpenPort(const char *portName) {
 	portHandle = CreateFile(tmpPortName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
 	if (portHandle != INVALID_HANDLE_VALUE)  portOpened = TRUE;
 #else
-	portFd = open(portName, O_RDWR | O_NOCTTY);
+	portFd = open(portName, O_RDWR | O_NOCTTY );
 
 	if (portFd > 0)
 		portOpened = true;
@@ -493,9 +516,30 @@ bool UART::OpenPort(const char *portName) {
 	return portOpened;
 }
 
+char *UART::GetMessage (void) {
+	static char message_copy[MAX_MESSAGE_SIZE+1]="";
+
+	if (strncmp(message,message_copy,MAX_MESSAGE_SIZE) == 0 ) {
+		return 0;
+	} else {
+		strncpy(message_copy,message,MAX_MESSAGE_SIZE);
+		return message;
+	}
+}
+
 void UART::Stop(void) {
 	ClosePortAndRemoveLockFile();
 	sprintf(message,NO_OPEN_PORT);
+}
+
+bool UART::Status(void) {
+
+#ifdef WIN32
+	reurn true;
+#else
+	 struct termios t;
+	 return !tcgetattr(portFd, &t);
+#endif
 }
 
 bool UART::Start(void) {

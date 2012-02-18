@@ -2660,10 +2660,12 @@ void SciTEGTK::Execute() {
 }
 
 void SciTEGTK::ExecuteOnConsole() {
+	char *mesg;
 	while (serial->IsAlive()) {
-		msSleep(100);
-		while (serial->IsConnected() && serial->IsAlive()) {
-			serial->ListenPort();
+		serial->ListenPort();
+		if((mesg=serial->GetMessage()) != 0) {
+			instance->props.Set("SerialMsg",mesg);
+		    instance->UpdateStatusBar(true);
 		}
 	}
 }
@@ -5152,7 +5154,6 @@ gboolean SciTEGTK::DoItLater(SciTEGTK *scite)
 {
 	if ((scite->props.Get("serial.autoconnect").size() == 0) ||
 					scite->props.GetInt ("serial.autoconnect") == 0) {
-		scite->props.Set("SerialMsg",scite->serial->GetStartMessage());
 		return FALSE;
 	}
 
@@ -5162,7 +5163,6 @@ gboolean SciTEGTK::DoItLater(SciTEGTK *scite)
 			scite->serial->OutByte('\r'); /* Send the first \r in order to get eLua prompt */
 		}
 	}
-	scite->props.Set("SerialMsg",scite->serial->GetStartMessage());
 
 	if ((scite->props.Get("term.terminal").size() != 0) &&
 				scite->props.GetInt ("term.terminal") == 1) {
