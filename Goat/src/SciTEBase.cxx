@@ -3031,19 +3031,21 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		// may decide to open multiple files so do not know yet
 		// how much room needed.
 #ifndef  WIN32
-		OpenDialog(FilePath(props.Get(EXAMPLES_PROPS_DIR_NAME).c_str()), GUI::StringFromUTF8(props.GetExpanded("open.filter").c_str()).c_str());
+		OpenDialog(FilePath(props.Get(EXAMPLES_PROPS_DIR_NAME).c_str()),
+				GUI::StringFromUTF8(props.GetExpanded("open.filter").c_str()).c_str());
 #else
-		// TODO WIN32
-		OpenDialog(filePath.Directory(), GUI::StringFromUTF8(props.GetExpanded("open.filter").c_str()).c_str());
+		OpenDialog(FilePath(GUI::StringFromUTF8(props.Get(EXAMPLES_PROPS_DIR_NAME).c_str()).c_str()),
+				GUI::StringFromUTF8(props.GetExpanded("open.filter").c_str()).c_str());
 #endif
 		WindowSetFocus(wEditor);
 		break;
 	case IDM_FLASH_IMGS__OPEN:
 #ifndef  WIN32
-		OpenDialog(FilePath(props.Get(ROOT_PROPS_DIR_NAME).c_str()), GUI::StringFromUTF8(props.GetExpanded("flash.filter").c_str()).c_str());
+		OpenDialog(FilePath(props.Get(ROOT_PROPS_DIR_NAME).c_str()),
+				GUI::StringFromUTF8(props.GetExpanded("flash.filter").c_str()).c_str());
 #else
-		// TODO WIN32
-		OpenDialog(filePath.Directory(), GUI::StringFromUTF8(props.GetExpanded("flash.filter").c_str()).c_str());
+		OpenDialog(FilePath(GUI::StringFromUTF8(props.Get(ROOT_PROPS_DIR_NAME).c_str()).c_str()),
+				GUI::StringFromUTF8(props.GetExpanded("flash.filter").c_str()).c_str());
 #endif
 		WindowSetFocus(wEditor);
 		break;
