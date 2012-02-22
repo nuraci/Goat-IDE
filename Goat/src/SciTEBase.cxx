@@ -4234,20 +4234,18 @@ void SciTEBase::CheckMenus() {
 	CheckAMenuItem(IDM_MONOFONT, CurrentBuffer()->useMonoFont);
 	EnableAMenuItem(IDM_COMPILE, !jobQueue.IsExecuting() &&
 	        props.GetWild("command.compile.", FileNameExt().AsUTF8().c_str()).size() != 0);
-#if 0
-	EnableAMenuItem(IDM_BUILD, !jobQueue.IsExecuting() &&
-	        props.GetWild("command.build.", FileNameExt().AsUTF8().c_str()).size() != 0);
-	EnableAMenuItem(IDM_GO, !jobQueue.IsExecuting() &&
-	        props.GetWild("command.go.", FileNameExt().AsUTF8().c_str()).size() != 0);
-#endif
+
 	EnableAMenuItem(IDM_SEND_MMC, !jobQueue.IsExecuting() &&
 			serial->IsConnected() &&
+			!CurrentBuffer()->IsUntitled() &&
 			!CurrentBuffer()->isDirty);
 	EnableAMenuItem(IDM_RUN_MMC,!jobQueue.IsExecuting() &&
 			serial->IsConnected() &&
+			!CurrentBuffer()->IsUntitled() &&
 			!CurrentBuffer()->isDirty);
 	EnableAMenuItem(IDM_RUN_RAM, !jobQueue.IsExecuting() &&
 			serial->IsConnected() &&
+			!CurrentBuffer()->IsUntitled() &&
 			!CurrentBuffer()->isDirty);
 
 	EnableAMenuItem(IDM_OPEN_UART, !serial->IsConnected());
@@ -4258,7 +4256,7 @@ void SciTEBase::CheckMenus() {
 	EnableAMenuItem(IDM_OPENDIRECTORYPROPERTIES, props.GetInt("properties.directory.enable") != 0);
 	for (int toolItem = 0; toolItem < toolMax; toolItem++)
 		EnableAMenuItem(IDM_TOOLS + toolItem, !jobQueue.IsExecuting());
-	//EnableAMenuItem(IDM_STOPEXECUTE, jobQueue.IsExecuting());
+
 	EnableAMenuItem(IDM_STOPEXECUTE, serial->IsConnected());
 
 	if (buffers.size > 0) {

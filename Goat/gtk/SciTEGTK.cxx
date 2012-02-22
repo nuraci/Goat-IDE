@@ -489,8 +489,8 @@ protected:
 	DialogParameters dlgParameters;
 
 	GtkWidget *btnCompile;
-	GtkWidget *btnBuild;
-	GtkWidget *btnStop;
+	GtkWidget *btnSendRam;
+	GtkWidget *btnModeTerminal;
 
 	GtkWidget *menuBar;
 	std::map<std::string, GtkWidget *> pulldowns;
@@ -766,8 +766,9 @@ SciTEGTK::SciTEGTK(Extension *ext) : SciTEBase(ext) {
 	wIncrementPanel = 0;
 	IncSearchEntry = 0;
 	btnCompile = 0;
-	btnBuild = 0;
-	btnStop = 0;
+	btnSendRam = 0;
+	btnModeTerminal = 0;
+
 	menuBar = 0;
 	accelGroup = 0;
 
@@ -1115,6 +1116,7 @@ void SciTEGTK::Command(unsigned long wParam, long) {
 	default:
 		SciTEBase::MenuCommand(cmdID, menuSource);
 		menuSource = 0;
+		break;
 	}
 	if (notifyCode != SCEN_CHANGE) {
 		// Changes to document produce SCN_UPDATEUI as well as SCEN_CHANGE
@@ -1379,10 +1381,13 @@ void SciTEGTK::CheckMenus() {
 	CheckAMenuItem(IDM_VIEWSTATUSBAR, sbVisible);
 	CheckAMenuItem(IDM_VIEWTABBAR, tabVisible);
 
-	if (btnBuild) {
-		gtk_widget_set_sensitive(btnBuild, !jobQueue.IsExecuting());
-		gtk_widget_set_sensitive(btnCompile, !jobQueue.IsExecuting());
-		gtk_widget_set_sensitive(btnStop, jobQueue.IsExecuting());
+	if (btnCompile) {
+		gtk_widget_set_sensitive(btnCompile, !jobQueue.IsExecuting() &&
+			props.GetWild("command.compile.", FileNameExt().AsUTF8().c_str()).size() != 0);
+		gtk_widget_set_sensitive(btnSendRam, serial->IsConnected() &&
+							!CurrentBuffer()->IsUntitled() &&
+							!CurrentBuffer()->isDirty);
+		gtk_widget_set_sensitive(btnModeTerminal,serial->IsConnected());
 	}
 }
 
@@ -2670,7 +2675,6 @@ void SciTEGTK::ExecuteOnConsole() {
 	}
 }
 
-
 void SciTEGTK::StopExecute() {
 	if (!triedKill && pidShell) {
 		kill(-pidShell, SIGKILL);
@@ -3614,13 +3618,8 @@ void SciTEGTK::AddToolBar() {
 
 		AddToolSpace(GTK_TOOLBAR(PWidget(wToolBar)));
 		btnCompile = AddToolButton("Compile", IDM_COMPILE, gtk_image_new_from_stock("gtk-execute", GTK_ICON_SIZE_LARGE_TOOLBAR));
-		btnBuild = AddToolButton("Build", IDM_BUILD, gtk_image_new_from_stock("gtk-convert", GTK_ICON_SIZE_LARGE_TOOLBAR));		
-		//TODO Manage new images
-		//btnBuild = AddToolButton("Send to MMC", IDM_SEND_MMC, gtk_image_new_from_stock("gtk-convert", GTK_ICON_SIZE_LARGE_TOOLBAR));
-		//btnBuild = AddToolButton("Run from MMC", IDM_RUN_MMC, gtk_image_new_from_stock("gtk-convert", GTK_ICON_SIZE_LARGE_TOOLBAR));
-		//btnBuild = AddToolButton("Send & Run on RAM", IDM_RUN_RAM, gtk_image_new_from_stock("gtk-convert", GTK_ICON_SIZE_LARGE_TOOLBAR));
-
-		btnStop = AddToolButton("Stop", IDM_STOPEXECUTE, gtk_image_new_from_stock("gtk-stop", GTK_ICON_SIZE_LARGE_TOOLBAR));
+		btnSendRam = AddToolButton("Send & Run on RAM", IDM_RUN_RAM, gtk_image_new_from_stock("gtk-send-ram", GTK_ICON_SIZE_LARGE_TOOLBAR));
+		btnModeTerminal = AddToolButton("Mode Terminal", IDM_MODE_TERMINAL, gtk_image_new_from_stock("gtk-mode-terminal", GTK_ICON_SIZE_LARGE_TOOLBAR));
 
 		AddToolSpace(GTK_TOOLBAR(PWidget(wToolBar)));
 		AddToolButton("Previous", IDM_PREVFILE, gtk_image_new_from_stock("gtk-go-back", GTK_ICON_SIZE_LARGE_TOOLBAR));
@@ -3649,11 +3648,8 @@ void SciTEGTK::AddToolBar() {
 
 	AddToolSpace(GTK_TOOLBAR(PWidget(wToolBar)));
 	btnCompile = AddToolButton("Compile", IDM_COMPILE, pixmap_new((gchar**)compile_xpm));
-	btnBuild = AddToolButton("Build", IDM_BUILD, pixmap_new((gchar**)build_xpm));	
-	//TODO Manage new images
-	//btnBuild = AddToolButton("Send to MMC", IDM_SEND_MMC, pixmap_new((gchar**)build_xpm));
-	//btnBuild = AddToolButton("Run from MMC", IDM_RUN_MMC, pixmap_new((gchar**)build_xpm));
-	btnStop = AddToolButton("Stop", IDM_STOPEXECUTE, pixmap_new((gchar**)stop_xpm));
+	btnSendRam = AddToolButton("Send & Run on RAM", IDM_RUN_RAM, pixmap_new((gchar**)chip_xpm));
+	btnModeTerminal = AddToolButton("Mode Terminal", IDM_MODE_TERMINAL, pixmap_new((gchar**)term_xpm));
 
 	AddToolSpace(GTK_TOOLBAR(PWidget(wToolBar)));
 	AddToolButton("Previous", IDM_PREVFILE, pixmap_new((gchar**)prev_xpm));
@@ -3930,8 +3926,8 @@ void SciTEGTK::CreateMenu() {
 	                                      {"/View/_Parameters", NULL, menuSig, IDM_TOGGLEPARAMETERS, "<CheckItem>"},
 
 	                                      {"/_Tools", NULL, NULL, 0, "<Branch>"},
-	                                      {"/Tools/Send & Run on RAM", "F5", menuSig, IDM_RUN_RAM, 0},
 	                                      {"/Tools/_Compile", "<control>F7", menuSig, IDM_COMPILE, 0},
+	                                      {"/Tools/Send & Run on RAM", "F5", menuSig, IDM_RUN_RAM, 0},
  										  {"/Tools/_Send to MMC", NULL, menuSig, IDM_SEND_MMC, 0},
 	                                      {"/Tools/_Run from MMC", NULL, menuSig, IDM_RUN_MMC, 0},
 	                                      {"/Tools/Port", NULL, NULL, 0, "<Separator>"},
@@ -4959,7 +4955,7 @@ bool SciTEGTK::CheckForRunningInstance(int argc, char *argv[]) {
 	char *pipeFileName = NULL;
 	const char *filename;
 
-	sprintf(uniqueInstance,"%s/SciTE.ensure.unique.instance.for.%s", g_get_tmp_dir(), getenv("USER"));
+	sprintf(uniqueInstance,"%s/Goat.ensure.unique.instance.for.%s", g_get_tmp_dir(), getenv("USER"));
 	int fd;
 	bool isLocked;
 	do {
