@@ -6,8 +6,8 @@
 
 .SUFFIXES: .cxx .properties
 
-#CROSSWIN32 = 1
-#DEBUG=1
+CROSSWIN32 = 1
+DEBUG=1
 
 ifdef CYGWIN
 CC = gcc

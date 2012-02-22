@@ -12,9 +12,9 @@
 #define APP_NAME "Goat"
 #define APP_NAME_TITLE "Go @ IDE"
 #define APP_NAME_STATIC_BUILD "GoatIDE"
-#define VERSION_GOAT "0.0.4.3"
-#define VERSION_GOAT_WORDS 0, 0,4, 3
-#define COPYRIGHT_GOAT_DATES "January 2012"
+#define VERSION_GOAT "0.5.0.0"
+#define VERSION_GOAT_WORDS 0, 5, 0, 0
+#define COPYRIGHT_GOAT_DATES "February 2012"
 #define COPYRIGHT_GOAT_YEARS "2012"
 // Version numbers and dates
 #define VERSION_SCITE "3.0.2"

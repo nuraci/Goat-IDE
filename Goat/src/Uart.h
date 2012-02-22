@@ -26,8 +26,10 @@ using namespace std;
 #define P_LOCK 				"/tmp"  /* lock file location */
 #define MSG_WRN 			0
 #define MSG_ERR 			1
+#define MS_TIMEOUT 			3000
 
-class UART  {
+
+class UART {
 protected:
 	char 			buffer[BUFFER_RX + 1];
 
@@ -40,6 +42,7 @@ protected:
 	char 			portName[MAX_PORT_STR_SIZE+1];
 	char 			message[MAX_MESSAGE_SIZE+1];
 	bool 			isAlive;
+	bool            isStarted;
 	char 			lockfile[128];
 	bool			xmodemOn;
 	unsigned int  	portSpeed;
@@ -52,6 +55,8 @@ protected:
 	bool 			portOpened;
 	int 			indexWrite;
 	int 			indexRead;
+	unsigned char   *xmodemBuf;
+	size_t  		xmodemBufSize;
 
 	int Tx(const char *string, int length = 1);
 	char *mbasename(char *s, char *res, int reslen);
@@ -73,10 +78,11 @@ public:
 	UART();
 	~UART();
 
-	int Send(const char *string, int length);
+	int  Send(const char *string, int length);
 	bool Start(void);
 	bool Status(void);
 	bool IsConnected() { return portOpened;	}
+	bool IsStarted() { return isStarted; }
 	void Stop(void);
 	void ConfigureclrfAuto(bool clrfAuto);
 	void SendBreak(void);
@@ -90,35 +96,25 @@ public:
 	char *GetMessage(void);
 	bool IsAlive(void) { return isAlive; }
 	void KillMe(void) { isAlive = FALSE; Stop(); }
-	int GetCopyOfBuffer(char *s, int len);
-	int GetCharFromBuffer();
-	void  PutCharToBuffer(char byte);
+	int  GetCopyOfBuffer(char *s, int len);
+	int  GetCharFromBuffer();
+	int  PeekCharFromBuffer();
+	void PutCharToBuffer(char byte);
 	/* Xmodem stuff */
-	int InByte(unsigned short timeout);
+	int  InByte(unsigned short timeout);
 	void OutByte(int byte);
-	int XmodemReceive(unsigned char *dest, int destsz);
-	int XmodemTransmit(unsigned char *src, int srcsz);
+	int  XmodemReceive(unsigned char *dest, int destsz);
+	int  XmodemTransmit();
 	void XmodemOn(bool state) { xmodemOn = state;  };
 	bool IsXmodemOn() { return xmodemOn; }
-	int XmodemTransmitFile(const char *name);
+	int  XmodemTransmitFile(const char *name);
 	/* Ring buffer stuff */
 	bool RingBufferIsEmpty();
-	int ListenPort();
+	int  ListenPort();
 
 private:
 
 };
-
-#ifdef WIN32
-#define FALSE 			0
-#define TRUE 			1
-#define KeepGuiLive()
-#define waitMs(ms) { for (unsigned int a=0; a<ms ; a++) { msSleep(1);}}
-DWORD WINAPI ListenPort(LPVOID lpParam);
-#else
-#define KeepGuiLive() { gtk_main_iteration_do(false); }
-#define waitMs(ms) { for (unsigned int a=0; a<ms ; a++) { gtk_main_iteration_do (false); msSleep(1);}}
-#endif
 
 #define synchronized(M)  for(Lock M##_lock = M; M##_lock; M##_lock.setUnlock())
 

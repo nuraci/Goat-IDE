@@ -36,6 +36,9 @@
 #include "Mutex.h"
 #include "Uart.h"
 
+
+static void *XmodemTransmitThread(void *ptr);
+
 /*
  * Elua: SciTEGTK::ExecuteOnConsole -> SciTEGTK::PostCallbackConsole -> SciTEBase::ConsoleInsertChars()
  *
@@ -136,15 +139,8 @@ int UART::check(int crc, const unsigned char *buf, int sz) {
 	return 0;
 }
 
-void UART::flushinput(void) {
-	KeepGuiLive();
-	return;
-}
-
 int UART::XmodemTransmitFile(const char *name) {
 	FILE *pFile;
-	size_t lSize;
-	unsigned char *buf;
 	size_t result;
 
 	pFile = fopen(name , "rb");
@@ -155,41 +151,68 @@ int UART::XmodemTransmitFile(const char *name) {
 
 	// obtain file size:
 	fseek(pFile , 0 , SEEK_END);
-	lSize = ftell(pFile);
+	xmodemBufSize = ftell(pFile);
 	rewind(pFile);
 
 	// allocate memory to contain the whole file:
-	buf = (unsigned char *) malloc(sizeof(char)*lSize);
-	if (buf == NULL) {
+	xmodemBuf = (unsigned char *) malloc(sizeof(char)*xmodemBufSize);
+	if (xmodemBuf == NULL) {
 		printf("Memory error\n");
 		return (-2);
 	}
 
 	// copy the file into the buffer:
-	result = fread(buf,1,lSize,pFile);
-	if (result != lSize) {
+	result = fread(xmodemBuf,1,xmodemBufSize,pFile);
+	if (result != xmodemBufSize) {
 		printf("Reading error\n");
-		free(buf);
+		free(xmodemBuf);
+		xmodemBuf= NULL;
 		return (-3);
 	}
 
 	/* the whole file is now loaded in the memory buffer. */
-	// terminate
 	fclose(pFile);
-	waitMs(600);
-	XmodemOn(true);
-	XmodemTransmit(buf, lSize);
-	XmodemOn(false);
-	free(buf);
-	return 0;
+
+	/* Following really needs to be rewritten in a better way... */
+	/* Unfortunately Windows doesn't help! */
+#ifdef GTK
+	{
+		pthread_t tid;
+		pthread_create(&tid, NULL, XmodemTransmitThread, (void *)(this));
+		return tid != 0;
+	}
+#endif
+
+#ifdef WIN32
+	{
+		uintptr_t result = _beginthread((void (*)(void*))XmodemTransmitThread, 1024 * 1024, reinterpret_cast<void *>(this));
+		return result != static_cast<uintptr_t>(-1);
+	}
+#endif
 }
 
-int UART::XmodemTransmit(unsigned char *src, int srcsz) {
+static void *XmodemTransmitThread(void *ptr) {
+	UART *uart_class = static_cast<UART *>(ptr);
+	uart_class->XmodemTransmit();
+	return NULL;
+}
+
+int UART::XmodemTransmit() {
 	unsigned char xbuff[1030]; /* 1024 for XModem 1k + 3 head chars + 2 crc + nul */
 	int bufsz, crc = -1;
+	unsigned int timeout = MS_TIMEOUT;
 	unsigned char packetno = 1;
 	int i, c, len = 0;
-	int retry;
+	int retry, ret;
+
+	/* Waiting for character 'C' */
+	while ((c = PeekCharFromBuffer()) != 'C' && timeout ) {
+		msSleep(1);
+		timeout--;
+	}
+
+	XmodemOn(true);
+
 	for (;;) {
 		for (retry = 0; retry < 16; ++retry) {
 			if ((c = InByte((DLY_1S)<<1)) >= 0) {
@@ -203,8 +226,8 @@ int UART::XmodemTransmit(unsigned char *src, int srcsz) {
 				case CAN:
 					if ((c = InByte(DLY_1S)) == CAN) {
 						OutByte(ACK);
-						flushinput();
-						return -1; /* canceled by remote */
+						ret = -1; /* canceled by remote */
+						goto exit_trans;
 					}
 					break;
 				default:
@@ -215,8 +238,8 @@ int UART::XmodemTransmit(unsigned char *src, int srcsz) {
 		OutByte(CAN);
 		OutByte(CAN);
 		OutByte(CAN);
-		flushinput();
-		return -2; /* no sync */
+		ret = -2; /* no sync */
+		goto exit_trans;
 
 		for (;;) {
 start_trans:
@@ -224,14 +247,14 @@ start_trans:
 			bufsz = 128;
 			xbuff[1] = packetno;
 			xbuff[2] = ~packetno;
-			c = srcsz - len;
+			c = xmodemBufSize - len;
 			if (c > bufsz) c = bufsz;
 			if (c >= 0) {
 				memset(&xbuff[3], CTRLZ, bufsz);
 				if (c == 0) {
 					xbuff[3] = CTRLZ;
 				} else {
-					memcpy(&xbuff[3], &src[len], c);
+					memcpy(&xbuff[3], &xmodemBuf[len], c);
 					//if (c < bufsz) xbuff[3+c] = CTRLZ; // now useless, see the memset() before.
 				}
 				if (crc) {
@@ -258,8 +281,8 @@ start_trans:
 						case CAN:
 							if ((c = InByte(DLY_1S)) == CAN) {
 								OutByte(ACK);
-								flushinput();
-								return -1; /* canceled by remote */
+								ret = -1; /* canceled by remote */
+								goto exit_trans;
 							}
 							break;
 						case NAK:
@@ -271,19 +294,25 @@ start_trans:
 				OutByte(CAN);
 				OutByte(CAN);
 				OutByte(CAN);
-				flushinput();
-				return -4; /* xmit error */
+				ret = -4; /* xmit error */
+				goto exit_trans;
 			} else {
 				for (retry = 0; retry < 10; ++retry) {
 					OutByte(EOT);
 					if ((c = InByte((DLY_1S)<<1)) == ACK) break;
 				}
-				flushinput();
-				return (c == ACK)?len:-5;
+				ret = (c == ACK)?len:-5;
+				goto exit_trans;
 			}
 		}
 	}
-	return 0; // fake return
+
+exit_trans:
+
+	XmodemOn(false);
+	free(xmodemBuf);
+	xmodemBuf= NULL;
+	return ret;
 }
 
 #ifdef WIN32
@@ -291,19 +320,28 @@ int UART::ListenPort() {
 	static char Buffer[BUFFER_RX + 1];
 	DWORD bytes = 0;
 
-	if (portHandle == INVALID_HANDLE_VALUE) return 0;
+	if (!IsStarted())
+		return 0;
+
+	if (!Status() ) {
+		myDbgPrint("not connected...");
+		//msSleep(1000);
+		//Start();
+		return 0;
+	}
+
+	if (portHandle == INVALID_HANDLE_VALUE)
+		return 0;
 
 	if (!ReadFile(portHandle, Buffer, BUFFER_RX, &bytes, NULL)) {
-		MYDEBUG("error in ListenPort()");
+		myDbgPrint("!ReadFile");
+		return 0;
 	}
 
 	if (bytes > 0) {
 		for (DWORD cc=0; cc < bytes; cc++) {
 			PutCharToBuffer((char) Buffer[cc]);
 		}
-	} else {
-		bytes = 0;
-		Stop();
 	}
 
 	return bytes;
@@ -316,6 +354,9 @@ int UART::ListenPort() {
 	int bytes;
 	int n;
 	int tmout = 1000;
+
+	if (!IsStarted())
+		return 0;
 
 	if (!Status() ) {
 		msSleep(1000);
@@ -378,6 +419,18 @@ int UART::GetCharFromBuffer() {
 	return byte;
 }
 
+int UART::PeekCharFromBuffer() {
+	char byte;
+	Lock lock(mutex);
+
+	if(indexWrite == indexRead)
+		return (0xff00); /* Buffer empty */
+
+	byte = buffer[indexRead];
+
+	return byte;
+}
+
 int UART::GetCopyOfBuffer(char *s, int len) {
 	int value;
 	int bytes;
@@ -396,7 +449,6 @@ int UART::GetCopyOfBuffer(char *s, int len) {
 int UART::InByte(unsigned short timeout /* ms */) {
 	int byte;
 	while (RingBufferIsEmpty()) {
-		KeepGuiLive();
 		if (timeout) {
 			msSleep(1);
 			if (--timeout == 0)
@@ -407,7 +459,7 @@ int UART::InByte(unsigned short timeout /* ms */) {
 	return  (0x00ff & byte);
 }
 
-void  UART::OutByte(int  byte) {
+void  UART::OutByte(int byte) {
 	Tx((const char *) &byte, 1);
 }
 
@@ -434,7 +486,10 @@ UART::UART() {
 	indexWrite= 0;
 	indexRead = 0;
 	sprintf(message, NO_OPEN_PORT);
+
+	xmodemBuf= NULL;
 	isAlive = true;
+	isStarted = false;
 	instance = this;
 }
 
@@ -443,9 +498,14 @@ UART::~UART() {
 	ClosePortAndRemoveLockFile();
 	instance = NULL;
 	isAlive = false;
+	isStarted = false;
 	xmodemOn = false;
 	delete mutex;
 	mutex = 0;
+	if (xmodemBuf != NULL) {
+		free(xmodemBuf);
+		xmodemBuf= NULL;
+	}
 }
 
 void UART::SetSpeed(unsigned int s) {
@@ -491,9 +551,8 @@ int UART::Send(const char *string, int length) {
 	if (length == 0)
 		return 0;
 
-	if (length == -1) {
+	if (length == -1)
 		length = strlen(string);
-	}
 
 	return Tx(string, length);
 }
@@ -502,11 +561,16 @@ bool UART::OpenPort(const char *portName) {
 	portOpened = false;
 
 #ifdef WIN32
-	wchar_t tmpPortName[MAX_PORT_STR_SIZE+1];
-	mbstowcs(tmpPortName,portName,MAX_PORT_STR_SIZE);
+	char portWinName[MAX_PORT_STR_SIZE+1];
+	wchar_t wPortWinName[MAX_PORT_STR_SIZE+1];
+
+	sprintf(portWinName,"\\\\.\\%s",portName);
+	mbstowcs(wPortWinName,(const char*)portWinName, MAX_PORT_STR_SIZE);
 	// Open the serial port.
-	portHandle = CreateFile(tmpPortName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
-	if (portHandle != INVALID_HANDLE_VALUE)  portOpened = TRUE;
+	portHandle = CreateFile(wPortWinName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+
+	if (portHandle != INVALID_HANDLE_VALUE)
+		portOpened = true;
 #else
 	portFd = open(portName, O_RDWR | O_NOCTTY );
 
@@ -528,6 +592,7 @@ char *UART::GetMessage (void) {
 }
 
 void UART::Stop(void) {
+	isStarted = false;
 	ClosePortAndRemoveLockFile();
 	sprintf(message,NO_OPEN_PORT);
 }
@@ -535,8 +600,22 @@ void UART::Stop(void) {
 bool UART::Status(void) {
 
 #ifdef WIN32
-	reurn true;
+#if 0
+	DCB myDCB;
+
+	FillMemory(&myDCB , sizeof(myDCB), 0);
+	myDCB.DCBlength = sizeof(myDCB);
+
+	if (!GetCommState(portHandle,&myDCB))
+	    return false;
+	else
+		return true;
+#endif
+
+	return true;
+
 #else
+	/* It is so easy, using a serious O.S. */
 	 struct termios t;
 	 return !tcgetattr(portFd, &t);
 #endif
@@ -551,6 +630,8 @@ bool UART::Start(void) {
 #else
 	struct termios 	termios_p;
 #endif
+
+	isStarted = false;
 
 	ClosePort();
 	RemoveLockFile();
@@ -663,121 +744,128 @@ bool UART::Start(void) {
 	tcflush(portFd, TCOFLUSH);
 	tcflush(portFd, TCIFLUSH);
 
+	isStarted = true;
+
 	return true;
 #else
 
-	if (portHandle == INVALID_HANDLE_VALUE) return FALSE;
+	if (portHandle == INVALID_HANDLE_VALUE)
+		return false;
 
 	switch (portParity) {
-	case 1:
-		sprintf(message,"%s,O", message);
-		break;
-	case 2:
-		sprintf(message,"%s,E", message);
-		break;
-	default:
-		sprintf(message,"%s,N", message);
-		break;
+		case 1:
+			sprintf(message,"%s,O", message);
+			break;
+		case 2:
+			sprintf(message,"%s,E", message);
+			break;
+		default:
+			sprintf(message,"%s,N", message);
+			break;
 	}
 
 	switch (numStopBits) {
-	case 0:
-		StopBits = ONESTOPBIT;
-		sprintf(message,"%s,1", message);
-		break;
-	case 1:
-		/* Later maybe .... */
-		//StopBits = ONE5STOPBITS;
-		//sprintf(message,"%s,1.5", message);
-		StopBits = ONESTOPBIT;
-		sprintf(message,"%s,1", message);
-		break;
-	case 2:
-		StopBits = TWOSTOPBITS;
-		sprintf(message,"%s,2", message);
-		break;
+		case 0:
+			StopBits = ONESTOPBIT;
+			sprintf(message,"%s,1", message);
+			break;
+		case 1:
+			/* Later maybe .... */
+			//StopBits = ONE5STOPBITS;
+			//sprintf(message,"%s,1.5", message);
+			StopBits = ONESTOPBIT;
+			sprintf(message,"%s,1", message);
+			break;
+		case 2:
+			StopBits = TWOSTOPBITS;
+			sprintf(message,"%s,2", message);
+			break;
 	}
 
 	switch (portSpeed) {
-	case 110:
-		DCB_Baud_Rate = 110;
-		break;
-	case 300:
-		DCB_Baud_Rate = CBR_300;
-		break;
-	case 600:
-		DCB_Baud_Rate = CBR_600;
-		break;
-	case 1200:
-		DCB_Baud_Rate = CBR_1200;
-		break;
-	case 2400:
-		DCB_Baud_Rate = CBR_2400;
-		break;
-	case 4800:
-		DCB_Baud_Rate = CBR_4800;
-		break;
-	case 9600:
-		DCB_Baud_Rate = CBR_9600;
-		break;
-	case 19200:
-		DCB_Baud_Rate = CBR_19200;
-		break;
-	case 38400:
-		DCB_Baud_Rate = CBR_38400;
-		break;
-	case 57600:
-		DCB_Baud_Rate = CBR_57600;
-		break;
-	case 115200:
-		DCB_Baud_Rate = CBR_115200;
-		break;
-	default:
-		return INVALID_HANDLE_VALUE;
+		case 110:
+			DCB_Baud_Rate = 110;
+			break;
+		case 300:
+			DCB_Baud_Rate = CBR_300;
+			break;
+		case 600:
+			DCB_Baud_Rate = CBR_600;
+			break;
+		case 1200:
+			DCB_Baud_Rate = CBR_1200;
+			break;
+		case 2400:
+			DCB_Baud_Rate = CBR_2400;
+			break;
+		case 4800:
+			DCB_Baud_Rate = CBR_4800;
+			break;
+		case 9600:
+			DCB_Baud_Rate = CBR_9600;
+			break;
+		case 19200:
+			DCB_Baud_Rate = CBR_19200;
+			break;
+		case 38400:
+			DCB_Baud_Rate = CBR_38400;
+			break;
+		case 57600:
+			DCB_Baud_Rate = CBR_57600;
+			break;
+		case 115200:
+			DCB_Baud_Rate = CBR_115200;
+			break;
+		default:
+			return INVALID_HANDLE_VALUE;
 	}
 
+	FillMemory(&PortDCB, sizeof(PortDCB), 0);
+	PortDCB.DCBlength = sizeof(PortDCB);
 
 	//Get the default port setting information.
-	GetCommState(portHandle, &PortDCB);
+	if (!GetCommState(portHandle, &PortDCB)) {
+		ClosePort();
+		return false;
+	}
 
 	// Change the settings.
 	PortDCB.BaudRate 	= DCB_Baud_Rate;   // BAUD Rate
 	PortDCB.ByteSize 	= numBits;           // Number of bits/byte, 5-8
 	PortDCB.Parity 		= portParity;          // 0-4=no,odd,even,mark,space
 	PortDCB.StopBits	= StopBits;        // StopBits
-	PortDCB.fNull 		= 0;			   // Allow NULL Receive bytes
-	PortDCB.fParity = 0;
-	PortDCB.fOutxCtsFlow = FALSE;
-	PortDCB.fOutxDsrFlow = FALSE;
-	PortDCB.fDsrSensitivity = FALSE;
-
+	PortDCB.fAbortOnError = 0;
 
 	// Re-configure the port with the new DCB structure.
 	if (!SetCommState(portHandle, &PortDCB)) {
 		ClosePort();
-		return FALSE;
+		return false;
 	}
 
 	// Retrieve the time-out parameters for all read and write operations
 	// on the port.
-	GetCommTimeouts(portHandle, &CommTimeouts);
+	if (!GetCommTimeouts(portHandle, &CommTimeouts)) {
+		ClosePort();
+		return false;
+	}
 	memset(&CommTimeouts, 0x00, sizeof(CommTimeouts));
 	CommTimeouts.ReadIntervalTimeout = MAXDWORD;
-	CommTimeouts.ReadTotalTimeoutMultiplier = MAXDWORD;
-	CommTimeouts.ReadTotalTimeoutConstant = 100; /* wait 100ms before escape from Readfile() */
+	CommTimeouts.ReadTotalTimeoutMultiplier = 0;
+	CommTimeouts.ReadTotalTimeoutConstant = 0; /* wait 100ms before escape from Readfile() */
 	CommTimeouts.WriteTotalTimeoutConstant = 0;
 	CommTimeouts.WriteTotalTimeoutMultiplier = 0;
 
 	if (!SetCommTimeouts(portHandle, &CommTimeouts)) {
 		ClosePort();
-		return FALSE;
+		return false;
 	}
 
-	if (PurgeComm(portHandle, PURGE_TXCLEAR | PURGE_RXCLEAR) ==0) {
-		CloseHandle(portHandle);
-		return FALSE;
+	if (!PurgeComm(portHandle, PURGE_TXCLEAR | PURGE_RXCLEAR)) {
+		ClosePort();
+		return false;
 	}
 
+	isStarted = true;
 	return true;
 #endif
 }

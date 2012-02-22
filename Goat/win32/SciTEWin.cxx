@@ -1227,10 +1227,12 @@ void SciTEWin::Execute() {
 
 
 void SciTEWin::ExecuteOnConsole() {
+	char *mesg;
 	while (serial->IsAlive()) {
-		msSleep(100);
-		while (serial->IsConnected() && serial->IsAlive()) {
-			serial->ListenPort();
+		serial->ListenPort();
+		if((mesg = serial->GetMessage()) != 0) {
+			props.Set("SerialMsg",mesg);
+			UpdateStatusBar(true);
 		}
 	}
 }
@@ -3663,25 +3665,24 @@ DWORD WINAPI SciTEWin::DoItLater(LPVOID lparam)
 
 	if ((goat->props.Get("serial.autoconnect").size() == 0) ||
 					goat->props.GetInt ("serial.autoconnect") == 0) {
-		goat->props.Set("SerialMsg",goat->serial->GetStartMessage());
-		return FALSE;
+		return false;
 	}
 
 	if(goat->serial->Start()) {
 		if ((goat->props.Get("serial.tx1cr").size() != 0) &&
-						goat->props.GetInt ("serial.tx1cr") == 1) {
+				goat->props.GetInt ("serial.tx1cr") == 1) {
 			char lf = '\r';
 			goat->serial->Send(&lf,1); /* Send the first \r in order to get eLua prompt */
 		}
+		myDbgPrint("Serial Started");
 	}
-	goat->props.Set("SerialMsg",goat->serial->GetStartMessage());
 	if ((goat->props.Get("term.terminal").size() != 0) &&
 			goat->props.GetInt ("term.terminal") == 1) {
 		goat->term.setTermActiveOn();
 		goat->term.Clear();
 	}
 
-	return FALSE;
+	return false;
 }
 
 
