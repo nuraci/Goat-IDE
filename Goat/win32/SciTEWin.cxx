@@ -1346,6 +1346,14 @@ void SciTEWin::RestorePosition() {
 	    top != static_cast<int>(CW_USEDEFAULT) &&
 	    width != static_cast<int>(CW_USEDEFAULT) &&
 	    height != static_cast<int>(CW_USEDEFAULT)) {
+		splitVertical = propsSession.GetInt("split.vertical", 0);
+
+		if (splitVertical)
+			heightOutput = propsSession.GetInt("output.vertical.size", CW_USEDEFAULT);
+		else
+			heightOutput = propsSession.GetInt("output.horizontal.size", CW_USEDEFAULT);
+
+		previousHeightOutput = heightOutput;
 		winPlace.length = sizeof(winPlace);
 		winPlace.rcNormalPosition.left = left;
 		winPlace.rcNormalPosition.right = left + width;
