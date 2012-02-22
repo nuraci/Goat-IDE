@@ -324,7 +324,7 @@ int UART::ListenPort() {
 		return 0;
 
 	if (!Status() ) {
-		myDbgPrint("not connected...");
+		//myDbgPrint("not connected...");
 		//msSleep(1000);
 		//Start();
 		return 0;
@@ -334,7 +334,7 @@ int UART::ListenPort() {
 		return 0;
 
 	if (!ReadFile(portHandle, Buffer, BUFFER_RX, &bytes, NULL)) {
-		myDbgPrint("!ReadFile");
+		//myDbgPrint("!ReadFile");
 		return 0;
 	}
 

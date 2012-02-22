@@ -3682,7 +3682,6 @@ DWORD WINAPI SciTEWin::DoItLater(LPVOID lparam)
 			char lf = '\r';
 			goat->serial->Send(&lf,1); /* Send the first \r in order to get eLua prompt */
 		}
-		myDbgPrint("Serial Started");
 	}
 	if ((goat->props.Get("term.terminal").size() != 0) &&
 			goat->props.GetInt ("term.terminal") == 1) {
