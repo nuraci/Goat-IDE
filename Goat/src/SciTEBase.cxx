@@ -3573,6 +3573,7 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 				GroupSetCurrentTab(BOARD_CONSOLE_TAB);
 				serial->Send(cmd.c_str(),-1);
 				serial->XmodemTransmitFile(name.c_str());
+				WindowSetFocus(wConsole);
 			}
 		}
 		break;
@@ -3592,8 +3593,8 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 				} else {
 					cmd += ".lua\n";
 				}
-				serial->Send(cmd.c_str(),-1);
 				GroupSetCurrentTab(BOARD_CONSOLE_TAB);
+				serial->Send(cmd.c_str(),-1);
 				WindowSetFocus(wConsole);
 			}
 		}
@@ -3609,8 +3610,8 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 				if(props.GetWild("command.compile.", FileNameExt().AsUTF8().c_str()).size() != 0) {
 					name.replace(name.end()-strlen(".lua"),name.end(),str1);
 				}
-				serial->Send(cmd.c_str(),-1);
 				GroupSetCurrentTab(BOARD_CONSOLE_TAB);
+				serial->Send(cmd.c_str(),-1);
 				serial->XmodemTransmitFile(name.c_str());
 				WindowSetFocus(wConsole);
 			}
@@ -3661,18 +3662,16 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		}
 		break;
 	case IDM_OPEN_UART:
-		serial->Start();
-		{
+		if (serial->Start()) {
 			char *mesg;
 			if((mesg=serial->GetMessage()) != 0)
 				props.Set("SerialMsg",mesg);
+			CheckMenus();
+			term.Clear();
+			if ((props.Get("serial.tx1cr").size() != 0) && props.GetInt ("serial.tx1cr") == 1) {
+				serial->OutByte('\r'); /* Send the first \r in order to get eLua prompt */
+			}
 		}
-		CheckMenus();
-		term.Clear();
-		if ((props.Get("serial.tx1cr").size() != 0) && props.GetInt ("serial.tx1cr") == 1) {
-			serial->OutByte('\r'); /* Send the first \r in order to get eLua prompt */
-		}
-
 	    break;
 	case IDM_CLOSE_UART:
 		term.setTermActiveOff();
