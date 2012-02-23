@@ -30,6 +30,14 @@ some features:
 * In order to support the "dfu-programmer" the libusb1.0 library is required:
 * $ sudo apt-get install libusb-1.0
 
+## How to dounload and install it on Windows:
+
+* Download it from here: http://www.box.com/s/0hiq7bquvtrx7ktvprbn
+* Install it as a Windows application.
+* Try it and please report problems and suggestions.
+* ps. for avr32 users, it will install a directory "DRIVER"
+      which contains the Windows driver of the USB UART. 
+
 ## How to build and install it on Windows:
 
 * Install the "Mingw/Msys" packages:
