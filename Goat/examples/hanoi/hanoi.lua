@@ -173,7 +173,7 @@ local function totower( from, to )
   while y >= topline do
     d:move( 0, -1 )
     from:draw()
-    tmr.delay(  50000 )
+    tmr.delay( 0, 50000 )
     if term.getchar( term.NOWAIT ) ~= -1 then return true end
     y = y - 1
   end
@@ -185,7 +185,7 @@ local function totower( from, to )
   while x ~= nx do
     d:move( dir, 0 )
     d:draw()
-    tmr.delay(  50000 )
+    tmr.delay( 0, 50000 )
     if term.getchar( term.NOWAIT ) ~= -1 then return true end
     x = x + dir
   end
@@ -194,7 +194,7 @@ local function totower( from, to )
   repeat
     d:move( 0, 1 )
     to:draw()
-    tmr.delay(  50000 )
+    tmr.delay( 0, 50000 )
     if term.getchar( term.NOWAIT ) ~= -1 then return true end
     y = y + 1
   until y > ny
