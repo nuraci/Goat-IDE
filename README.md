@@ -13,7 +13,7 @@ some features:
 * http://www.youtube.com/watch?v=kUmujKemFjA
 * http://www.youtube.com/watch?v=Z3g2Hu_FC3Q
 
-## How to build and install it on Linux:
+## How to build and install on Linux:
 
 * Be sure we have the package "libgtk+2.0" installed: 
 * $ sudo apt-get install libgtk+2.0
@@ -30,17 +30,17 @@ some features:
 * In order to support the "dfu-programmer" the libusb1.0 library is required:
 * $ sudo apt-get install libusb-1.0
 
-## How to dounload and install it on Windows:
+## How to install on Windows:
 
 * Download it from here: http://www.box.com/s/0hiq7bquvtrx7ktvprbn
-* Install it as a Windows application.
+* Install as a Windows application.
 * Try it and please report problems and suggestions.
 * ps.  Goat will install a directory "usb-driver" here:
 *      "C:\Program Files (x86)\The Go @ IDE\usb-driver" which contains:
 *      a) the Windows driver of the USB UART (...\dfu-driver directory).
 *      b) the Windows driver of the DFU Programmer (...\uart-driver directory).
 
-## How to build and install it on Windows:
+## How to build and install on Windows:
 
 * Install the "Mingw/Msys" packages:
 *    http://sourceforge.net/projects/mingw/files/latest/download?source=files
