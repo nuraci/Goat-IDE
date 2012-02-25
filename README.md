@@ -35,8 +35,10 @@ some features:
 * Download it from here: http://www.box.com/s/0hiq7bquvtrx7ktvprbn
 * Install it as a Windows application.
 * Try it and please report problems and suggestions.
-* ps. for avr32 users, it will install a directory "DRIVER"
-      which contains the Windows driver of the USB UART. 
+* ps.  Goat will install a directory "usb-driver" here:
+*      "C:\Program Files (x86)\The Go @ IDE\usb-driver" which contains:
+*      a) the Windows driver of the USB UART (...\dfu-driver directory).
+*      b) the Windows driver of the DFU Programmer (...\uart-driver directory).
 
 ## How to build and install it on Windows:
 
@@ -62,7 +64,6 @@ some features:
 * $ cp /mingw/bin/libstdc++-6.dll /c/temp/nuccioraciti-Goat-IDE-xxxxxxx/Goat/bin/
 * Launch the Go@ editor:
 * Use the windows explorer, localise Goat.exe and double click on it.
-* Later, I will provide an installation program without needs of build.
 
 
 ## What it requires on the eLua side...
