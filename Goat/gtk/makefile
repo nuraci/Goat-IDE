@@ -51,7 +51,7 @@ INSTALL=install
 
 PROG_EXE = Goat 
 PROG	 = ../bin/$(PROG_EXE)
-DFU-P	 = ../bin/dfu-programmer-0-5-4
+DFU-P	 = ../bin/dfu-programmer
 
 all: $(PROG)
 
