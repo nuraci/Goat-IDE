@@ -3809,9 +3809,7 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		        (cmdID < importCmdID + importMax)) {
 			ImportMenu(cmdID - importCmdID);
 		} else if (cmdID >= IDM_TOOLS && cmdID < IDM_TOOLS + toolMax) {
-#ifdef GTK
-			gtk_notebook_set_current_page(GTK_NOTEBOOK(wGroupTab.GetID()),SYS_CONSOLE_TAB);
-#endif
+			GroupSetCurrentTab(SYS_CONSOLE_TAB);
 			WindowSetFocus(wOutput);
 			ToolsMenu(cmdID - IDM_TOOLS);
 		} else if (cmdID >= IDM_LANGUAGE && cmdID < IDM_LANGUAGE + 100) {
