@@ -162,6 +162,7 @@ install:
 	$(INSTALL) -m 777 ../examples/hello/*.lua $(examplesdir)/hello; 
 	$(INSTALL) -m 777 -d $(examplesdir)/http-led
 	$(INSTALL) -m 777 ../examples/http-led/*.lua $(examplesdir)/http-led; 
+	$(INSTALL) -m 777 ../examples/http-led/*.pht $(examplesdir)/http-led; 
 	$(INSTALL) -m 777 -d $(examplesdir)/info
 	$(INSTALL) -m 777 ../examples/info/*.lua $(examplesdir)/info; 
 	$(INSTALL) -m 777 -d $(examplesdir)/led
