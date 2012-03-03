@@ -152,10 +152,21 @@ install:
 		$(INSTALL) -m 644 $$files $(docdir); \
 	done
 
-	for files in ../examples/*/*;  \
-	do \
-		$(INSTALL) -m 777 $$files $(examplesdir); \
-	done
+	# Examples
+	$(INSTALL) -m 777 ../examples/README $(examplesdir); 
+	$(INSTALL) -m 777 -d $(examplesdir)/hangman
+	$(INSTALL) -m 777 ../examples/hangman/*.lua $(examplesdir)/hangman; 
+	$(INSTALL) -m 777 -d $(examplesdir)/hanoi
+	$(INSTALL) -m 777 ../examples/hanoi/*.lua $(examplesdir)/hanoi; 
+	$(INSTALL) -m 777 -d $(examplesdir)/hello
+	$(INSTALL) -m 777 ../examples/hello/*.lua $(examplesdir)/hello; 
+	$(INSTALL) -m 777 -d $(examplesdir)/http-led
+	$(INSTALL) -m 777 ../examples/http-led/*.lua $(examplesdir)/http-led; 
+	$(INSTALL) -m 777 -d $(examplesdir)/info
+	$(INSTALL) -m 777 ../examples/info/*.lua $(examplesdir)/info; 
+	$(INSTALL) -m 777 -d $(examplesdir)/led
+	$(INSTALL) -m 777 ../examples/led/*.lua $(examplesdir)/led; 
+
 
 ifdef gnomeprefix
 	$(INSTALL) -m 755 -d $(DESTDIR)$(datadir)/applications $(DESTDIR)$(pixmapdir)
