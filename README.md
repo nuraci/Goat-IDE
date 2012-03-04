@@ -1,13 +1,14 @@
-## Go @ IDE is an editor dedicated to the eLua World: http://www.eluaproject.net/
+## Go @ IDE is an editor dedicated to the embedded eLua World: http://www.eluaproject.net/
 
 some features:
 
 * Its editor (which is based on the wonderful library "scintilla" http://www.scintilla.org/), is lightweight and powerful.
-* It has additional features such as "syntax highlighting", "code folding" and "code completion" based on the eLua API.
-* It includes the capability to connect with the real hardware (through the serial or the USB port) obtaining the prompt of Elua inside it.
-* It's able to build the sources and also is able to send the built file on the Hardware (using the xmodem protocol). 
-* Also it supports some terminal commands (standard ansi/vt100), so it's able to play games like "hanoi" or "hungman".
-* Starting from now, an experimental support for the DFU bootloader programmer.
+* Has additional features such as "syntax highlighting", "code folding" and "code completion" based on the eLua API.
+* Includes the capability to connect with the real hardware (through the serial or the USB port) obtaining the prompt of Elua inside it.
+* It's able to send the .lua/.lc file on the Hardware (using the eLua xmodem protocol).
+* Supports some terminal commands (standard ansi/vt100), so it's able to play games like "hanoi" or "hungman" (using the eLua TERM capability).
+* Supports the FLASH (on the target) programming through the DFU boot loader (initially only for the avr32 architecure).
+* It's easily extensible through Lua scripts.
 
 ## Videos:
 * http://www.youtube.com/watch?v=kUmujKemFjA
@@ -25,6 +26,7 @@ some features:
 * $ cd $HOME/Goat-IDE
 * $ cd Goat/gtk
 * $ make all
+* $ sudo make uninstall (if isn't first installation)
 * $ sudo make install
 
 * In order to support the "dfu-programmer" the libusb1.0 library is required:
@@ -88,5 +90,5 @@ and if it is avaliable on our hardware:
 
 Enjoy with the "Go @ IDE" and thank you for testing, improving and leaving your feedback for it.
 
-<raciti.nuccio(AT)gmail.com> <Mizar32@http://www.simplemachines.it >
+raciti.nuccio(AT)gmail.com 
 
