@@ -297,5 +297,5 @@ def ReadMenuIDs(filename):
 
 f = Face.Face()
 f.ReadFromFile(srcRoot + "/scintilla/include/Scintilla.iface")
-menuIDs  = ReadMenuIDs(srcRoot + "/scite/src/SciTE.h")
-Regenerate(srcRoot + "/scite/src/IFaceTable.cxx", printIFaceTableCXXFile, [f, menuIDs])
+menuIDs  = ReadMenuIDs(srcRoot + "/Goat/src/Goat.h")
+Regenerate(srcRoot + "/Goat/src/IFaceTable.cxx", printIFaceTableCXXFile, [f, menuIDs])

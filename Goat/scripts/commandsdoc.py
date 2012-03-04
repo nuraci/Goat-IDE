@@ -7,6 +7,7 @@ import os, sys
 
 scintillaDirectory = os.path.join("..", "..", "scintilla", "include")
 sys.path.append(scintillaDirectory)
+print scintillaDirectory
 import Face
 
 def cell(s):
@@ -32,10 +33,10 @@ def faceFeatures(out):
 	out.write("</table>\n")
 
 def menuFeatures(out):
-	out.write("<h2>SciTE menu commands</h2>\n")
+	out.write("<h2>Goat menu commands</h2>\n")
 	out.write("<table>\n")
 	out.write("<thead>%s%s</thead>\n" % (cell("Command"), cell("Menu text")))
-	with open(os.path.join("..", "win32", "SciTERes.rc"), "rt") as f:
+	with open(os.path.join("..", "win32", "GoatRes.rc"), "rt") as f:
 		for l in f:
 			l = l.strip()
 			if l.startswith("MENUITEM") and "SEPARATOR" not in l:

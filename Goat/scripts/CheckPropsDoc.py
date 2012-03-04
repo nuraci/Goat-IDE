@@ -7,10 +7,11 @@ import os
 import string
 import stat
 
-srcRoot = "../../scite"
+srcRoot = "../../Goat"
 srcDir = os.path.join(srcRoot, "src")
-docFileName = os.path.join(srcRoot, "doc", "SciTEDoc.html")
-propsFileName = os.path.join(srcDir, "SciTEGlobal.properties")
+propsDir = os.path.join(srcRoot, "properties")
+docFileName = os.path.join(srcRoot, "docs/uk/", "props.html")
+propsFileName = os.path.join(propsDir, "GoatGlobal.properties")
 try:	# Old Python
 	identCharacters = "_*." + string.letters + string.digits
 except AttributeError:	# Python 3.x
@@ -176,7 +177,7 @@ for line in open(localeFileName):
 		line = line.strip().strip("=")
 		localeSet[line.lower()] = 1
 
-resourceFileName = srcRoot + "/win32/SciTERes.rc"
+resourceFileName = srcRoot + "/win32/GoatRes.rc"
 resourceSet = {}
 for line in open(resourceFileName):
 	line = line.strip()
