@@ -149,14 +149,14 @@ install:
 	$(INSTALL) -m 777 ../properties/script/GoatTicTacToe.lua $(propsdir)/script; 
 	
 	# Docs
-	$(INSTALL) -m 777 -d $(docsdir)/img $(docsdir)/it $(docsdir)/uk  
+	$(INSTALL) -m 777 -d $(docsdir)/img $(docsdir)/it $(docsdir)/en  
 	for files in ../docs/img/*;  \
 	do \
 		$(INSTALL) -m 644 $$files $(docsdir)/img; \
 	done
-	for files in ../docs/uk/*;  \
+	for files in ../docs/en/*;  \
 	do \
-		$(INSTALL) -m 644 $$files $(docsdir)/uk; \
+		$(INSTALL) -m 644 $$files $(docsdir)/en; \
 	done
 	for files in ../docs/it/*;  \
 	do \
