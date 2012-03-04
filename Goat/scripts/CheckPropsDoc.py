@@ -10,7 +10,7 @@ import stat
 srcRoot = "../../Goat"
 srcDir = os.path.join(srcRoot, "src")
 propsDir = os.path.join(srcRoot, "properties")
-docFileName = os.path.join(srcRoot, "docs/uk/", "props.html")
+docFileName = os.path.join(srcRoot, "docs/en/", "GoatDoc.html")
 propsFileName = os.path.join(propsDir, "GoatGlobal.properties")
 try:	# Old Python
 	identCharacters = "_*." + string.letters + string.digits
