@@ -139,7 +139,6 @@ install:
 	$(INSTALL) -m 777 ../properties/Embedded.properties $(propsdir); 
 	$(INSTALL) -m 777 ../properties/Goat.properties $(propsdir); 
 	$(INSTALL) -m 777 ../properties/GoatGlobal.properties $(propsdir); 
-	$(INSTALL) -m 777 ../properties/GoatUser.properties $(propsdir); 
 	$(INSTALL) -m 777 ../properties/locale.it.properties $(propsdir); 
 	$(INSTALL) -m 777 ../properties/others.properties $(propsdir); 
 	$(INSTALL) -m 777 ../properties/elua.api $(propsdir); 
