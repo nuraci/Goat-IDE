@@ -4,9 +4,10 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta name="generator" content="Bluefish 2.0.3" />
+    <meta name="generator" content="Bluefish 2.0.3" />
     <meta http-equiv="Content-Type" content="text/html" />
     <title>
-      SciTE
+      Goat
     </title>
 <style type="text/css">
         table {
@@ -55,133 +56,212 @@
  </style>
   </head>
   <body bgcolor="#FFFFFF" text="#000000">
-    <table bgcolor="#000000" width="100%" cellspacing="0" cellpadding="0" style="border:0px solid #FF0000" border="0"  summary="banner">
+       <table bgcolor="#000000" width="100%" cellspacing="0" cellpadding="0" style="border:0px solid #FF0000" border="0"  summary="banner">
       <tr>
-        <td>
-          <img src="SciTEIco.png" border="3" height="64" width="64" alt="Scintilla icon" />
-        </td>
-        <td>
-          <a href="index.html" style="color:white;text-decoration:none"><font size="5">
-          SciTE Documentation</font></a>
+        <td><font size="5" color="#FFFFFF">Following documentation is coming from SciTE</font>   
         </td>
       </tr>
     </table>
+     <h2>Goat Documentation</h2>
     <table class="header" width="100%" summary="header">
       <tr>
         <td class="headerlinks">
-	  <a href="SciTEFAQ.html">
+	  <a href="GoatFAQ.html">
           Frequently Asked Questions</a>&nbsp;&nbsp;
-	  <a href="SciTELua.html">
+	  <a href="GoatLua.html">
           Scripting</a>&nbsp;&nbsp;
-	  <a href="SciTERegEx.html">Regular Expressions</a>&nbsp;&nbsp;
+	  <a href="GoatRegEx.html">Regular Expressions</a>&nbsp;&nbsp;
         </td>
       </tr>
     </table>
+    <h3 id="First Run">
+       First Run
+    </h3>
+    <p>
+        After the first run, the user (you) has to set some 
+        <a href="#PropertiesFile" target="body"> properties </a>
+         in order to fully configure the IDE.<br />
+			My advice is use the menu "Options" | "Open User Options file" in order to populate
+			the "GoatUser.properties" file described <a href="#PropertiesFile" target="body">here</a>
+			<br />
+			Probably you need to indicate all "properties" you architecture needs.<br />
+			The first of all could be the Serial port your PC is using in order to connect the eLua console coming from the target.<br />
+			For Linux os (just an example, unfortunately you need to discover the exact name):<br />
+					
+	 <blockquote>
+        <code>
+        serial.port=/dev/ttyACM0
+	        </code>
+    </blockquote>        
+    For Windows os: (just an example, you need to discover the exact name) <br />
+					
+	 <blockquote>
+        <code>
+        serial.port=COM6
+	        </code>
+    </blockquote>        
+   <br />
+	Goat can handle the same file across O.S. using an environment variable, 
+	so your "User Options" file (in my example) could contains:
+    <br />     
+<blockquote>
+<code>
+if PLAT_WIN<br />
+&nbsp;&nbsp;&nbsp; # Windows USB serial port  <br />
+&nbsp;&nbsp;&nbsp; serial.port=COM6 <br />
+
+if PLAT_GTK <br />
+&nbsp;&nbsp;&nbsp # Linux first serial port on USB. <br />
+&nbsp;&nbsp;&nbsp serial.port=/dev/ttyACM0 <br />
+</code>
+</blockquote>        
+<br /> 
+ Now again about the serial port, do you want change some parameters?<br />
+ Following are standard serial parameters for avr32 boards...
+<br />
+<blockquote>
+<code>
+serial.speed=115200<br />
+serial.nbits=8<br />
+serial.nstop=1<br />
+serial.parity=0<br />
+</code>
+</blockquote>
+        
+<br />
+Do you want the serial connected on start?
+<br />
+<blockquote>
+<code>
+serial.autoconnect=1
+</blockquote>
+</code>
+
+<br />
+Do you prefer that Goat (after the Serial connection) sends a &laquo;cr&raquo; character in order to get the eLua prompt?
+<br />
+<blockquote>
+<code>
+serial.tx1cr=1<br />
+</code>
+</blockquote>
+   
+<br />
+Following is about the terminal capability.<br />
+<br />
+<blockquote>
+<code>
+term.columns=80 <br />
+term.lines=30 <br />
+</code>
+</blockquote>
+
+<br />
+Do you want the terminal emulation (mode terminal) active as default?<br />
+(otherwise from menu "Options" | "Mode Terminal")<br />
+<br />
+<blockquote>
+<code>
+term.terminal=0<br />
+</code>
+</blockquote>
+<br />
+Following is the path which Goat prepends in order to access the MMC card <br />
+(<strong>/semi</strong> is used for the ARM semihostin FS.<br />
+<br />
+<blockquote>
+<code>
+# elua.extfs=/semi/<br />
+elua.extfs=/mmc/<br />
+</code>
+</blockquote>
+
+<br />
+Following are some TARGET settings, useful subsequently to manage the Hardware<br />
+(here are some setting for Mizar32/EVK1100).<br /> 
+<br />
+<blockquote>
+<code>
+target.avr32=1<br />
+target.board=mizar32<br />
+target.cpu=at32uc3a0512<br />
+</code>
+</blockquote>
+
+<br />
+Following are commands related to the "dfu-programmer", please note that they will appear from menu "Tools" 
+when you have a .hex file open inside the editor and currently <strong>only</strong> for the target.avr=1 
+(Mizar32/EVK1100 boards).<br /> 
+<br />
+<blockquote>
+<code>
+if target.avr32 <br />
+&nbsp;&nbsp;&nbsp; command.name.0.*.hex=DFU Flash Erase<br />
+&nbsp;&nbsp;&nbsp; command.0.*.hex=$(Bindir)/dfu-programmer $(TargetCPU) erase --debug 40<br />
+&nbsp;&nbsp;&nbsp; command.name.1.*.hex=DFU Flash Write<br />
+&nbsp;&nbsp;&nbsp; command.1.*.hex=$(Bindir)/dfu-programmer $(TargetCPU) flash --debug 40 $(FileNameExt)<br />
+&nbsp;&nbsp;&nbsp; command.name.2.*.hex=DFU CPU Reset<br />
+&nbsp;&nbsp;&nbsp; command.2.*.hex=$(Bindir)/dfu-programmer $(TargetCPU) reset --debug 40<br />
+<br /> 
+</code>
+</blockquote>
+<br />  
+        
+    </p>    
+    
     <h3 id="StandardEditing">
        Standard Editing
     </h3>
     <p>
-        Text editing in SciTE works similarly to most Macintosh or Windows editors with the added
-        feature of automatic syntax styling. SciTE can hold multiple files in memory at one time but
+        Text editing in Goat works similarly to most Macintosh or Windows editors with the added
+        feature of automatic syntax styling. Goat can hold multiple files in memory at one time but
         only one file will be visible. Rectangular
-        blocks of text can be selected in SciTE by holding down the Alt key on Windows or the Ctrl
+        blocks of text can be selected in Goat by holding down the Alt key on Windows or the Ctrl
         key on GTK+ while dragging the mouse over the text. The modifier key used on GTK+
         can be changed with the rectangular.selection.modifier property.
     </p>
     <p>
-       There are two panes in SciTE, the editing pane and the output pane. The output pane is
-      located either to the right of the editing pane or below it. Initially it is of zero size, but
-      it can be made larger by dragging the divider between it and the editing pane. The Options |
-      Vertical Split command can be used to move the output pane beneath the editing pane.
+       There are three panes in Goat, the editing pane the "eLua Console" pane and the "System Console" pane.
+       The two "Console" panes are  located either to the right of the editing pane or below it.
+       Initially it is of zero size, but it can be made larger by dragging the divider between it and the editing pane.
+       The Options | "Vertical Split" command can be used to move the "Console" panes beneath the editing pane.
     </p>
     <p>
-       SciTE can perform commands to compile or run source files with the output from these
-      commands directed into the output pane.
+       Goat can perform commands to compile (optional for eLua) or run/send source files with the output from these
+      commands directed into the "System Console" pane.
     </p>
     <p>
-       For example, if <a href="http://www.python.org">Python</a> is installed on the machine, open
-      a new document, type:
+       For example, open a new document, type:
     </p>
     <blockquote>
 <kbd>
-print "Hi"
+print ("Hi")
 </kbd>
     </blockquote>
     <p>
        as that document's text.
     </p>
-    Save the document as printhi.py. <br />
-     The document should now appear coloured as SciTE is using the file's extension to decide upon
+    Save the document as printhi.lua. <br /><br />
+     The document should now appear coloured as Goat is using the file's extension to decide upon
     the syntax styling to use:
     <blockquote>
         <code>
                 <b><font color="#000080">print </font></b>
-                <i><font color="#800080">"hi"</font></i>
+                <i><font color="#800080">("hi")</font></i>
         </code>
     </blockquote>
-    Perform the Tools | Go command.<br />
-     The output window will be made visible if it is not already visible and will show:<br />
+    Perform the Tools | "Send & Run on Ram".<br />
+     The "eLua Console" window will be made visible if it is not already visible and will show:<br />
     <blockquote>
         <code>
-                <font color="#0000FF">&gt;python -u printhi.py</font><br />
-                hi<br />
-                <font color="#0000FF">&gt;Exit code: 0</font>
+eLua# recv<br />
+Waiting for file ... Cdone, got 13 bytes<br />
+Hi<br />
+eLua# <br />
         </code>
     </blockquote>
-    The first blue line is from SciTE showing the command it will use to run the program. The black
-    line is the output from running the Python program. The last blue line is from SciTE showing
-    that the program has finished and displaying its exit code. An exit code of zero indicates a
-    successful run. <br />
-
-    <p>
-       SciTE partially understands the error messages produced by Python, GCC, Visual C++, Borland
-      C++, PHP and other tools which use the same format as one of these. To see this, add a mistake to
-      the Python file by adding a second line to make the file:
-    </p>
-    <blockquote>
-        <code>
-        <span style="color:#000080;font-weight:bold;">print </span>
-        <span style="color:#800080;font-style:italic;">"hi"</span><br />
-        mistake
-        </code>
-    </blockquote>
-    <p>
-       Perform the Tools | Go command. The results should look like:
-    </p>
-    <blockquote>
-<pre>
-<span style="color:#0000FF">&gt;python -u printhi.py</span>
-hi
-Traceback (innermost last):
-  <span style="color:#FF0000">File "printhi.py", line 2, in ?</span>
-    mistake
-NameError: mistake
-<span style="color:#0000FF">&gt;Exit code: 1</span>
-</pre>
-    </blockquote>
-    <p>
-       While it is easy to see where the problem is in this simple case, when a file is larger the
-      Tools | Next Message command can be used to view each of the reported errors. Upon performing
-      Tools | Next Message, the first error message in the output pane is highlighted with a yellow
-      background, and an error indicator is displayed for the appropriate line in the editing pane.
-      The caret is moved to this line and the pane is scrolled if needed to show the line. SciTE
-      now looks like this:
-    </p>
-    <img src="PrintHi.png" alt="SciTE after running Python interpreter" />
-    <p>
-       SciTE understands both the file name and line number parts of error messages in most cases
-      so can open another file (such as a header file) if errors were caused by that file. This
-      feature may not work where the file name is complicated by containing spaces or ".."
-    </p>
-    <p>
-       If command execution has failed and is taking too long to complete then the Tools | Stop
-      Executing command can be used.
-    </p>
-    <h3 id="CommandSubsystem">
-       Command subsystem
-    </h3>
-    <p>
-    Tools can be executed in various modes by SciTE which are called "subsystems". Different
+        <p>
+    Tools can be executed in various modes by Goat which are called "subsystems". Different
     subsystems are supported on Windows and GTK+. The default subsystem is 0.
     </p>
     <table class="windowsonly" cellpadding="0" cellspacing="0" border="1" summary="Command line commands">
@@ -209,7 +289,7 @@ NameError: mistake
        Command line arguments
     </h3>
     <p>
-       Command line arguments to SciTE include file names, commands and properties.
+       Command line arguments to Goat include file names, commands and properties.
        Commands and properties are preceded by "-" and are differentiated by the use in
        commands of ':' as the first character that is not '.' or alphabetic.
        Properties use the syntax used in property set files and override any
@@ -218,7 +298,7 @@ NameError: mistake
        placed around the whole argument, not just around a file name, so "-open:x y.txt" works but
        -open:"x y.txt" doesn't.
        On Linux, the standard shell quoting is available.
-       The "-p" argument causes SciTE to print the file and then exit.
+       The "-p" argument causes Goat to print the file and then exit.
     </p>
     <p>
 	For <span class="windowsonly">Windows</span>:<br />
@@ -234,14 +314,14 @@ NameError: mistake
     <div>
        For example,</div>
        <div class="example">
-       SciTE "-font.base=font:MS Gothic,size:11" -save.recent ScintillaGTK.cxx
+       Goat "-font.base=font:MS Gothic,size:11" -save.recent ScintillaGTK.cxx
        </div>
-       <div>starts SciTE, opens ScintillaGTK.cxx, loads the recent file list, and uses
+       <div>starts Goat, opens ScintillaGTK.cxx, loads the recent file list, and uses
        11 point MS Gothic as the base font.<br />
        A group of properties can be saved as a property set file (with the extension
        ".properties") and the import command used on the command line:</div>
        <div class="example">
-       SciTE "-import c:\os\web_work" SciTEDoc.html
+       Goat "-import c:\os\web_work" GoatDoc.html
        </div>
        <p>
        A few commands are currently available although this will expand in the future.
@@ -279,12 +359,12 @@ NameError: mistake
        </table>
        The following opens /big/icon.txt:<br />
        <div class="example">
-       SciTE -open:/big/icon.txt
+       Goat -open:/big/icon.txt
        </div>
-       On Windows, the following opens C:\Program Files\SciTE\SciTEDoc.html
+       On Windows, the following opens C:\Program Files\Goat\GoatDoc.html
        and goes to the 123rd line:<br />
        <div class="example">
-       SciTE "-open:C:\\Program Files\\SciTE\\SciTEDoc.html" -goto:123
+       Goat "-open:C:\\Program Files\\Goat\\GoatDoc.html" -goto:123
        </div>
     <p>
         Command line arguments are evaluated left to right in two phases because
@@ -295,7 +375,7 @@ NameError: mistake
     </p>
     <p>
         So, if you need to perform e.g. a find: or a goto: command on a file, you must put
-        the command after the filename, to allow SciTE to open the file before performing the command.
+        the command after the filename, to allow Goat to open the file before performing the command.
     </p>
 	<p>
 	For <span class="windowsonly">Windows</span>:<br />
@@ -312,7 +392,7 @@ NameError: mistake
        Buffers
     </h3>
     <p>
-       SciTE may be configured to use between 1 and 100 buffers each containing a
+       Goat may be configured to use between 1 and 100 buffers each containing a
        file. The default is 1 and this effectively turns off buffers. With more than one buffer,
        the Buffers menu can be used to switch between buffers, either by selecting the
        file name or using the Previous (F6) and Next (Shift+F6) commands.
@@ -338,7 +418,7 @@ NameError: mistake
      </p>
      <p>
         Use File | Load Session and File | Save Session to load/save sessions.
-        You can turn on/off "last session autoloading" using SciTE properties
+        You can turn on/off "last session autoloading" using Goat properties
         variable "save.session".
      </p>
      <p>
@@ -351,7 +431,7 @@ NameError: mistake
      </p>
      <p>
         Opening a specific file from command line overrides "save.session"
-        variable state. When you start SciTE loading a specific file from
+        variable state. When you start Goat loading a specific file from
         command line last session will not restore even if "save.session"
         variable is set to "1". This makes "save.session" safe to use - you
         will never open a couple of files when you are trying to open just
@@ -362,108 +442,6 @@ NameError: mistake
         and folding states of the currently opened buffers are saved in session
         files and restored when sessions are loaded.
      </p>
-    <h3 id="Languages">
-       Languages understood by SciTE
-    </h3>
-    <p>
-       SciTE currently is able to syntax style these languages (* denotes
-       support for folding):
-    </p>
-    <ul>
-        <li>Abaqus*</li>
-        <li>Ada</li>
-        <li>ANS.1 MIB definition files*</li>
-        <li>APDL</li>
-        <li>Assembler (NASM, MASM)</li>
-        <li>Asymptote*</li>
-        <li>AutoIt*</li>
-        <li>Avenue*</li>
-        <li>Batch files (MS-DOS)</li>
-        <li>Baan*</li>
-        <li>Bash*</li>
-        <li>BlitzBasic*</li>
-        <li>Bullant*</li>
-        <li>C/C++/C#*</li>
-        <li>Clarion*</li>
-        <li>cmake*</li>
-        <li>conf (Apache)*</li>
-        <li>CSound*</li>
-        <li>CSS*</li>
-        <li>D</li>
-        <li>diff files*</li>
-        <li>E-Script*</li>
-        <li>Eiffel*</li>
-        <li>Erlang*</li>
-        <li>Flagship (Clipper / XBase)*</li>
-        <li>Flash (ActionScript)*</li>
-        <li>Fortran*</li>
-        <li>Forth*</li>
-        <li>GAP*</li>
-        <li>Gettext</li>
-        <li>Haskell</li>
-        <li>HTML*</li>
-        <li>HTML with embedded JavaScript, VBScript, PHP and ASP*</li>
-        <li>Gui4Cli*</li>
-        <li>IDL - both MSIDL and XPIDL*</li>
-        <li>INI, properties* and similar</li>
-        <li>InnoSetup*</li>
-        <li>Java*</li>
-        <li>JavaScript*</li>
-        <li>LISP*</li>
-        <li>LOT*</li>
-        <li>Lout*</li>
-        <li>Lua*</li>
-        <li>Make</li>
-        <li>Matlab*</li>
-        <li>Metapost*</li>
-        <li>MMIXAL</li>
-        <li>MSSQL</li>
-        <li>nnCron</li>
-        <li>NSIS*</li>
-        <li>Objective Caml*</li>
-        <li>Opal</li>
-        <li>Octave*</li>
-        <li>Pascal/Delphi*</li>
-        <li>Perl, most of it except for some ambiguous cases*</li>
-        <li>PL/M*</li>
-        <li>Progress*</li>
-        <li>PostScript*</li>
-        <li>POV-Ray*</li>
-        <li>PowerBasic*</li>
-        <li>PowerShell*</li>
-        <li>PureBasic*</li>
-        <li>Python*</li>
-        <li>R*</li>
-        <li>Rebol*</li>
-        <li>Ruby*</li>
-        <li>Scheme*</li>
-        <li>scriptol*</li>
-        <li>Specman E*</li>
-        <li>Spice</li>
-        <li>Smalltalk</li>
-        <li>SQL and PLSQL</li>
-        <li>TADS3*</li>
-        <li>TeX and LaTeX</li>
-        <li>Tcl/Tk*</li>
-        <li>VB and VBScript*</li>
-        <li>Verilog*</li>
-        <li>VHDL*</li>
-        <li>XML*</li>
-        <li>YAML*</li>
-    </ul>
-    <p>
-       Running and building commands for some of these languages have been set up but should be
-      checked as they will have to be modified to work for many people.
-    </p>
-    <p>
-      To keep menus to a reasonable length some languages are included but have been commented
-      out in global options. These should be enabled by removing the comment character '#'.
-    </p>
-    <p>
-      Language settings are determined from the file extension but this can be changed
-      by selecting another language from the Language menu. The language menu can be
-      changed with the menu.language property.
-    </p>
     <h3 id="FindReplace">
        Find and Replace
     </h3>
@@ -474,7 +452,7 @@ NameError: mistake
        They are specified with the find.use.strip and replace.use.strip properties.
     </p>
     <p>
-       SciTE has options to allow searching for words, regular expressions,
+       Goat has options to allow searching for words, regular expressions,
        matching case, in the reverse direction, wrapping around the end of the
        document.
        C style backslash escapes which are listed in the command line
@@ -486,8 +464,8 @@ NameError: mistake
        Regular expressions will not match across a line end.
     </p>
     <p>
-       SciTE supports
-       <a href="SciTERegEx.html">basic regular expressions</a>
+       Goat supports
+       <a href="GoatRegEx.html">basic regular expressions</a>
        with tagging.
     </p>
     <p>
@@ -498,7 +476,7 @@ NameError: mistake
        Keyboard commands
     </h3>
     <p>
-       Keyboard commands in SciTE mostly follow common Windows and GTK+ conventions.
+       Keyboard commands in Goat mostly follow common Windows and GTK+ conventions.
        All movement keys (arrows, page up/down, home and end)
        allow to extend or reduce a stream selection when holding the Shift key,
        and a rectangular selection when holding the Shift and Alt keys.
@@ -671,8 +649,8 @@ NameError: mistake
        Folding
     </h3>
     <p>
-       SciTE supports folding for many languages (see the list of languages
-       understood by SciTE for more information.) Fold points are based upon
+       Goat supports folding for many languages (see the list of languages
+       understood by Goat for more information.) Fold points are based upon
        indentation for Python and on counting braces for the other languages.
     </p>
 
@@ -712,18 +690,18 @@ NameError: mistake
        Properties file
     </h3>
     <p>
-       Much of SciTE's behaviour can be changed by editing the properties files.
+       Much of Goat's behaviour can be changed by editing the properties files.
     </p>
     <p>
        There are four properties files used:</p>
        <ul>
-       <li>Local properties file called "SciTE.properties" which may be
+       <li>Local properties file called "Goat.properties" which may be
        present in the same directory as the file being edited.</li>
-       <li>Directory properties file called "SciTEDirectory.properties" which may be
+       <li>Directory properties file called "GoatDirectory.properties" which may be
        present in the same or in a parent directory as the file being edited.</li>
-       <li>User properties file called "SciTEUser.properties" on Windows
-       and ".SciTEUser.properties" on GTK+</li>
-       <li>Global properties file called "SciTEGlobal.properties"</li>
+       <li>User properties file called "GoatUser.properties" on Windows
+       and "GoatUser.properties" on GTK+</li>
+       <li>Global properties file called "GoatGlobal.properties"</li>
        </ul>
     <p>
       Settings in the local properties file override those in the directory properties file
@@ -736,17 +714,17 @@ NameError: mistake
       compile, build commands should work in the same manner in subdirectories of a project. The
       benefit is that local properties files in subdirectories can be replaced by one properties file
       which is located at the root of the project.
-      The evalution of the directory properties file is disabled by default and must be enabled by
+      The evaluation of the directory properties file is disabled by default and must be enabled by
       setting the variable properties.directory.enable to 1 in the user or global properties file.
     </p>
     <p>
       The user properties file is intended for customisation by the user,
-      leaving the global properties file to contain the default options distributed with SciTE.
+      leaving the global properties file to contain the default options distributed with Goat.
       The main use of the local properties files is to change the effects of the
       Compile, Build and Go commands for the files in a directory. For example, I use the javac
-      compiler from the Java Development Kit for most work, so SciTEGlobal.properties sets the
+      compiler from the Java Development Kit for most work, so GoatGlobal.properties sets the
       command for compiling .java files to "javac". If I want to use the jvc compiler for the files
-      in one directory, then the SciTE.properties file in that directory contains an entry setting
+      in one directory, then the Goat.properties file in that directory contains an entry setting
       the command to "jvc".
     </p>
     <p>
@@ -755,8 +733,8 @@ NameError: mistake
       USERPROFILE environment variable, or in the directory of the executable if
       USERPROFILE is not set.
       For GTK+ the user properties file is found in the user's home directory and the global
-      properties in a directory set at build time - normally /usr/share/scite.
-      If the "SciTE_HOME" environment variable is set on either Windows or GTK+ then it is where
+      properties in a directory set at build time - normally /usr/share/Goat.
+      If the "Goat_HOME" environment variable is set on either Windows or GTK+ then it is where
       both the global and user properties files are found.
     </p>
     <p>
@@ -796,9 +774,9 @@ NameError: mistake
                <tr><td>SelectionEndColumn</td><td>column where selection ends</td></tr>
                <tr><td>SelectionEndLine</td><td>line where selection ends</td></tr>
                <tr><td>CurrentMessage</td><td>most recently selected output pane message</td></tr>
-               <tr><td>SciteDefaultHome</td><td>directory in which the Global Options file is found</td></tr>
-               <tr><td>SciteUserHome</td><td>directory in which the User Options file is found</td></tr>
-               <tr><td>SciteDirectoryHome</td><td>directory in which the Directory Options file is found</td></tr>
+               <tr><td>GoatDefaultHome</td><td>directory in which the Global Options file is found</td></tr>
+               <tr><td>GoatUserHome</td><td>directory in which the User Options file is found</td></tr>
+               <tr><td>GoatDirectoryHome</td><td>directory in which the Directory Options file is found</td></tr>
                <tr><td>APIPath</td><td>list of full paths of API files from api.<i>filepattern</i></td></tr>
                <tr><td>AbbrevPath</td><td>full path of abbreviations file</td></tr>
         </table>
@@ -836,8 +814,8 @@ NameError: mistake
        inline at that point. The imported properties file
        must be in the same directory as the current file and a properties
        extension is assumed. Therefore a "import Lua" statement in
-       c:\os\scite\bin\SciTEGlobal.properties will import
-       c:\os\scite\bin\Lua.properties.
+       c:\os\Goat\bin\GoatGlobal.properties will import
+       c:\os\Goat\bin\Lua.properties.
     </p>
     <p>
        All of the properties files in a directory can be imported with "import *".
@@ -861,7 +839,7 @@ NameError: mistake
        Command parameters and prompting
     </h3>
     <p>
-      SciTE has 4 properties $(1) .. $(4) which can be used to run commands with
+      Goat has 4 properties $(1) .. $(4) which can be used to run commands with
       changeable parameters. To set the parameter values, use the View | Parameters
       command to view the modeless Parameters dialog which shows the current values
       of these parameters and allows setting new values. The accelerator keys for the main
@@ -875,7 +853,7 @@ NameError: mistake
        Encodings
     </h3>
     <p>
-      SciTE will automatically detect the encoding scheme used for Unicode files that
+      Goat will automatically detect the encoding scheme used for Unicode files that
       start with a Byte Order Mark (BOM).
       The UTF-8 and UTF-16 encodings are recognised including both Little Endian and
       Big Endian variants of UTF-16.
@@ -919,7 +897,7 @@ NameError: mistake
           position.tile
         </td>
         <td>
-          If there is another copy of SciTE open, set the initial window position to be
+          If there is another copy of Goat open, set the initial window position to be
           with the left side at position.left + position.width so that most of the time
           you can see both copies at once without overlap.
           Works nicely if position.left set to 0 and position.width set to half of the
@@ -935,7 +913,7 @@ NameError: mistake
         Values outside this range are clamped to be within the range.
         The default is 1 which turns off UI features concerned with buffers.<br />
         This value is read only once, early in the startup process and only from the
-        global properties files. So after changing it, restart SciTE to see the effect.
+        global properties files. So after changing it, restart Goat to see the effect.
         </td>
       </tr>
       <tr>
@@ -954,7 +932,7 @@ NameError: mistake
            are.you.sure.for.build
         </td>
         <td>
-          The classic GUI question. Normally, when SciTE is about to close a file which has unsaved
+          The classic GUI question. Normally, when Goat is about to close a file which has unsaved
           edits it asks this annoying question. To turn off the question, set are.you.sure to 0 and
           files will be automatically saved without bothering the user. To abandon edits to a file
           use the New command. New always asks "Are you sure?" giving an opportunity to not save
@@ -969,7 +947,7 @@ NameError: mistake
            save.all.for.build
         </td>
         <td>
-          SciTE normally saves the current buffer when performing a Compile, Build, or Go
+          Goat normally saves the current buffer when performing a Compile, Build, or Go
 	  command. To save all buffers set save.all.for.build=1
         </td>
       </tr>
@@ -979,7 +957,7 @@ NameError: mistake
         view.indentation.whitespace
         </td>
         <td>
-          Setting view.whitespace to 1 makes SciTE start up with whitespace visible.<br />
+          Setting view.whitespace to 1 makes Goat start up with whitespace visible.<br />
           Setting view.indentation.whitespace to 0 hides visible whitespace inside indentation.
         </td>
       </tr>
@@ -1015,7 +993,7 @@ NameError: mistake
           view.eol
         </td>
         <td>
-          Setting this to 1 makes SciTE display the characters that make up line ends. This looks
+          Setting this to 1 makes Goat display the characters that make up line ends. This looks
           similar to (CR), (LF), or (CR)(LF). This is useful when using files created on another
           operating system with software that is picky about line ends.
         </td>
@@ -1060,7 +1038,7 @@ NameError: mistake
           margin.width
         </td>
         <td>
-          Setting this to a number makes SciTE display a selection margin to the left of the text.
+          Setting this to a number makes Goat display a selection margin to the left of the text.
           The value is the number of pixels wide the selection margin should be. Line markers are
           displayed in the selection margin area.
         </td>
@@ -1080,7 +1058,7 @@ NameError: mistake
           minimize.to.tray
         </td>
         <td>
-        Setting this to 1 minimizes SciTE to the system tray rather than to the task bar.
+        Setting this to 1 minimizes Goat to the system tray rather than to the task bar.
         </td>
       </tr>
       <tr>
@@ -1089,7 +1067,7 @@ NameError: mistake
           line.margin.width
         </td>
         <td>
-          SciTE is able to display a column of line numbers to the left of the selection
+          Goat is able to display a column of line numbers to the left of the selection
           margin.  Setting line.margin.visible to 1 makes this column visible at startup.
           The line.margin.width property controls how much space is reserved for the line
           numbers, in terms of the number of digits that can be displayed.  To specify that
@@ -1143,8 +1121,8 @@ NameError: mistake
           toolbar.usestockicons
         </td>
         <td>
-          SciTE has a built-in icon set for the toolbar, setting this to 1 makes
-	SciTE more integrated in the GNOME desktop by using the icons
+          Goat has a built-in icon set for the toolbar, setting this to 1 makes
+	Goat more integrated in the GNOME desktop by using the icons
 	provided by the current theme used in GNOME.
         </td>
       </tr>
@@ -1200,7 +1178,7 @@ NameError: mistake
           buffered.draw
         </td>
         <td>
-          Setting this to 0 rather than the default 1 makes SciTE draw output directly to the
+          Setting this to 0 rather than the default 1 makes Goat draw output directly to the
           screen rather than into a buffer bitmap first and then to the screen. Buffered drawing
           flickers less but is slower.
         </td>
@@ -1237,10 +1215,10 @@ NameError: mistake
            save.on.deactivate
         </td>
         <td>
-          The load.on.activate property causes SciTE to check whether the current file has been
+          The load.on.activate property causes Goat to check whether the current file has been
           updated by another process whenever it is activated. This is useful when another editor
-          such as a WYSIWYG HTML editor, is being used in conjunction with SciTE.<br />
-           The save.on.deactivate property causes SciTE to save the file whenever the SciTE
+          such as a WYSIWYG HTML editor, is being used in conjunction with Goat.<br />
+           The save.on.deactivate property causes Goat to save the file whenever the Goat
           application loses focus. This is useful when developing web pages and you want to often
           check the appearance of the page in a browser.
         </td>
@@ -1250,9 +1228,9 @@ NameError: mistake
           are.you.sure.on.reload
         </td>
         <td>
-          When both this and load.on.activate are set to 1, SciTE will ask if you really want to
+          When both this and load.on.activate are set to 1, Goat will ask if you really want to
           reload the modified file, giving you the chance to keep the file as it is. By default this
-          property is disabled, causing SciTE to reload the file without bothering you.
+          property is disabled, causing Goat to reload the file without bothering you.
         </td>
       </tr>
       <tr>
@@ -1269,10 +1247,10 @@ NameError: mistake
            check.if.already.open
         </td>
         <td>
-	This option allows opening files in an existing instance of SciTE rather than
+	This option allows opening files in an existing instance of Goat rather than
 	always opening a new instance.
-	When this option is set and SciTE is started, it checks to see if
-	there are any other instances of SciTE open. If there is, another
+	When this option is set and Goat is started, it checks to see if
+	there are any other instances of Goat open. If there is, another
 	instance is asked to open the file and become active and the new
 	instance exits.
 	On Windows, the instance with the Options | Open Files Here
@@ -1298,7 +1276,7 @@ NameError: mistake
           This setting controls whether files are opened and saved without blocking the user interface
 	while they are being read or written.
 	Files larger than the given size in bytes will be read or written in the background while
-	smaller files will be read or written directly and SciTE will not respond until the file access is completed.
+	smaller files will be read or written directly and Goat will not respond until the file access is completed.
 	The default value is -1 allows background processing for all files.
 	For saving, the size used is the in-memory size in bytes which will differ from the on-disk size
 	when the UTF-16 encoding is used.
@@ -1309,11 +1287,11 @@ NameError: mistake
           temp.files.sync.load
         </td>
         <td>
-          Files dropped on SciTE on Windows are normally opened asynchronously
+          Files dropped on Goat on Windows are normally opened asynchronously
 	as there may be a long list. However, files dragged from some applications
 	such as 7-Zip may only exist for a moment in the temporary directory and
 	be deleted once the drop has occurred.<br />
-	Setting this to 1 makes SciTE open dropped files in the temporary directory
+	Setting this to 1 makes Goat open dropped files in the temporary directory
 	immediately.
         </td>
       </tr>
@@ -1322,9 +1300,9 @@ NameError: mistake
            quit.on.close.last
         </td>
         <td>
-        If this option is set, SciTE will close when its last buffer has been
+        If this option is set, Goat will close when its last buffer has been
         closed, e.g. with File/Close.  (By default, if this option is not set,
-        SciTE will remain open and will create a new blank document when its
+        Goat will remain open and will create a new blank document when its
         last buffer is closed.)
         </td>
       </tr>
@@ -1360,7 +1338,7 @@ NameError: mistake
         Windows/Start key on Windows keyboards or the Command key on Mac keyboards.
         <br />
         Since the Alt key is often used by window managers to move windows, this will need to
-        be configured off to use the combination in SciTE. This can be done for Metacity using
+        be configured off to use the combination in Goat. This can be done for Metacity using
         gconf-editor to modify the /apps/metacity/general/mouse_button_modifier. A valid value here
         is &lt;Super&gt;.
         </td>
@@ -1607,7 +1585,7 @@ NameError: mistake
           the matching source lines, this option selects the line where the error occurs.
           Most useful if the error message contains the column of error too as the selection will
           start at the column of the error. The error message must contain the column and must be
-          understood by SciTE (currently only supported for HTML Tidy). The tab size assumed by
+          understood by Goat (currently only supported for HTML Tidy). The tab size assumed by
           the external tool must match the tab size of your source file for correct column reporting.
         </td>
        </tr>
@@ -1666,7 +1644,7 @@ NameError: mistake
           Loads an abbreviations file for a particular language overriding the default abbreviations file.
           For example,
          <div class="example">
-                abbreviations.*.c=$(SciteUserHome)/c_abbrev.properties<br />
+                abbreviations.*.c=$(GoatUserHome)/c_abbrev.properties<br />
          </div>
         </td>
       </tr>
@@ -2032,7 +2010,7 @@ NameError: mistake
 	</tr>
 	<tr>
 	<td>lexer.props.allow.initial.spaces</td>
-	<td>For properties files, set to 0 to style all lines that start with whitespace in the default style. This is not suitable for SciTE .properties files which use indentation for flow control but can be used for RFC2822 text where indentation is used for continuation lines.</td>
+	<td>For properties files, set to 0 to style all lines that start with whitespace in the default style. This is not suitable for Goat .properties files which use indentation for flow control but can be used for RFC2822 text where indentation is used for continuation lines.</td>
 	</tr>
 	<tr>
 	<td>lexer.python.keywords2.no.sub.identifiers</td>
@@ -2089,7 +2067,7 @@ NameError: mistake
         This is a '|' delimited list of keys and the commands they produce.
         The commands are either <a href="CommandValues.html">string or numeric IDs</a>.
         Numeric IDs above 2000 are Scintilla commands and are sent to the focussed pane.
-        Named IDs and numeric IDs below 2000 are SciTE menu commands.
+        Named IDs and numeric IDs below 2000 are Goat menu commands.
         The modifiers are Ctrl, Shift, and Alt and the named keys are Left,
         Right, Up, Down, Insert, End, Home, Enter, Space, Tab, KeypadPlus, KeypadMinus,
         KeypadMultiply, KeypadDivide, Escape, Delete, PageUp, PageDown, Slash,
@@ -2145,7 +2123,7 @@ Prev File|IDM_PREVFILE|<br/>
           If split.vertical is set to 1 then the output pane is to the right of the editing pane,
         if set to 0 then the output pane is below the editing pane.
         The output.*.size settings determine the initial size of the output pane.
-        If output.initial.hide is 1, then the output pane is hidden when SciTE first
+        If output.initial.hide is 1, then the output pane is hidden when Goat first
         starts up even when output.*.size is set; otherwise the output pane is shown at
         startup.
         </td>
@@ -2291,7 +2269,7 @@ Prev File|IDM_PREVFILE|<br/>
           This is a complex expression used for determining the file types that will be available in
           the open file dialog. For each type of file, there is some explanatory text, a '|'
           character, some file patterns, and another '|' character. In the distributed
-          SciTEGlobal.properties file, the line continuation character '\', is used to spread these
+          GoatGlobal.properties file, the line continuation character '\', is used to spread these
           items out, one per line. These file types appear in the "Files of type:" pull down. The
           first item is the default, so you may wish to change the first item to include the file
           types you commonly open.<br />
@@ -2312,7 +2290,7 @@ Prev File|IDM_PREVFILE|<br/>
           max.file.size
         </td>
         <td>
-        To avoid accidentally loading huge files on slow media, or just to ensure SciTE is used
+        To avoid accidentally loading huge files on slow media, or just to ensure Goat is used
         only to edit human readable code, the user can set the max.file.size property to specify
         a limit to file loading.
         If unset or set to 0, there is no limit.
@@ -2348,18 +2326,18 @@ Prev File|IDM_PREVFILE|<br/>
         </td>
         <td>
         If you set save.session, the list of currently opened buffers will be saved on exit
-        in a session file. When you start SciTE next time (without specifying a file name
+        in a session file. When you start Goat next time (without specifying a file name
         on the command line) the last session will be restored automatically.<br />
-        For GTK+, the file is called ".SciTE.session" and is located in the directory
-        given by the SciTE_HOME environment variable and if that is not set, the value
+        For GTK+, the file is called ".Goat.session" and is located in the directory
+        given by the Goat_HOME environment variable and if that is not set, the value
         of the HOME environment variable and if that is not set, the top level directory.
-        For Windows, the file is called "SciTE.session" and is located in the directory
-        given by the SciTE_HOME environment variable and if that is not set, the value
+        For Windows, the file is called "Goat.session" and is located in the directory
+        given by the Goat_HOME environment variable and if that is not set, the value
         of the USERPROFILE environment variable and if that is not set, the directory
-        of the SciTE executable.<br />
+        of the Goat executable.<br />
         Setting save.recent causes the most recently used files list to be saved on
         exit in the session file and read at start up.<br />
-        Setting save.position causes the SciTE window position on the desktop to be
+        Setting save.position causes the Goat window position on the desktop to be
         saved on exit in the session file and restored at start up.
         </td>
       </tr>
@@ -2470,7 +2448,7 @@ Prev File|IDM_PREVFILE|<br/>
           Find in Files dialog.<br />
           There are some scripts that implement this feature in Perl better than grep does
           itself
-          <a href="http://jenda.krynicky.cz/#SciteFind">here</a> and
+          <a href="http://jenda.krynicky.cz/#GoatFind">here</a> and
           <a href="http://www.forusers.com/forme/finder.zip">here</a>.
           This command line works with Cygwin on Windows, with modifications to suit
           the Cygwin installation directory:<br />
@@ -2483,7 +2461,7 @@ c:\cygwin\bin\xargs -0 fgrep -G -n "$(find.what)"
           its standard input stream to avoid problems with quote interpretation.
           To do this, specify find.input to be the search string, $(find.what).
           <br />
-          If find.command is empty then SciTE's own search code is used. This only does a
+          If find.command is empty then Goat's own search code is used. This only does a
 	simple search without regular expressions and is faster than running an external program.
         </td>
       </tr>
@@ -2508,7 +2486,7 @@ c:\cygwin\bin\xargs -0 fgrep -G -n "$(find.what)"
         </td>
         <td>
 	If find.in.dot is 1 then Find in Files searches in directories that start with '.'.
-	The default behaviour is to prevent SciTE finding matches in the unmodified versions of
+	The default behaviour is to prevent Goat finding matches in the unmodified versions of
 	files kept by Subversion in .svn subdirectories.
         </td>
       </tr>
@@ -2682,12 +2660,12 @@ imports.include=fortran lisp
           lexer.<i>filepattern</i>
         </td>
         <td>
-          A lexer splits a file up into syntactic pieces. SciTE can then display these pieces in
-          different visual styles. Many lexers are included in SciTE for popular
+          A lexer splits a file up into syntactic pieces. Goat can then display these pieces in
+          different visual styles. Many lexers are included in Goat for popular
           programming languages such as Python, Java, C/C++, JavaScript and VB. Often several file
           extensions (.cpp, .cc, .h) can map to one language (C++) and hence one lexer. These
           settings associate a file name with a lexer.<br />
-          The lexers included in SciTE are written in C++ and compiled into the SciTE executable.
+          The lexers included in Goat are written in C++ and compiled into the Goat executable.
           Lexers can also be written as a <a href="ScriptLexer.html">Lua script</a>
           or as a Lua LPeg lexer using <a href="http://code.google.com/p/scintillua/">scintillua</a>.
         </td>
@@ -2909,8 +2887,8 @@ imports.include=fortran lisp
           go commands. The optional command.is.filter property states that the command modifies the
           current file so it may need to be read in after performing the command if
           load.on.activate is set.<br />
-        If command.save.before is set to 1, SciTE automatically saves the file before execution.
-        If it is set to 2, SciTE will not save the file, otherwise SciTE asks you.
+        If command.save.before is set to 1, Goat automatically saves the file before execution.
+        If it is set to 2, Goat will not save the file, otherwise Goat asks you.
 
         On Windows, the optional command.input property specifies text that will be piped
         to the command.  This may reference other properties; for example,
@@ -2955,7 +2933,7 @@ groupundo - yes or no
 </div>
         Currently, all of these except groupundo are based on individual properties with
         similar names, and so are not described separately here.  The groupundo setting
-        works with subsystem 3 (lua / director), and indicates that SciTE should treat any
+        works with subsystem 3 (lua / director), and indicates that Goat should treat any
         changes made by the command as a single undo action.  A command that uses the
         groupundo setting should not change which buffer is active in the editor.<br />
 
@@ -2996,11 +2974,11 @@ groupundo - yes or no
       </tr>
       <tr>
         <td>
-          command.scite.help<br />
-          command.scite.help.subsystem
+          command.Goat.help<br />
+          command.Goat.help.subsystem
         </td>
         <td>
-        Defines a command to be executed for help on the SciTE program itself which normally
+        Defines a command to be executed for help on the Goat program itself which normally
         means displaying this file in a browser.
         </td>
       </tr>
@@ -3011,7 +2989,7 @@ groupundo - yes or no
         </td>
         <td>
         Defines a command to be executed when print is invoked on GTK+ 2.x.
-        On Windows and GTK+ 3.x, printing is performed directly by SciTE.
+        On Windows and GTK+ 3.x, printing is performed directly by Goat.
         </td>
       </tr>
       <tr>
@@ -3081,7 +3059,7 @@ groupundo - yes or no
         </td>
         <td>
         These settings determine the style of the header and footer using the same
-        format as other styles in SciTE. Only the fore, back, font, size, bold, italics,
+        format as other styles in Goat. Only the fore, back, font, size, bold, italics,
         and underlined attributes are supported.
         </td>
       </tr>
@@ -3157,7 +3135,7 @@ groupundo - yes or no
         export.pdf.margins sets the widths of the page margins. Margins defaults to 72 points,
         or 1 inch.<br />
         The PDF exporter is necessarily feature-limited because PDF is a document archival format. Supporting
-        a full set of features will bloat SciTE. Wrapping Helvetica or Times adequately isn't possible without
+        a full set of features will bloat Goat. Wrapping Helvetica or Times adequately isn't possible without
         the complexities of font metrics and kerning. The PDF produced uses WinAnsiEncoding, so pre-encoding
         has to be done before exporting to PDF, if you want to use extended characters.
         </td>
@@ -3488,7 +3466,7 @@ groupundo - yes or no
         </td>
         <td>
                 The menukey.* settings allow the user to redefine accelerator keys for menus
-		without having to resort to modifying the SciTE source code.  The syntax for the setting is:
+		without having to resort to modifying the Goat source code.  The syntax for the setting is:
 		<div class="example">
 		menukey.menu_title.menu_name=&lt;modifier&gt;key
 		</div>
@@ -3513,9 +3491,9 @@ groupundo - yes or no
           If the name specified on the command line cannot be found as a directory or file - including a wild-card
           search, the contents of the property are treated as default extensions to be used to locate the file name.<br />
           An example is: .cxx|.cpp|.c|.hxx|.hpp|.h|.bat|.txt|.lua<br />
-          Attempting to open win32\SciTEWin would open win32\SciTEWin.cxx since it matches before win32\SciTEWin.h
+          Attempting to open win32\GoatWin would open win32\GoatWin.cxx since it matches before win32\GoatWin.h
           <br />
-          If the property contains an entry such as Bar.cxx|.cxx and you attempt to open win32\SciTEWin, it will open
+          If the property contains an entry such as Bar.cxx|.cxx and you attempt to open win32\GoatWin, it will open
           ScTEWinBar.cxx since that is the first match.
         </td>
       </tr>
@@ -3527,32 +3505,32 @@ groupundo - yes or no
           extension.<i>filepattern</i>
         </td>
         <td>
-          The ext.lua properties are specific to the <a href="SciTELua.html">
-          SciTE Lua Scripting Extension</a>.  The extension.<i>filepattern</i> property
-          is part of the generic <a href="SciTEExtension.html">SciTE Extension
+          The ext.lua properties are specific to the <a href="GoatLua.html">
+          Goat Lua Scripting Extension</a>.  The extension.<i>filepattern</i> property
+          is part of the generic <a href="GoatExtension.html">Goat Extension
           Interface</a> but is currently only used by the Lua Scripting Extension.
           <br />
           The ext.lua.startup.script property defines the filename of a Lua script that
-          will be loaded when SciTE starts to set up the global state for Lua.
-          The default value is $(SciteUserHome)/SciTEStartup.lua.
+          will be loaded when Goat starts to set up the global state for Lua.
+          The default value is $(GoatUserHome)/GoatStartup.lua.
           You should use an absolute path for this property, but can reference the
-          $(SciteDefaultHome) or $(SciteUserHome) properties.  Global event handlers,
+          $(GoatDefaultHome) or $(GoatUserHome) properties.  Global event handlers,
           command functions, as well as other functions and objects can be defined here.
           <br />
           The ext.lua.auto.reload property determines what happens if you save the
-          startup script, or the active extension script, from within SciTE.  If it
+          startup script, or the active extension script, from within Goat.  If it
           is set to 0, the startup script only applied at startup time
           or when you switch buffers (depending on ext.lua.reset), and changes to the
           extension script are only applied when you switch buffers.  If
-          ext.lua.auto.reload is set to 1 (the default), SciTE will re-initialize the global scope
-          immediately when either script is saved from within SciTE.  <i>Even
-          when ext.lua.auto.reload is enabled, SciTE will not notice if the files
-          are changed from outside the current SciTE instance.  For that, see
+          ext.lua.auto.reload is set to 1 (the default), Goat will re-initialize the global scope
+          immediately when either script is saved from within Goat.  <i>Even
+          when ext.lua.auto.reload is enabled, Goat will not notice if the files
+          are changed from outside the current Goat instance.  For that, see
           ext.lua.reset below.</i>
           <br />
           The ext.lua.reset property is primarily for debugging.  If ext.lua.reset
           is 0 (the default), the startup script property is checked only once -
-          when SciTE starts.  If ext.lua.reset is changed to 1, SciTE will check
+          when Goat starts.  If ext.lua.reset is changed to 1, Goat will check
           the startup script property, and reload the new startup script, each
           time you switch buffers.  As such, it has a different (larger) set of
           side effects than ext.lua.auto.reload.  In some situations it will make
@@ -3569,9 +3547,9 @@ groupundo - yes or no
           <br />
           The extension property can also define behavior that is specific to a given
           directory.  If a bare filename (no path) is specified in the extension
-          property, SciTE looks for the file in the standard property file locations,
+          property, Goat looks for the file in the standard property file locations,
           starting with the local directory.  This can be very useful in combination
-          with a local SciTE.properties file.
+          with a local Goat.properties file.
         </td>
       </tr>
       <tr>
@@ -3728,10 +3706,10 @@ groupundo - yes or no
     <p>
        For languages that can not be lexed with the existing lexers, a new lexer can be coded in
       C++.&nbsp; These can either be built into Scintilla, or put into an
-		external module and loaded when SciTE runs (See lexerpath).</p>
-       <a href="SciTELexer.html">Installing a lexer into SciTE</a>
+		external module and loaded when Goat runs (See lexerpath).</p>
+       <a href="GoatLexer.html">Installing a lexer into Goat</a>
     <br />
-		<a href="SciTEExternalLexer.html">Creating and installing an external
+		<a href="GoatExternalLexer.html">Creating and installing an external
 		lexer</a><br />
     <p>
        The open.filter should be modified to include the file extensions used for the new language
@@ -3743,7 +3721,7 @@ groupundo - yes or no
     </h3>
     <p>
        The .api files can be generated by hand or by using a program.
-       There are also <a href="http://code.google.com/p/scite-files/wiki/Customization">downloadable ready-to-use
+       There are also <a href="http://code.google.com/p/Goat-files/wiki/Customization">downloadable ready-to-use
        .api files.</a>
     </p>
     <p>
@@ -3780,27 +3758,27 @@ groupundo - yes or no
        associated application.
     </p>
     <h3 id="Translations">
-       SciTE in other languages
+       Goat in other languages
     </h3>
     <p>
-       SciTE can be and has been <a href="http://code.google.com/p/scite-files/wiki/Translations">translated into other languages</a>.
+       Goat can be and has been <a href="http://code.google.com/p/Goat-files/wiki/Translations">translated into other languages</a>.
     </p>
     <h3 id="Building">
-       Building SciTE
+       Building Goat
     </h3>
     <p>
-       The procedure for building and installing SciTE is described in the README file in the scite
+       The procedure for building and installing Goat is described in the README file in the Goat
        directory.
     </p>
     <h3 id="Extending">
-       Extending SciTE
+       Extending Goat
     </h3>
     <p>
-       There are two formal extension interfaces for SciTE, the
-       <a href="SciTEExtension.html">SciTE Extension Interface</a>
-       is for extending SciTE with code compiled into the SciTE executable and the
-       <a href="SciTEDirector.html">SciTE Director Interface</a> is for
-       manipulating SciTE on Windows from another application.
+       There are two formal extension interfaces for Goat, the
+       <a href="GoatExtension.html">Goat Extension Interface</a>
+       is for extending Goat with code compiled into the Goat executable and the
+       <a href="GoatDirector.html">Goat Director Interface</a> is for
+       manipulating Goat on Windows from another application.
     </p>
   </body>
 </html>
