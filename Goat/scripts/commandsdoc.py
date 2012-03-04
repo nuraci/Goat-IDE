@@ -7,7 +7,6 @@ import os, sys
 
 scintillaDirectory = os.path.join("..", "..", "scintilla", "include")
 sys.path.append(scintillaDirectory)
-print scintillaDirectory
 import Face
 
 def cell(s):
