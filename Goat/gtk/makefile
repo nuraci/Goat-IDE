@@ -43,8 +43,8 @@ pixmapdir=$(datadir)/pixmaps
 APPDIR=$(prefix)/share/goat
 
 bindir=$(APPDIR)/bin
-docdir=$(APPDIR)/docs
-propdir=$(APPDIR)/properties
+docsdir=$(APPDIR)/docs
+propsdir=$(APPDIR)/properties
 examplesdir=$(APPDIR)/examples
 
 INSTALL=install
@@ -125,31 +125,42 @@ include deps.mak
 # The two last install commands will fail if Gnome is not installed or is not at $(prefix).
 # This just means no Goat in the Gnome Applications menu
 install:
-	$(INSTALL) -m 755 -d $(bindir) $(docdir) 
-	$(INSTALL) -m 777 -d $(propdir) $(propdir)/script $(examplesdir)
+	$(INSTALL) -m 755 -d $(bindir)   $(docsdir) 
+	$(INSTALL) -m 777 -d $(propsdir) $(examplesdir)
 
-	$(INSTALL) -m 755 $(PROG) $(bindir)
+	$(INSTALL) -m 755 $(PROG)  $(bindir)
 	$(INSTALL) -m 755 $(DFU-P) $(bindir)
 
-	# properties
-	$(INSTALL) -m 777 ../properties/conf.properties $(propdir); 
-	$(INSTALL) -m 777 ../properties/cpp.properties $(propdir); 
-	$(INSTALL) -m 777 ../properties/elua.properties $(propdir); 
-	$(INSTALL) -m 777 ../properties/Embedded.properties $(propdir); 
-	$(INSTALL) -m 777 ../properties/Goat.properties $(propdir); 
-	$(INSTALL) -m 777 ../properties/GoatGlobal.properties $(propdir); 
-	$(INSTALL) -m 777 ../properties/GoatUser.properties $(propdir); 
-	$(INSTALL) -m 777 ../properties/locale.it.properties $(propdir); 
-	$(INSTALL) -m 777 ../properties/others.properties $(propdir); 
-	$(INSTALL) -m 777 ../properties/elua.api $(propdir); 
-	$(INSTALL) -m 777 ../properties/extman.lua $(propdir); 
-	$(INSTALL) -m 777 ../properties/script/list.lua $(propdir)/script; 
-	$(INSTALL) -m 777 ../properties/script/GoatElizaClassic.lua $(propdir)/script; 
-	$(INSTALL) -m 777 ../properties/script/GoatTicTacToe.lua $(propdir)/script; 
+	# Properties
+	$(INSTALL) -m 777 -d $(propsdir)/script
+	$(INSTALL) -m 777 ../properties/conf.properties $(propsdir); 
+	$(INSTALL) -m 777 ../properties/cpp.properties $(propsdir); 
+	$(INSTALL) -m 777 ../properties/elua.properties $(propsdir); 
+	$(INSTALL) -m 777 ../properties/Embedded.properties $(propsdir); 
+	$(INSTALL) -m 777 ../properties/Goat.properties $(propsdir); 
+	$(INSTALL) -m 777 ../properties/GoatGlobal.properties $(propsdir); 
+	$(INSTALL) -m 777 ../properties/GoatUser.properties $(propsdir); 
+	$(INSTALL) -m 777 ../properties/locale.it.properties $(propsdir); 
+	$(INSTALL) -m 777 ../properties/others.properties $(propsdir); 
+	$(INSTALL) -m 777 ../properties/elua.api $(propsdir); 
+	$(INSTALL) -m 777 ../properties/extman.lua $(propsdir); 
+	$(INSTALL) -m 777 ../properties/script/list.lua $(propsdir)/script; 
+	$(INSTALL) -m 777 ../properties/script/GoatElizaClassic.lua $(propsdir)/script; 
+	$(INSTALL) -m 777 ../properties/script/GoatTicTacToe.lua $(propsdir)/script; 
 	
-	for files in ../docs/*;  \
+	# Docs
+	$(INSTALL) -m 777 -d $(docsdir)/img $(docsdir)/it $(docsdir)/uk  
+	for files in ../docs/img/*;  \
 	do \
-		$(INSTALL) -m 644 $$files $(docdir); \
+		$(INSTALL) -m 644 $$files $(docsdir)/img; \
+	done
+	for files in ../docs/uk/*;  \
+	do \
+		$(INSTALL) -m 644 $$files $(docsdir)/uk; \
+	done
+	for files in ../docs/it/*;  \
+	do \
+		$(INSTALL) -m 644 $$files $(docsdir)/it; \
 	done
 
 	# Examples
