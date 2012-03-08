@@ -210,7 +210,8 @@ static void *checkudata(lua_State *L, int ud, const char *tname) {
 
 static int cf_scite_send(lua_State *L) {
 	// This is reinstated as a replacement for the old <pane>:send, which was removed
-	// due to safety concerns.  Is now exposed as scite.SendEditor / scite.SendOutput.
+	// due to safety concerns.
+	// Is now exposed as scite.SendEditor, scite.SendOutput and scite.SendConsole.
 	// It is rewritten to be typesafe, checking the arguments against the metadata in
 	// IFaceTable in the same way that the object interface does.
 
@@ -288,6 +289,45 @@ static int cf_scite_menu_command(lua_State *L) {
 static int cf_scite_update_status_bar(lua_State *L) {
 	bool bUpdateSlowData = (lua_gettop(L) > 0 ? lua_toboolean(L, 1) : false) != 0;
 	host->UpdateStatusBar(bUpdateSlowData);
+	return 0;
+}
+
+static int cf_scite_strip_show(lua_State *L) {
+	const char *s = luaL_checkstring(L, 1);
+	if (s) {
+		host->UserStripShow(s);
+	}
+	return 0;
+}
+
+static int cf_scite_strip_set(lua_State *L) {
+	int control = luaL_checkint(L, 1);
+	const char *value = luaL_checkstring(L, 2);
+	if (value) {
+		host->UserStripSet(control, value);
+	}
+	return 0;
+}
+
+static int cf_scite_strip_set_list(lua_State *L) {
+	int control = luaL_checkint(L, 1);
+	const char *value = luaL_checkstring(L, 2);
+	if (value) {
+		host->UserStripSetList(control, value);
+	}
+	return 0;
+}
+
+static int cf_scite_strip_value(lua_State *L) {
+	int control = luaL_checkint(L, 1);
+	const char *value = host->UserStripValue(control);
+	if (value) {
+		lua_pushstring(L, value);
+		delete []value;
+		return 1;
+	} else {
+		lua_pushstring(L, "");
+	}
 	return 0;
 }
 
@@ -721,6 +761,47 @@ static int cf_global_dostring(lua_State *L) {
 	return 0;
 }
 
+static int cf_serial_send(lua_State *L) {
+	const char *s = luaL_checkstring(L, 1);
+	int ret = -1;
+
+	if (s)
+		ret = host->SerialSend(s,-1);
+
+	lua_pushinteger(L, ret);
+	return 1;
+}
+
+static int cf_serial_xtx_file(lua_State *L) {
+	const char *name = luaL_checkstring(L, 1);
+	int ret = -1;
+
+	if (name)
+		ret = host->SerialXmodemTxFile(name);
+
+	lua_pushinteger(L, ret);
+	return 1;
+}
+
+static int cf_goat_choice_console_tab(lua_State *L) {
+	int tab = luaL_checkint(L, 1);
+	host->SelectConsoleTab(tab);
+	return 0;
+}
+
+static int cf_goat_ask_question(lua_State *L) {
+	const char *str = luaL_checkstring(L, 1);
+	host->AskQuestion(str);
+	return 0;
+}
+static int cf_goat_ask_file(lua_State *L) {
+	const char *dirName = luaL_checkstring(L, 1);
+	const char *filter = luaL_checkstring(L, 2);
+
+	host->AskForFile(dirName, filter);
+	return 0;
+}
+
 static bool call_function(lua_State *L, int nargs, bool ignoreFunctionReturnValue=false) {
 	bool handled = false;
 	if (L) {
@@ -802,6 +883,21 @@ static bool CallNamedFunction(const char *name, int numberArg, const char *strin
 		if (lua_isfunction(luaState, -1)) {
 			lua_pushnumber(luaState, numberArg);
 			lua_pushstring(luaState, stringArg);
+			handled = call_function(luaState, 2);
+		} else {
+			lua_pop(luaState, 1);
+		}
+	}
+	return handled;
+}
+
+static bool CallNamedFunction(const char *name, int numberArg, int numberArg2) {
+	bool handled = false;
+	if (luaState) {
+		lua_getglobal(luaState, name);
+		if (lua_isfunction(luaState, -1)) {
+			lua_pushnumber(luaState, numberArg);
+			lua_pushnumber(luaState, numberArg2);
 			handled = call_function(luaState, 2);
 		} else {
 			lua_pop(luaState, 1);
@@ -1329,6 +1425,9 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	push_pane_object(luaState, ExtensionAPI::paneOutput);
 	lua_setglobal(luaState, "output");
 
+	push_pane_object(luaState, ExtensionAPI::paneConsole);
+	lua_setglobal(luaState, "console");
+
 	// scite
 	lua_newtable(luaState);
 
@@ -1339,6 +1438,10 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	lua_getglobal(luaState, "output");
 	lua_pushcclosure(luaState, cf_scite_send, 1);
 	lua_setfield(luaState, -2, "SendOutput");
+
+	lua_getglobal(luaState, "console");
+	lua_pushcclosure(luaState, cf_scite_send, 1);
+	lua_setfield(luaState, -2, "SendConsole");
 
 	lua_pushcfunction(luaState, cf_scite_constname);
 	lua_setfield(luaState, -2, "ConstantName");
@@ -1352,7 +1455,44 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	lua_pushcfunction(luaState, cf_scite_update_status_bar);
 	lua_setfield(luaState, -2, "UpdateStatusBar");
 
+	lua_pushcfunction(luaState, cf_scite_strip_show);
+	lua_setfield(luaState, -2, "StripShow");
+
+	lua_pushcfunction(luaState, cf_scite_strip_set);
+	lua_setfield(luaState, -2, "StripSet");
+
+	lua_pushcfunction(luaState, cf_scite_strip_set_list);
+	lua_setfield(luaState, -2, "StripSetList");
+
+	lua_pushcfunction(luaState, cf_scite_strip_value);
+	lua_setfield(luaState, -2, "StripValue");
+
 	lua_setglobal(luaState, "scite");
+
+	// serial
+	lua_newtable(luaState);
+
+	lua_pushcfunction(luaState, cf_serial_send);
+	lua_setfield(luaState, -2, "SendString");
+
+	lua_pushcfunction(luaState, cf_serial_xtx_file);
+	lua_setfield(luaState, -2, "SendFile");
+
+	lua_setglobal(luaState, "serial");
+
+	// goat
+	lua_newtable(luaState);
+
+	lua_pushcfunction(luaState, cf_goat_choice_console_tab);
+	lua_setfield(luaState, -2, "ChoiceConsole");
+
+	lua_pushcfunction(luaState,cf_goat_ask_question);
+	lua_setfield(luaState, -2, "AskQuestion");
+
+	lua_pushcfunction(luaState,cf_goat_ask_file);
+	lua_setfield(luaState, -2, "AskForFile");
+
+	lua_setglobal(luaState, "goat");
 
 	// Metatable for global namespace, to publish iface constants
 	if (luaL_newmetatable(luaState, "SciTE_MT_GlobalScope")) {
@@ -2026,6 +2166,10 @@ bool LuaExtension::OnDwellStart(int pos, const char *word) {
 
 bool LuaExtension::OnClose(const char *filename) {
 	return CallNamedFunction("OnClose", filename);
+}
+
+bool LuaExtension::OnUserStrip(int control, int change) {
+	return CallNamedFunction("OnStrip", control, change);
 }
 
 #ifdef _MSC_VER

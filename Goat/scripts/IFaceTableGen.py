@@ -288,6 +288,8 @@ def ReadMenuIDs(filename):
 					d, name, number = l.split()
 					if name.startswith("IDM_"):
 						ids.append((name, {"Value":number}))
+					if name.startswith("GOA_"):
+						ids.append((name, {"Value":number}))
 				except ValueError:
 					# No value present
 					pass

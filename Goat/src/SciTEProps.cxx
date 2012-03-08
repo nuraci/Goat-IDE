@@ -94,7 +94,6 @@ void SciTEBase::ImportMenu(int pos) {
 }
 
 void SciTEBase::SetLanguageMenu() {
-#ifdef HAVE_MENU_LANGUAGES
 	for (int i = 0; i < 100; i++) {
 		DestroyMenuItem(menuLanguage, languageCmdID + i);
 	}
@@ -113,7 +112,6 @@ void SciTEBase::SetLanguageMenu() {
 			SetMenuItem(menuLanguage, item, itemID, entry.c_str());
 		}
 	}
-#endif
 }
 
 const GUI::gui_char propLocalFileName[] = GUI_TEXT("Goat.properties");
@@ -632,6 +630,7 @@ static const char *propertiesToForward[] = {
 	"lexer.cpp.track.preprocessor",
 	"lexer.cpp.triplequoted.strings",
 	"lexer.cpp.update.preprocessor",
+	"lexer.css.scss.language",
 	"lexer.d.fold.at.else",
 	"lexer.errorlist.value.separate",
 	"lexer.flagship.styling.within.preprocessor",
@@ -819,10 +818,10 @@ void SciTEBase::ReadProperties() {
 		wEditor.CallString(SCI_SETKEYWORDS, wl, kw.c_str());
 	}
 
-	FilePath homepath = GetScitePropertiesHome();
-	props.Set(PROPERTIES_PROPS_DIR_NAME, homepath.AsUTF8().c_str());
+	FilePath homepath = GetSciteDefaultHome();
+	props.Set(GOAT_DEFAULT_HOME_P, homepath.AsUTF8().c_str());
 	homepath = GetSciteUserHome();
-	props.Set(USER_PROPS_DIR_NAME, homepath.AsUTF8().c_str());
+	props.Set(GOAT_USER_HOME_P, homepath.AsUTF8().c_str());
 
 	for (size_t i=0; propertiesToForward[i]; i++) {
 		ForwardPropertyToEditor(propertiesToForward[i]);
@@ -883,7 +882,6 @@ void SciTEBase::ReadProperties() {
 
 	wEditor.Call(SCI_SETCARETWIDTH, props.GetInt("caret.width", 1));
 	wOutput.Call(SCI_SETCARETWIDTH, props.GetInt("caret.width", 1));
-
 
 	SString caretLineBack = props.Get("caret.line.back");
 	if (caretLineBack.length()) {
@@ -1015,10 +1013,11 @@ void SciTEBase::ReadProperties() {
 
 	sval = FindLanguageProperty("calltip.*.ignorecase");
 	callTipIgnoreCase = sval == "1";
+	sval = FindLanguageProperty("calltip.*.use.escapes");
+	callTipUseEscapes = sval == "1";
 
 	calltipWordCharacters = FindLanguageProperty("calltip.*.word.characters",
 		"_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
-
 	calltipParametersStart = FindLanguageProperty("calltip.*.parameters.start", "(");
 	calltipParametersEnd = FindLanguageProperty("calltip.*.parameters.end", ")");
 	calltipParametersSeparators = FindLanguageProperty("calltip.*.parameters.separators", ",;");
@@ -1050,7 +1049,7 @@ void SciTEBase::ReadProperties() {
 	wOutput.Call(SCI_AUTOCSETIGNORECASE, 1);
 
 	int autoCChooseSingle = props.GetInt("autocomplete.choose.single");
-	wEditor.Call(SCI_AUTOCSETCHOOSESINGLE, autoCChooseSingle),
+	wEditor.Call(SCI_AUTOCSETCHOOSESINGLE, autoCChooseSingle);
 
 	wEditor.Call(SCI_AUTOCSETCANCELATSTART, 0);
 	wEditor.Call(SCI_AUTOCSETDROPRESTOFWORD, 0);
@@ -1333,7 +1332,6 @@ void SciTEBase::ReadProperties() {
 	wEditor.Call(SCI_SETHSCROLLBAR, props.GetInt("horizontal.scrollbar", 1));
 	wOutput.Call(SCI_SETHSCROLLBAR, props.GetInt("output.horizontal.scrollbar", 1));
 
-
 	wEditor.Call(SCI_SETENDATLASTLINE, props.GetInt("end.at.last.line", 1));
 	wEditor.Call(SCI_SETCARETSTICKY, props.GetInt("caret.sticky", 0));
 
@@ -1342,7 +1340,6 @@ void SciTEBase::ReadProperties() {
 	wEditor.Call(SCI_INDICATORCLEARRANGE, 0, wEditor.Call(SCI_GETLENGTH));
 	wOutput.Call(SCI_SETINDICATORCURRENT, indicatorHightlightCurrentWord);
 	wOutput.Call(SCI_INDICATORCLEARRANGE, 0, wOutput.Call(SCI_GETLENGTH));
-
 	currentWordHighlight.statesOfDelay = currentWordHighlight.noDelay;
 
 	currentWordHighlight.isEnabled = props.GetInt("highlight.current.word", 0) == 1;
@@ -1358,7 +1355,6 @@ void SciTEBase::ReadProperties() {
 		wEditor.Call(SCI_INDICSETFORE, indicatorHightlightCurrentWord, highlightCurrentWordColour);
 		wOutput.Call(SCI_INDICSETSTYLE, indicatorHightlightCurrentWord, INDIC_ROUNDBOX);
 		wOutput.Call(SCI_INDICSETFORE, indicatorHightlightCurrentWord, highlightCurrentWordColour);
-
 		currentWordHighlight.isOnlyWithSameStyle = props.GetInt("highlight.current.word.by.style", 0) == 1;
 		HighlightCurrentWord(true);
 	}
@@ -1385,6 +1381,14 @@ void SciTEBase::ReadProperties() {
 			}
 		}
 	}
+
+	delayBeforeAutoSave = props.GetInt("save.on.timer");
+	if (delayBeforeAutoSave) {
+		TimerStart(timerAutoSave);
+	} else {
+		TimerEnd(timerAutoSave);
+	}
+
 	firstPropertiesRead = false;
 	needReadProperties = false;
 }
@@ -1415,7 +1419,6 @@ void SciTEBase::ReadFontProperties() {
 	sval = props.GetNewExpand(key);
 	SetOneStyle(wEditor, STYLE_DEFAULT, sval.c_str());
 	SetOneStyle(wOutput, STYLE_DEFAULT, sval.c_str());
-
 
 	sprintf(key, "style.%s.%0d", languageName, STYLE_DEFAULT);
 	sval = props.GetNewExpand(key);
@@ -1468,7 +1471,7 @@ void SciTEBase::SetPropertiesInitial() {
 	wrap = props.GetInt("wrap");
 	wrapOutput = props.GetInt("output.wrap");
 	indentationWSVisible = props.GetInt("view.indentation.whitespace", 1);
-	sbVisible = props.GetInt("statusbar.visible",1);
+	sbVisible = props.GetInt("statusbar.visible");
 	tbVisible = props.GetInt("toolbar.visible");
 	tabVisible = props.GetInt("tabbar.visible");
 	tabMultiLine = props.GetInt("tabbar.multiline");
@@ -1552,7 +1555,7 @@ void SciTEBase::ReadLocalization() {
 	if (localeProps.length()) {
 		title = GUI::StringFromUTF8(localeProps.c_str());
 	}
-	FilePath propdir = GetScitePropertiesHome();
+	FilePath propdir = GetSciteDefaultHome();
 	FilePath localePath(propdir, title);
 	localiser.Read(localePath, propdir, filter, &importFiles);
 	localiser.SetMissing(props.Get("translation.missing"));
@@ -1583,7 +1586,6 @@ void SciTEBase::ReadPropertiesInitial() {
 	wEditor.Call(SCI_SETWRAPMODE, wrap ? wrapStyle : SC_WRAP_NONE);
 	wOutput.Call(SCI_SETWRAPMODE, wrapOutput ? wrapStyle : SC_WRAP_NONE);
 
-#ifdef HAVE_MENU_LANGUAGES
 	SString menuLanguageProp = props.GetNewExpand("menu.language");
 	languageItems = 0;
 	for (unsigned int i = 0; i < menuLanguageProp.length(); i++) {
@@ -1604,7 +1606,7 @@ void SciTEBase::ReadPropertiesInitial() {
 		sMenuLanguage += strlen(sMenuLanguage) + 1;
 	}
 	SetLanguageMenu();
-#endif
+
 	// load the user defined short cut props
 	SString shortCutProp = props.GetNewExpand("user.shortcuts");
 	if (shortCutProp.length()) {
@@ -1635,18 +1637,18 @@ void SciTEBase::ReadPropertiesInitial() {
 	}
 #endif
 
-	FilePath homepath = GetScitePropertiesHome();
-	props.Set(APP_NAME"PropertiesHome", homepath.AsUTF8().c_str());
+	FilePath homepath = GetSciteDefaultHome();
+	props.Set(GOAT_DEFAULT_HOME_P, homepath.AsUTF8().c_str());
 	homepath = GetSciteUserHome();
-	props.Set(APP_NAME"UserHome", homepath.AsUTF8().c_str());
+	props.Set(GOAT_USER_HOME_P, homepath.AsUTF8().c_str());
 }
 
 FilePath SciTEBase::GetDefaultPropertiesFileName() {
-	return FilePath(GetScitePropertiesHome(), propGlobalFileName);
+	return FilePath(GetSciteDefaultHome(), propGlobalFileName);
 }
 
 FilePath SciTEBase::GetAbbrevPropertiesFileName() {
-	return FilePath(GetScitePropertiesHome(), propAbbrevFileName);
+	return FilePath(GetSciteUserHome(), propAbbrevFileName);
 }
 
 FilePath SciTEBase::GetUserPropertiesFileName() {

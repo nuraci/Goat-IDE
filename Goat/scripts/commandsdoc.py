@@ -65,7 +65,7 @@ startFile = """
 """
 
 if __name__ == "__main__":
-	with open(os.path.join("..", "docs", "CommandValues.html"), "w") as out:
+	with open(os.path.join("..", "docs/en", "CommandValues.html"), "w") as out:
 		out.write(startFile)
 		menuFeatures(out)
 		faceFeatures(out)

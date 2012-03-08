@@ -68,16 +68,16 @@ FileLoader::~FileLoader() {
 void FileLoader::Execute() {
 	if (fp) {
 		Utf8_16_Read convert;
-		char data[blockSize];
-		size_t lenFile = fread(data, 1, sizeof(data), fp);
-		UniMode umCodingCookie = CodingCookieValue(data, lenFile);
+		std::vector<char> data(blockSize);
+		size_t lenFile = fread(&data[0], 1, blockSize, fp);
+		UniMode umCodingCookie = CodingCookieValue(&data[0], lenFile);
 		while ((lenFile > 0) && (err == 0) && (!cancelling)) {
 #ifdef __unix__
 			usleep(sleepTime * 1000);
 #else
 			::Sleep(sleepTime);
 #endif
-			lenFile = convert.convert(data, lenFile);
+			lenFile = convert.convert(&data[0], lenFile);
 			char *dataBlock = convert.getNewBuf();
 			err = pLoader->AddData(dataBlock, static_cast<int>(lenFile));
 			jobProgress += static_cast<int>(lenFile);
@@ -85,7 +85,7 @@ void FileLoader::Execute() {
 				nextProgress = et.Duration() + timeBetweenProgress;
 				pListener->PostOnMainThread(WORK_FILEPROGRESS, this);
 			}
-			lenFile = fread(data, 1, sizeof(data), fp);
+			lenFile = fread(&data[0], 1, blockSize, fp);
 		}
 		fclose(fp);
 		fp = 0;
@@ -106,8 +106,10 @@ void FileLoader::Cancel() {
 	pLoader = 0;
 }
 
-FileStorer::FileStorer(WorkerListener *pListener_, const char *documentBytes_, FilePath path_, long size_, FILE *fp_, UniMode unicodeMode_) : 
-	FileWorker(pListener_, path_, size_, fp_), documentBytes(documentBytes_), writtenSoFar(0), unicodeMode(unicodeMode_) {
+FileStorer::FileStorer(WorkerListener *pListener_, const char *documentBytes_, FilePath path_,
+	long size_, FILE *fp_, UniMode unicodeMode_, bool visibleProgress_) : 
+	FileWorker(pListener_, path_, size_, fp_), documentBytes(documentBytes_), writtenSoFar(0),
+		unicodeMode(unicodeMode_), visibleProgress(visibleProgress_) {
 	jobSize = static_cast<int>(size);
 	jobProgress = 0;
 }
@@ -121,17 +123,16 @@ static bool IsUTF8TrailByte(int ch) {
 
 void FileStorer::Execute() {
 	if (fp) {
-		//if (size % 3) err = 2;	// Fake a failure
 		Utf8_16_Write convert;
 		if (unicodeMode != uniCookie) {	// Save file with cookie without BOM.
 			convert.setEncoding(static_cast<Utf8_16::encodingType>(
 					static_cast<int>(unicodeMode)));
 		}
 		convert.setfile(fp);
-		char data[blockSize + 1];
+		std::vector<char> data(blockSize + 1);
 		int lengthDoc = static_cast<int>(size);
 		int grabSize;
-		for (int i = 0; i < lengthDoc; i += grabSize) {
+		for (int i = 0; i < lengthDoc && (!cancelling); i += grabSize) {
 #ifdef __unix__
 			usleep(sleepTime * 1000);
 #else
@@ -143,14 +144,13 @@ void FileStorer::Execute() {
 			if ((unicodeMode != uni8Bit) && (i + grabSize < lengthDoc)) {
 				// Round down so only whole characters retrieved.
 				int startLast = grabSize;
-				while ((startLast > 0) && ((grabSize - startLast) > 6) && IsUTF8TrailByte(static_cast<unsigned char>(documentBytes[i + startLast])))
+				while ((startLast > 0) && ((grabSize - startLast) < 6) && IsUTF8TrailByte(static_cast<unsigned char>(documentBytes[i + startLast])))
 					startLast--;
 				if ((grabSize - startLast) < 5)
 					grabSize = startLast;
 			}
-			//grabSize = pStorer->PositionBefore(i + grabSize + 1) - i;
-			memcpy(data, documentBytes+i, grabSize);
-			size_t written = convert.fwrite(data, grabSize);
+			memcpy(&data[0], documentBytes+i, grabSize);
+			size_t written = convert.fwrite(&data[0], grabSize);
 			jobProgress += grabSize;
 			if (et.Duration() > nextProgress) {
 				nextProgress = et.Duration() + timeBetweenProgress;
@@ -165,4 +165,8 @@ void FileStorer::Execute() {
 	}
 	completed = true;
 	pListener->PostOnMainThread(WORK_FILEWRITTEN, this);
+}
+
+void FileStorer::Cancel() {
+	FileWorker::Cancel();
 }

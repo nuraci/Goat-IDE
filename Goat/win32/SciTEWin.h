@@ -79,6 +79,7 @@ typedef HANDLE HTHEME;
 #include "SciTEBase.h"
 #include "SciTEKeys.h"
 #include "UniqueInstance.h"
+#include "StripDefinition.h"
 
 const int SCITE_TRAY = WM_APP + 0;
 const int SCITE_DROP = WM_APP + 1;
@@ -196,7 +197,6 @@ public:
 	virtual bool KeyDown(WPARAM key);
 	virtual bool Command(WPARAM wParam);
 	virtual void Size();
-	//virtual void Paint(HDC hDC);
 	virtual bool HasClose() const;
 	virtual LRESULT WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam);
 	virtual int Height() {
@@ -308,6 +308,39 @@ public:
 	}
 };
 
+class StripDefinition;
+
+class UserStrip : public Strip {
+	int entered;
+	int lineHeight;
+	StripDefinition *psd;
+	Extension *extender;
+	SciTEWin *pSciTEWin;
+public:
+	UserStrip() : entered(0), lineHeight(26), psd(0), extender(0), pSciTEWin(0) {
+	}
+	virtual void Creation();
+	virtual void Destruction();
+	virtual void Close();
+	void Focus();
+	virtual bool KeyDown(WPARAM key);
+	virtual bool Command(WPARAM wParam);
+	virtual void Size();
+	virtual bool HasClose() const;
+	virtual LRESULT WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam);
+	virtual int Height() {
+		return lineHeight * Lines() + 1;
+	}
+	int Lines();
+	void SetDescription(const char *description);
+	void SetExtender(Extension *extender_);
+	void SetSciTE(SciTEWin *pSciTEWin_);
+	UserControl *FindControl(int control);
+	void Set(int control, const char *value);
+	void SetList(int control, const char *value);
+	std::string GetValue(int control);
+};
+
 struct Band {
 	bool visible;
 	int height;
@@ -329,6 +362,7 @@ class SciTEWin : public SciTEBase, public Worker {
 	friend class SearchStrip;
 	friend class FindStrip;
 	friend class ReplaceStrip;
+	friend class UserStrip;
 
 protected:
 
@@ -377,17 +411,21 @@ protected:
 
 	ContentWin contents;
 	BackgroundStrip backgroundStrip;
+	UserStrip userStrip;
 	SearchStrip searchStrip;
 	FindStrip findStrip;
 	ReplaceStrip replaceStrip;
 
-	enum { bandTool, bandTab, bandContents, bandBackground, bandSearch, bandFind, bandReplace, bandStatus };
+	enum { bandTool, bandTab, bandContents, bandUser, bandBackground, bandSearch, bandFind, bandReplace, bandStatus };
 	std::vector<Band> bands;
 
 	virtual void ReadLocalization();
 	virtual void GetWindowPosition(int *left, int *top, int *width, int *height, int *maximize);
 
 	virtual void ReadProperties();
+
+	virtual void TimerStart(int mask);
+	virtual void TimerEnd(int mask);
 
 	virtual void SizeContentWindows();
 	virtual void SizeSubWindows();
@@ -410,6 +448,7 @@ protected:
 	int DoDialog(HINSTANCE hInst, const TCHAR *resName, HWND hWnd, DLGPROC lpProc);
 	GUI::gui_string DialogFilterFromProperty(const GUI::gui_char *filterProperty);
 	virtual bool OpenDialog(FilePath directory, const GUI::gui_char *filter);
+	virtual void AskForFileDialog(FilePath directory, const GUI::gui_char *filter);
 	FilePath ChooseSaveName(FilePath directory, const char *title, const GUI::gui_char *filter=0, const char *ext=0);
 	virtual bool SaveAsDialog();
 	virtual void SaveACopy();
@@ -439,8 +478,9 @@ protected:
 	GUI::gui_string ProcessArgs(const GUI::gui_char *cmdLine);
 	virtual void QuitProgram();
 
+	virtual const GUI::gui_char *GetGoatDefaultDirectory();
 	virtual FilePath GetDefaultDirectory();
-	virtual FilePath GetScitePropertiesHome();
+	virtual FilePath GetSciteDefaultHome();
 	virtual FilePath GetSciteUserHome();
 
 	virtual void SetFileProperties(PropSetFile &ps);
@@ -471,6 +511,11 @@ protected:
 	void Command(WPARAM wParam, LPARAM lParam);
 	HWND MainHWND();
 
+	virtual void UserStripShow(const char *description);
+	virtual void UserStripSet(int control, const char *value);
+	virtual void UserStripSetList(int control, const char *value);
+	virtual const char *UserStripValue(int control);
+	void UserStripClosed();
 	virtual void ShowBackgroundProgress(const GUI::gui_string &explanation, int size, int progress);
 	BOOL FindMessage(HWND hDlg, UINT message, WPARAM wParam);
 	static BOOL CALLBACK FindDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
@@ -490,8 +535,11 @@ protected:
 	virtual void DestroyFindReplace();
 
 	BOOL GoLineMessage(HWND hDlg, UINT message, WPARAM wParam);
+	BOOL QuestionMessage(HWND hDlg, UINT message, WPARAM wParam);
 	static BOOL CALLBACK GoLineDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
+	static BOOL CALLBACK QuestionDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
 	virtual void GoLineDialog();
+	virtual void QuestionDialog(const char *str);
 
 	BOOL AbbrevMessage(HWND hDlg, UINT message, WPARAM wParam);
 	static BOOL CALLBACK AbbrevDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);

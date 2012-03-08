@@ -73,6 +73,15 @@
 
 const GUI::gui_char defaultSessionFileName[] = GUI_TEXT("Goat.session");
 
+void Buffer::DocumentModified() {
+	documentModTime = time(0);
+}
+
+bool Buffer::NeedsSave(int delayBeforeSave) {
+	time_t now = time(0);
+	return now && documentModTime && isDirty && !pFileWorker && (now-documentModTime > delayBeforeSave) && !IsUntitled();
+}
+
 void Buffer::CompleteLoading() {
 	lifeState = open;
 	if (pFileWorker && pFileWorker->IsLoading()) {
@@ -87,6 +96,16 @@ void Buffer::CompleteStoring() {
 		pFileWorker = 0;
 	}
 	SetTimeFromFile();
+}
+
+void Buffer::AbandonAutomaticSave() {
+	if (pFileWorker && !pFileWorker->IsLoading()) {
+		FileStorer *pFileStorer = static_cast<FileStorer *>(pFileWorker);
+		if (!pFileStorer->visibleProgress) {
+			pFileWorker->Cancel();
+			// File is in partially saved state so may be better to remove
+		}
+	}
 }
 
 void Buffer::CancelLoad() {
@@ -293,6 +312,11 @@ BackgroundActivities BufferList::CountBackgroundActivities() const {
 	for (int i = 0;i < length;i++) {
 		if (buffers[i].pFileWorker) {
 			if (!buffers[i].pFileWorker->FinishedJob()) {
+				if (!buffers[i].pFileWorker->IsLoading()) {
+					FileStorer *fstorer = static_cast<FileStorer*>(buffers[i].pFileWorker);
+					if (!fstorer->visibleProgress)
+						continue;
+				}
 				if (buffers[i].pFileWorker->IsLoading())
 					bg.loaders++;
 				else
@@ -795,6 +819,8 @@ void SciTEBase::New() {
 	InitialiseBuffers();
 	UpdateBuffersCurrent();
 
+	propsDiscovered.Clear();
+
 	if ((buffers.size == 1) && (!buffers.buffers[0].IsUntitled())) {
 		AddFileToStack(buffers.buffers[0],
 		        buffers.buffers[0].selection,
@@ -826,6 +852,7 @@ void SciTEBase::New() {
 	jobQueue.isBuilding = false;
 	jobQueue.isBuilt = false;
 	isReadOnly = false;	// No sense to create an empty, read-only buffer...
+	CurrentBuffer()->isReadOnly = false;
 
 	ClearDocument();
 	DeleteFileStackMenu();
@@ -842,7 +869,7 @@ void SciTEBase::RestoreState(const Buffer &buffer, bool restoreBookmarks) {
 		codePage = SC_CP_UTF8;
 		wEditor.Call(SCI_SETCODEPAGE, codePage);
 	}
-	isReadOnly = wEditor.Call(SCI_GETREADONLY);
+	isReadOnly = CurrentBuffer()->isReadOnly;
 
 	// check to see whether there is saved fold state, restore
 	if (!buffer.foldState.empty()) {
@@ -951,6 +978,7 @@ void SciTEBase::CloseTab(int tab) {
 	if (tab == tabCurrent) {
 		if (SaveIfUnsure() != IDCANCEL) {
 			Close();
+			WindowSetFocus(wEditor);
 		}
 	} else {
 		FilePath fpCurrent = buffers.buffers[tabCurrent].AbsolutePath();
@@ -1624,6 +1652,11 @@ int DecodeMessage(const char *cdoc, char *sourcePath, int format, int &column) {
 						strncpy(sourcePath, cdoc, i);
 						sourcePath[i] = 0;
 					}
+					i += 2;
+					while (isdigitchar(cdoc[i]))
+						++i;
+					if (cdoc[i] == ':' && isdigitchar(cdoc[i + 1]))
+						column = atoi(cdoc + i + 1) - 1;
 					return sourceNumber;
 				}
 			}
@@ -1908,10 +1941,10 @@ int DecodeMessage(const char *cdoc, char *sourcePath, int format, int &column) {
 		}
 
 	case SCE_ERR_DIFF_MESSAGE: {
-			// Diff file header, either +++ <filename>\t or --- <filename>\t
+			// Diff file header, either +++ <filename> or --- <filename>, may be followed by \t
 			// Often followed by a position line @@ <linenumber>
 			const char *startPath = cdoc + 4;
-			const char *endPath = strchr(startPath, '\t');
+			const char *endPath = strpbrk(startPath, "\t\r\n");
 			if (endPath) {
 				ptrdiff_t length = endPath - startPath;
 				strncpy(sourcePath, startPath, length);
@@ -2072,6 +2105,19 @@ void SciTEBase::GoMessage(int dir) {
 					}
 				}
 
+				else if (style == SCE_ERR_DIFF_MESSAGE) {
+					bool isAdd = message.startswith("+++ ");
+					int atLine = lookLine + (isAdd ? 1 : 2); // lines are in this order: ---, +++, @@
+					SString atMessage = GetLine(wOutput, atLine);
+					if (atMessage.startswith("@@ -")) {
+						int atPos = (isAdd
+							? atMessage.search(" +", 7) + 2 // skip "@@ -1,1" and then " +"
+							: 4 // deleted position starts right after "@@ -"
+						);
+						sourceLine = atol(atMessage.c_str() + atPos) - 1;
+					}
+				}
+
 				if (props.GetInt("error.inline")) {
 					ShowMessages(lookLine);
 				}
@@ -2089,7 +2135,7 @@ void SciTEBase::GoMessage(int dir) {
 					// Get the position in line according to current tab setting
 					startSourceLine = wEditor.Call(SCI_FINDCOLUMN, sourceLine, column);
 				}
-				EnsureRangeVisible(startSourceLine, startSourceLine);
+				EnsureRangeVisible(wEditor, startSourceLine, startSourceLine);
 				if (props.GetInt("error.select.line") == 1) {
 					//select whole source source line from column with error
 					SetSelection(endSourceline, startSourceLine);

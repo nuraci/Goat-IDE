@@ -23,8 +23,8 @@ vComma = vFull[0] + ", " + vFull[1] + ", " + vFull[2] + ", 0"
 
 print("[ %s | %s | %s ]" % (vFull, vPoint, vComma))
 
-tgzV = "scite" + vFull + ".tgz"
-tgzFileName = srcRoot + "scite.tgz"
+tgzV = "goat" + vFull + ".tgz"
+tgzFileName = srcRoot + "goat.tgz"
 tgzVFileName = srcRoot + tgzV
 
 print("[ %s | %s ]" % (tgzFileName, tgzVFileName))
@@ -40,10 +40,10 @@ else:
 	shutil.copyfile(tgzVFileName, rpmVFileName)
 
 	# Run the rpm build command
-	os.system("rpm -ba scite.spec")
+	os.system("rpm -ba goat.spec")
 
-	rpmB = "scite-" + vPoint + "-1.i386.rpm"
+	rpmB = "goat-" + vPoint + "-1.i386.rpm"
 	shutil.copyfile(rpmBin + rpmB, srcRoot + rpmB)
-	rpmS = "scite-" + vPoint + "-1.src.rpm"
+	rpmS = "goat-" + vPoint + "-1.src.rpm"
 	shutil.copyfile(rpmSource + rpmS, srcRoot + rpmS)
 

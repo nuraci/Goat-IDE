@@ -133,8 +133,7 @@ as a Lua script.
 </p><p>
 If there is no function matching the command name, no error will be
 displayed.  This is because Lua assumes in this case that the command
-is meant for some other extension, such as the <a href="GoatDirector.html">Goat Director
-Extension</a>.  However, if the command function is found, but fails
+is meant for some other extension. However, if the command function is found, but fails
 to execute, an error is reported.
 </p>
 <h4>Multiple handlers</h4>
@@ -150,10 +149,13 @@ Within Lua scripts you can use the following functions / objects:
 </p><pre><tt>  trace(s) - writes s to the output pane (no prefix, no newlines)
   dostring(s) - executes s as a Lua string, like Lua 4&#39;s dostring
   editor - the editor pane
-  output - the output pane
+  output - the "Host Console" pane
+  console - the "Target Console" pane
   props - a pseudo-table representing the Goat properties
   buffer - a table associated with the current buffer or document
-  Goat - a namespace for functions which control Goat.
+  scite - a namespace for functions which control the SciTE capabilities of Goat.
+  serial - a namespace for functions which control the serial.
+  goat   - a namespace for functions which control Goat specific capabilities.
 </tt></pre><p>
 In addition, all constants defined in Scintilla.iface are exposed as
 Lua globals variables. Function names are exposed as their block
@@ -179,7 +181,7 @@ properties are not changed.  If you later assign nil to the same property
 from Lua, this removes the run-time setting, allowing any file-based
 property setting to show through once again.
 </p><p>
-The editor and output panes support the following properties and
+The editor, output and console panes support the following properties and
 methods:
 </p><pre><tt>  textrange(startPos, endPos) - gets the text in the specified range
 
@@ -234,26 +236,30 @@ properties, e.g. <tt>editor.StyleBold[SCE_PROPS_DEFAULT] = true</tt>.
 However, if an iface function is declared as get / set but cannot be
 mapped to a Lua property, it is exposed as a Lua function instead.
 </p><p>
-The possible Scintilla calls are listed in <a href="http://Goat-interest.googlegroups.com/web/GoatLua.api">API file format.</a>
+The possible Scintilla calls are listed in <a href="http://scite-interest.googlegroups.com/web/SciTELua.api">API file format.</a>
 The Scintilla API is described in 
 <a href="http://www.scintilla.org/ScintillaDoc.html">ScintillaDoc</a>.
 </p>
-The <tt>Goat</tt> namespace includes the following functions:
-</p><pre><tt>  Goat.Open(filename)
+<p>
+The <tt>scite</tt> namespace includes the following functions:
+</p><pre><tt>  scite.Open(filename)
     - opens a file in a new buffer
     - activates the file's buffer if it is already opened.
 
-  Goat.SendEditor(SCI_constant, ...)
+  scite.SendEditor(SCI_constant, ...)
     - sends a message to the editor pane
     - equivalent to the corresponding iface function or property
 
-  Goat.SendOutput(SCI_constant, ...)
-    - sends a message to the output pane
+  scite.SendOutput(SCI_constant, ...)
+    - sends a message to the "Host Console" pane
+    
+  scite.SendConsole(SCI_constant, ...)
+    - sends a message to the "Target Console" pane
 
-  Goat.ConstantName(number)
+  scite.ConstantName(number)
     - returns the symbolic name of a Scintilla / Goat constant
 
-  Goat.MenuCommand(IDM_constant)
+  scite.MenuCommand(IDM_constant)
     - equivalent to the corresponding IDM_ command defined in Goat.h
 </tt></pre><p>
 <tt>Open</tt> requires special care.  When the buffer changes in Goat, the
@@ -280,6 +286,106 @@ or if extending the Goat LuaExtension to support macro recording.
 The <tt>MenuCommand</tt> function enables usage of Goat's menu commands
 as defined in Goat.h.
 </p>
+<br />
+The <tt>serial</tt> namespace includes the following functions:
+</p><pre><tt>
+  serial.SendString(string)
+    - send a "string" via serial
+    - the <tt>SendString</tt> function can be used in order to send commands to the target e.g. "help\n"
+
+  serial.SendFile(filename)
+    - opens a file and send it via serial.
+    - the <tt>SendFile</tt>  is very useful when the target implements the <a href="http://en.wikipedia.org/wiki/XMODEM">xmodem</a> protocol, 
+      it can send files via the serial port.
+</pre>
+<br />
+The <tt>goat</tt> namespace includes the following functions:
+<pre><tt>
+  goat.ChoiceConsole(pane)
+    - Change the pane, it should be a constant: GOAT_CON_TARGET or GOAT_CON_HOST
+    - the <tt>ChoiceConsole</tt> function permits to select the active console output pane:
+</pre>
+<div class="example">   
+   goat.ChoiceConsole(GOAT_CON_TARGET) -- The "Target Console" will be activated.<br />
+   goat.ChoiceConsole(GOAT_CON_HOST)   -- The "Host Console" will be activated.<br />
+</div>
+<pre>
+  goat.AskQuestion(string)
+    - Opens a dialog box asking for an user string
+    - the <tt>AskQuestion</tt> function shows a dialog box with a label="string" and after the user press
+      the "Execute" button, the properties variable "Answer" will contain the answer.
+</pre>
+<div class="example">
+   Lua example code:<br />
+<br />
+   local File = ""
+   goat.AskQuestion("Enter the file name")<br />
+   File = props['Answer']<br />
+   output:AddText("User choice is: ".. File .."\n")<br />
+</div>
+<pre>
+ goat.AskForFile(StartDir,Filter)
+    - Opens a dialog box asking for an user file.
+    - the <tt>AskForFile</tt> function shows a file choice dialog box from the "StartDir" filesytem directory...
+      the "Filter" parameters is a string like this "C (*.c)|*.c" or "All (*.*)|*.*"
+</pre>
+<div class="example">   
+   Lua example code:<br />
+<br />
+   local examples = props['ExamplesDir']<br />
+   goat.AskForFile(examples,"All (*.*)|*.*")<br />
+   FileSelected = props['FileSelected'] <br />
+   name = basename(FileSelected)<br />
+   serial.SendString("recv ".. "/mmc/" .. name .. "\n")<br /> 
+   serial.SendFile(FileSelected)<br />
+</div>
+
+
+<h4>Scripting user interfaces with strips</h4>
+<p>Simple user interfaces may be defined from Lua as strips similar to
+the find and replace strips. An example looks like
+<img src="http://scintilla.org/UserStrip.png"></img></p>
+
+<p>Strips are shown with StripShow which takes a string describing
+the user interface then builds and displays it as a strip at the
+bottom of the application window. There are 4 supported elements:
+static text, editable text, combo boxes and buttons. These are
+surrounded by different indicator characters: ' for static text; []
+for editable text; {} for combo boxes; and () for buttons. There can
+also be a newline to start a new line and a ! to show a close box on
+Windows only. Buttons may include accelerator keys prefixed with &amp;.
+
+  For example, the code
+<pre><tt>
+       scite.StripShow("!'Explanation:'{}(&amp;Search)\n'Name:'[Name](OK)(Cancel)")
+</tt></pre>
+  shows the strip displayed in the picture. The strip can be closed
+by passing an empty string.</p>
+
+<p>On GTK+ a table is used for layout and the approach was copied to the other
+platforms. It is not yet as capable on the other platforms yet as on
+GTK+ - columns containing editable text and combo boxes can expand and
+other columns are fixed to the their natural width of their widest
+element.</p>
+
+<p>Events from the user are communicated back to the script through
+the OnStrip function which takes an element number (starting at 0 and
+including static text elements) and a change type (clicked=1,
+change=2, focusIn=3, focusOut=4). 'clicked' is for button presses,
+'change' for changes to editable text or the editable text part of a
+combo boxes and 'focusIn' and 'focusOut' are when the user moves focus
+between elements. The value of editable text or combo boxes can be
+retrieved with StripValue(element).</p>
+
+<p>There are some bugs and limitations with these events currently.
+Focus events may not occur or may occur only when text is edited.
+Selecting an item from the list in a combo box may not send a 'change'
+event.</p>
+
+<p>The editable part of combo boxes and editable text can be set with
+StripSet(element, value) and the list part of combo boxes can be set
+with StripSetList(element, value) where the items in 'value' are
+separated with new lines.</p>
 
 <h4>Lua 5.1</h4>
 <pre>

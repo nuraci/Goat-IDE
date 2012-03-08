@@ -16,9 +16,8 @@ BEGIN
 POPUP "&File"
 BEGIN
 	MENUITEM "&New\tCtrl+N",		IDM_NEW
-	MENUITEM "&Open...\tCtrl+O",	IDM_OPEN
+	MENUITEM "&Open...\tCtrl+O",		IDM_OPEN
 	MENUITEM "Open &Example",       IDM_EXAMPLE_OPEN
-	MENUITEM "Open Flash Image",    IDM_FLASH_IMGS__OPEN
 	MENUITEM "Open Selected &Filename\tCtrl+Shift+O",	IDM_OPENSELECTED
 	MENUITEM "&Revert\tCtrl+R",		IDM_REVERT
 	MENUITEM "&Close\tCtrl+W",		IDM_CLOSE
@@ -122,14 +121,13 @@ END
 
 POPUP "&Tools"
 BEGIN
-	MENUITEM "&Compile\tCtrl+F7",	IDM_COMPILE
-	MENUITEM "Send & Run on RAM",  	IDM_RUN_RAM
-	MENUITEM "&Send to MMC", 		IDM_SEND_MMC
-	MENUITEM "&Run from MMC",  		IDM_RUN_MMC
+	MENUITEM "&Compile\tCtrl+F7",		IDM_COMPILE
+	MENUITEM "&Build\tF7",				IDM_BUILD
+	MENUITEM "&Go\tF5",					IDM_GO
+	MENUITEM "&Stop Executing\tCtrl+Break",IDM_STOPEXECUTE
 	MENUITEM SEPARATOR
 	MENUITEM "Open Serial Port",  IDM_OPEN_UART
 	MENUITEM "Close Serial Port", IDM_CLOSE_UART
-	MENUITEM "Send <Ctrl+Z>",    IDM_STOPEXECUTE
 	MENUITEM SEPARATOR
 	MENUITEM "&Next Message\tF4",		IDM_NEXTMSG
 	MENUITEM "&Previous Message\tShift+F4",IDM_PREVMSG
@@ -142,7 +140,7 @@ BEGIN
 	MENUITEM "&Always On Top",			IDM_ONTOP
 	MENUITEM "Open Files &Here",		IDM_OPENFILESHERE
 	MENUITEM "Vertical &Split",			IDM_SPLITVERTICAL
-	MENUITEM "&Wrap",			        IDM_WRAP
+	MENUITEM "&Wrap",			IDM_WRAP
 	MENUITEM "Wrap Out&put",			IDM_WRAPOUTPUT
 	MENUITEM "&Read-Only",				IDM_READONLY
 	MENUITEM SEPARATOR
@@ -168,13 +166,10 @@ BEGIN
 	MENUITEM SEPARATOR
 END // used: abcghlmoprstux
 
-#ifdef NOT_DEF
-
-POPUP "&Languages"
+POPUP "&Language"
 BEGIN
 	MENUITEM "", IDM_LANGUAGE
 END
-#endif
 
 POPUP "&Buffers"
 BEGIN

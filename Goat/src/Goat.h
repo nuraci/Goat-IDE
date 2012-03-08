@@ -10,34 +10,35 @@
 
 
 #define APP_NAME "Goat"
-#define APP_NAME_TITLE "Go @ IDE"
+#define APP_NAME_TITLE "The Go @ IDE"
 #define APP_NAME_STATIC_BUILD "GoatIDE"
-#define VERSION_GOAT "0.5.0.1"
-#define VERSION_GOAT_WORDS 0, 5, 0, 1
-#define COPYRIGHT_GOAT_DATES "February 2012"
+#define VERSION_GOAT "0.6.0"
+#define VERSION_GOAT_WORDS 0, 6, 0, 0
+#define COPYRIGHT_GOAT_DATES "March 2012"
 #define COPYRIGHT_GOAT_YEARS "2012"
 // Version numbers and dates
-#define VERSION_SCITE "3.0.2"
-#define VERSION_WORDS 3, 0, 2, 0
-#define COPYRIGHT_DATES "December 1998-December 2011"
-#define COPYRIGHT_YEARS "1998-2011"
+#define VERSION_SCITE "3.0.4"
+#define VERSION_WORDS 3, 0, 4, 0
+#define COPYRIGHT_DATES "December 1998-March 2012"
+#define COPYRIGHT_YEARS "1998-2012"
 
-#define ROOT_PROPS_DIR_NAME 		"Rootdir"
-#define BIN_DIR_NAME 				"bin"
-#define BIN_PROPS_DIR_NAME 			"Bindir"
-#define DOCS_DIR_NAME 				"docs"
-#define DOCS_PROPS_DIR_NAME 		"Docsdir"
-#define EXAMPLES_DIR_NAME 			"examples"
-#define EXAMPLES_PROPS_DIR_NAME 	"ExamplesDir"
-#define PROPERTIES_DIR_NAME 		"properties"
-#define PROPERTIES_PROPS_DIR_NAME  	"GoatDir"
-#define USER_PROPS_DIR_NAME  		"GoatUserDir"
+#define GOAT_DEFAULT_HOME_P "GoatDefaultHome"
+#define GOAT_DEFAULT_HOME 	"properties"
+#define GOAT_USER_HOME_P	"GoatUserHome"
 
-#define PROPERTIES_BOARD_NAME 		"TargetBOARD"
-#define PROPERTIES_CPU_NAME			"TargetCPU"
+#define ROOT_DIR_P			"RootDir"
+#define BIN_DIR		 		"bin"
+#define BIN_DIR_P 			"BinDir"
+#define DOCS_DIR	 		"docs"
+#define DOCS_DIR_P		 	"DocsDir"
+#define EXAMPLES_DIR		"examples"
+#define EXAMPLES_DIR_P		"ExamplesDir"
 
-#define BOARD_CONSOLE_TAB 	0
-#define SYS_CONSOLE_TAB 	1
+#define TARGET_BOARD_P 		"TargetBOARD"
+#define TARGET_CPU_P		"TargetCPU"
+
+#define GOA_CON_TARGET	0
+#define GOA_CON_HOST 	1
 
 #ifdef DEBUG
 #ifdef WIN32
@@ -62,12 +63,12 @@ void __cdecl myDbgPrint(const char *s, ...);
 #define IDM_TOOLS			1100
 #define IDM_BUFFER			1200
 #define IDM_IMPORT			1300
-#define IDM_LANGUAGE		1400
+#define IDM_LANGUAGE			1400
 
 // File
-#define IDM_NEW				101
+#define IDM_NEW			101
 #define IDM_OPEN			102
-#define IDM_OPENSELECTED	103
+#define IDM_OPENSELECTED		103
 #define IDM_REVERT			104
 #define IDM_CLOSE			105
 #define IDM_SAVE			106
@@ -79,7 +80,7 @@ void __cdecl myDbgPrint(const char *s, ...);
 #define IDM_SAVEASTEX		115
 #define IDM_SAVEACOPY		116
 #define IDM_SAVEASXML		117
-#define IDM_COPYPATH		118
+#define IDM_COPYPATH			118
 #define IDM_MRU_SEP			120
 #define IDM_MRU_SUB			121
 #define IDM_PRINTSETUP		130
@@ -87,7 +88,7 @@ void __cdecl myDbgPrint(const char *s, ...);
 #define IDM_LOADSESSION		132
 #define IDM_SAVESESSION		133
 #define IDM_QUIT			140
-#define IDM_ENCODING_DEFAULT 	150
+#define IDM_ENCODING_DEFAULT	150
 #define IDM_ENCODING_UCS2BE	151
 #define IDM_ENCODING_UCS2LE	152
 #define IDM_ENCODING_UTF8	153
@@ -216,18 +217,13 @@ void __cdecl myDbgPrint(const char *s, ...);
 #define IDM_OPENDIRECTORYPROPERTIES	465
 
 #define IDM_EXAMPLE_OPEN		470
-#define IDM_SEND_MMC			471
-#define IDM_RUN_MMC				472
-#define IDM_RUN_RAM				473
 #define IDM_CONSOLEWIN			475
 #define IDM_OUT_CONSOLE 		476
 #define IDM_OUT_SYSTEM 			477
-#define IDM_FLASH_IMGS__OPEN	478
 #define IDM_VIEWGROUPTAB        479
 #define IDM_CLEARCONSOLE		480
 #define IDM_OPEN_UART			481
 #define IDM_CLOSE_UART  		482
-#define IDM_RESET_UART			483
 #define IDM_GROUPTAB			484
 #define IDC_GROUPSHIFTTAB		485
 #define IDM_MODE_TERMINAL 		486

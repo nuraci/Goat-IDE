@@ -160,7 +160,7 @@ SciTEBase::SciTEBase(Extension *ext) : apis(true), extender(ext) {
 	returnOutputToCommand = true;
 	scrollConsole = 1;
 	returnConsoleToCommand = true;
-	
+
 	ptStartDrag.x = 0;
 	ptStartDrag.y = 0;
 	capturedMouse = false;
@@ -176,8 +176,8 @@ SciTEBase::SciTEBase(Extension *ext) : apis(true), extender(ext) {
 
 	indentationWSVisible = true;
 	indentExamine = SC_IV_LOOKBOTH;
-
 	autoCompleteIgnoreCase = false;
+	callTipUseEscapes = false;
 	callTipIgnoreCase = false;
 	autoCCausedByOnlyOne = false;
 	startCalltipWord = 0;
@@ -216,9 +216,13 @@ SciTEBase::SciTEBase(Extension *ext) : apis(true), extender(ext) {
 
 	needReadProperties = false;
 	quitting = false;
+
+	timerMask = 0;
+	delayBeforeAutoSave = 0;
 }
 
 SciTEBase::~SciTEBase() {
+	TimerEnd(timerAutoSave);
 	if (extender)
 		extender->Finalise();
 	delete []languageMenu;
@@ -241,11 +245,6 @@ void SciTEBase::WorkerCommand(int cmd, Worker *pWorker) {
 		break;
 	}
 }
-#if TODO
-void SciTEBase::WorkerCommandConsole(const char *buf, int len, Worker *pWorker) {
-	ConsoleInsertCharsSynchronised(buf,len);
-}
-#endif
 
 int SciTEBase::CallFocused(unsigned int msg, uptr_t wParam, sptr_t lParam) {
 	if (wOutput.HasFocus())
@@ -314,7 +313,7 @@ void SciTEBase::AssignKey(int key, int mods, int cmd) {
  */
 void SciTEBase::SetOverrideLanguage(int cmdID) {
 	RecentFile rf = GetFilePosition();
-	EnsureRangeVisible(0, wEditor.Call(SCI_GETLENGTH), false);
+	EnsureRangeVisible(wEditor, 0, wEditor.Call(SCI_GETLENGTH), false);
 	// Zero all the style bytes
 	wEditor.Call(SCI_CLEARDOCUMENTSTYLE);
 
@@ -591,7 +590,8 @@ void SciTEBase::BraceMatch(bool editor) {
 	int braceAtCaret = -1;
 	int braceOpposite = -1;
 	FindMatchingBracePosition(editor, braceAtCaret, braceOpposite, bracesSloppy);
-	GUI::ScintillaWindow &win = editor ? wEditor : wOutput;
+	GUI::ScintillaWindow &win = editor ? wEditor : wOutput.HasFocus() ? wOutput : wConsole;
+
 	if ((braceAtCaret != -1) && (braceOpposite == -1)) {
 		win.Send(SCI_BRACEBADLIGHT, braceAtCaret, 0);
 		wEditor.Call(SCI_SETHIGHLIGHTGUIDE, 0);
@@ -986,6 +986,7 @@ int SciTEBase::MarkAll() {
 		CurrentBuffer()->findMarks = Buffer::fmMarked;
 	}
 	if (posFirstFound != -1) {
+		int posEndFound;
 		int posFound = posFirstFound;
 		do {
 			marked++;
@@ -995,7 +996,9 @@ int SciTEBase::MarkAll() {
 				wEditor.Call(SCI_INDICATORFILLRANGE, posFound, wEditor.Call(SCI_GETTARGETEND) - posFound);
 			}
 			posFound = FindNext(false, false);
-		} while ((posFound != -1) && (posFound != posFirstFound));
+			posEndFound = wEditor.Call(SCI_GETTARGETEND);
+			// Since start position may be within a match, terminate when match includes initial position
+		} while ((posFound != -1) && !((posFound <= posFirstFound) && (posFirstFound <= posEndFound)));
 	}
 	wEditor.Call(SCI_SETCURRENTPOS, posCurrent);
 	return marked;
@@ -1106,7 +1109,7 @@ int SciTEBase::FindNext(bool reverseDirection, bool showWarnings) {
 		havefound = true;
 		int start = wEditor.Call(SCI_GETTARGETSTART);
 		int end = wEditor.Call(SCI_GETTARGETEND);
-		EnsureRangeVisible(start, end);
+		EnsureRangeVisible(wEditor, start, end);
 		SetSelection(start, end);
 		if (!replacing && closeFind) {
 			DestroyFindReplace();
@@ -1338,13 +1341,6 @@ void SciTEBase::MakeOutputVisible() {
 	}
 }
 
-void SciTEBase::ClearJobQueue() {
-	for (int ic = 0; ic < jobQueue.commandMax; ic++) {
-		jobQueue.jobQueue[ic].Clear();
-	}
-	jobQueue.commandCurrent = 0;
-}
-
 void SciTEBase::Execute() {
 	props.Set("CurrentMessage", "");
 	dirNameForExecute = FilePath();
@@ -1363,7 +1359,7 @@ void SciTEBase::Execute() {
 	}
 	if (displayParameterDialog) {
 		if (!ParametersDialog(true)) {
-			ClearJobQueue();
+			jobQueue.ClearJobs();
 			return;
 		}
 	} else {
@@ -1393,7 +1389,7 @@ void SciTEBase::Execute() {
 
 void SciTEBase::ToggleOutputVisible() {
 	if (heightOutput > 0) {
-		heightOutput = NormaliseSplit(heightOutput);
+		heightOutput = NormaliseSplit(0);
 		WindowSetFocus(wEditor);
 	} else {
 		if (previousHeightOutput < 20) {
@@ -1531,7 +1527,18 @@ void SciTEBase::FillFunctionDefinition(int pos /*= -1*/) {
 			} else if (maxCallTips > 1) {
 				functionDefinition.insert(1, "\002");
 			}
-			wEditor.CallString(SCI_CALLTIPSHOW, lastPosCallTip - currentCallTipWord.length(), functionDefinition.c_str());
+
+			SString definitionForDisplay;
+			if (callTipUseEscapes) {
+				char *sUnslashed = StringDup(functionDefinition.c_str());
+				UnSlash(sUnslashed);
+				definitionForDisplay = sUnslashed;
+				delete []sUnslashed;
+			} else {
+				definitionForDisplay = functionDefinition;
+			}
+
+			wEditor.CallString(SCI_CALLTIPSHOW, lastPosCallTip - currentCallTipWord.length(), definitionForDisplay.c_str());
 			ContinueCallTip();
 		}
 	}
@@ -1615,10 +1622,21 @@ void SciTEBase::ContinueCallTip() {
 	int endHighlight = startHighlight;
 	while (functionDefinition[endHighlight] && !calltipParametersSeparators.contains(functionDefinition[endHighlight]) && !calltipParametersEnd.contains(functionDefinition[endHighlight]))
 		endHighlight++;
+	if (callTipUseEscapes) {
+		char *sUnslashed = StringDup(functionDefinition.substr(0, startHighlight + 1).c_str());
+		int unslashedStartHighlight = UnSlash(sUnslashed) - 1;
+		delete []sUnslashed;
+
+		sUnslashed = StringDup(functionDefinition.substr(startHighlight, endHighlight - startHighlight + 1).c_str());
+		int unslashedEndHighlight = unslashedStartHighlight + UnSlash(sUnslashed) - 1;
+		delete []sUnslashed;
+
+		startHighlight = unslashedStartHighlight;
+		endHighlight = unslashedEndHighlight;
+	}
 
 	wEditor.Call(SCI_CALLTIPSETHLT, startHighlight, endHighlight);
 }
-
 void SciTEBase::EliminateDuplicateWords(char *words) {
 	char *firstWord = words;
 	char *firstSpace = strchr(firstWord, ' ');
@@ -2836,6 +2854,11 @@ bool SciTEBase::HandleXml(char ch) {
 		return false;
 	}
 
+	if (sel[nCaret - nMin - 2] == '-') {
+		// User typed something like "<a $this->"
+		return false;
+	}
+
 	SString strFound = FindOpenXmlTag(sel, nCaret - nMin);
 
 	if (strFound.length() > 0) {
@@ -2870,7 +2893,9 @@ SString SciTEBase::FindOpenXmlTag(const char sel[], int nSize) {
 		if (*pCur == '<') {
 			break;
 		} else if (*pCur == '>') {
-			break;
+			if (*(pCur - 1) != '-') {
+				break;
+			}
 		}
 		--pCur;
 	}
@@ -2890,7 +2915,21 @@ SString SciTEBase::FindOpenXmlTag(const char sel[], int nSize) {
 void SciTEBase::GoMatchingBrace(bool select) {
 	int braceAtCaret = -1;
 	int braceOpposite = -1;
-	bool isInside = FindMatchingBracePosition(true, braceAtCaret, braceOpposite, true);
+	GUI::ScintillaWindow *wCurrent = &wEditor;
+    bool OutputHasFocus;
+	bool isInside;
+
+    if (wOutput.HasFocus()) {
+		wCurrent = &wOutput;
+		OutputHasFocus = true;
+    } else if (wConsole.HasFocus()) {
+		wCurrent = &wConsole;
+		OutputHasFocus = true;
+	} else {
+		wCurrent = &wEditor;
+		OutputHasFocus = false;
+    }
+	isInside = FindMatchingBracePosition(!OutputHasFocus, braceAtCaret, braceOpposite, true);
 	// Convert the character positions into caret positions based on whether
 	// the caret position was inside or outside the braces.
 	if (isInside) {
@@ -2907,11 +2946,11 @@ void SciTEBase::GoMatchingBrace(bool select) {
 		}
 	}
 	if (braceOpposite >= 0) {
-		EnsureRangeVisible(braceOpposite, braceOpposite);
+		EnsureRangeVisible(*wCurrent, braceOpposite, braceOpposite);
 		if (select) {
-			SetSelection(braceAtCaret, braceOpposite);
+			wCurrent->Call(SCI_SETSEL, braceAtCaret, braceOpposite);
 		} else {
-			SetSelection(braceOpposite, braceOpposite);
+			wCurrent->Call(SCI_SETSEL, braceOpposite, braceOpposite);
 		}
 	}
 }
@@ -2925,7 +2964,7 @@ void SciTEBase::GoMatchingPreprocCond(int direction, bool select) {
 	bool isInside = FindMatchingPreprocCondPosition(forward, mppcAtCaret, mppcMatch);
 
 	if (isInside && mppcMatch >= 0) {
-		EnsureRangeVisible(mppcMatch, mppcMatch);
+		EnsureRangeVisible(wEditor, mppcMatch, mppcMatch);
 		if (select) {
 			// Selection changes the rules a bit...
 			int selStart = wEditor.Call(SCI_GETSELECTIONSTART);
@@ -3025,28 +3064,14 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		OpenDialog(filePath.Directory(), GUI::StringFromUTF8(props.GetExpanded("open.filter").c_str()).c_str());
 		WindowSetFocus(wEditor);
 		break;
+
 	case IDM_EXAMPLE_OPEN:
 		// No need to see if can make room as that will occur
 		// when doing the opening. Must be done there as user
 		// may decide to open multiple files so do not know yet
 		// how much room needed.
-#ifndef  WIN32
-		OpenDialog(FilePath(props.Get(EXAMPLES_PROPS_DIR_NAME).c_str()),
+		OpenDialog(FilePath(GUI::StringFromUTF8(props.Get(EXAMPLES_DIR_P).c_str()).c_str()),
 				GUI::StringFromUTF8(props.GetExpanded("open.filter").c_str()).c_str());
-#else
-		OpenDialog(FilePath(GUI::StringFromUTF8(props.Get(EXAMPLES_PROPS_DIR_NAME).c_str()).c_str()),
-				GUI::StringFromUTF8(props.GetExpanded("open.filter").c_str()).c_str());
-#endif
-		WindowSetFocus(wEditor);
-		break;
-	case IDM_FLASH_IMGS__OPEN:
-#ifndef  WIN32
-		OpenDialog(FilePath(props.Get(ROOT_PROPS_DIR_NAME).c_str()),
-				GUI::StringFromUTF8(props.GetExpanded("flash.filter").c_str()).c_str());
-#else
-		OpenDialog(FilePath(GUI::StringFromUTF8(props.Get(ROOT_PROPS_DIR_NAME).c_str()).c_str()),
-				GUI::StringFromUTF8(props.GetExpanded("flash.filter").c_str()).c_str());
-#endif
 		WindowSetFocus(wEditor);
 		break;
 	case IDM_OPENSELECTED:
@@ -3293,11 +3318,14 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 	case IDM_SELECTTONEXTMATCHPPC:
 		GoMatchingPreprocCond(IDM_NEXTMATCHPPC, true);
 		break;
-
 	case IDM_SHOWCALLTIP:
-		StartCallTip();
+		if (wEditor.Call(SCI_CALLTIPACTIVE)) {
+			currentCallTip = (currentCallTip + 1 == maxCallTips) ? 0 : currentCallTip + 1;
+			FillFunctionDefinition();
+		} else {
+			StartCallTip();
+		}
 		break;
-
 	case IDM_COMPLETE:
 		autoCCausedByOnlyOne = false;
 		StartAutoComplete();
@@ -3415,12 +3443,12 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		ShowToolBar();
 		CheckMenus();
 		break;
-#if 0 //Unused in Goat
+
 	case IDM_TOGGLEOUTPUT:
 		ToggleOutputVisible();
 		CheckMenus();
 		break;
-#endif
+
 	case IDM_TOGGLEPARAMETERS:
 		ParametersDialog(false);
 		CheckMenus();
@@ -3437,9 +3465,10 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		wOutput.Call(SCI_SETWRAPMODE, wrapOutput ? wrapStyle : SC_WRAP_NONE);
 		CheckMenus();
 		break;
-		
+
 	case IDM_READONLY:
 		isReadOnly = !isReadOnly;
+		CurrentBuffer()->isReadOnly = false;
 		wEditor.Call(SCI_SETREADONLY, isReadOnly);
 		UpdateStatusBar(true);
 		CheckMenus();
@@ -3471,7 +3500,7 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 			if ( wGroupTab.GetID())
 				wGroupTabCurrentPage = GroupGetCurrentTab();
 			if (wEditor.HasFocus()) {
-				if (wGroupTabCurrentPage == BOARD_CONSOLE_TAB)
+				if (wGroupTabCurrentPage == GOA_CON_TARGET)
 					WindowSetFocus(wConsole);
 				else
 					WindowSetFocus(wOutput);
@@ -3481,13 +3510,13 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		break;
 	case IDM_OUT_CONSOLE:
 		if (wGroupTab.GetID()) {
-			GroupSetCurrentTab(BOARD_CONSOLE_TAB);
+			GroupSetCurrentTab(GOA_CON_TARGET);
 			WindowSetFocus(wConsole);
 		}
 		break;
 	case IDM_OUT_SYSTEM:
 		if (wGroupTab.GetID()) {
-			GroupSetCurrentTab(SYS_CONSOLE_TAB);
+			GroupSetCurrentTab(GOA_CON_HOST);
 			WindowSetFocus(wOutput);
 		}
 		break;
@@ -3536,7 +3565,7 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 			}
 		}
 		break;
-#if 0
+
 	case IDM_BUILD: {
 			if (SaveIfUnsureForBuilt() != IDCANCEL) {
 				SelectionIntoProperties();
@@ -3551,74 +3580,6 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 			}
 		}
 		break;
-#endif
-	case IDM_SEND_MMC: {
-			std::string cmd = "recv ";
-			std::string name;
-			std::string str1=".lc";
-
-			SString extfs = props.Get("elua.extfs");
-			if (extfs.size())
-				cmd += props.Get("elua.extfs").c_str();
-			else
-				cmd += "/mmc/";
-			if (SaveIfUnsureForBuilt() != IDCANCEL) {
-				SelectionIntoProperties();
-				cmd += FileNameExt().BaseName().AsUTF8();
-				name = filePath.AbsolutePath().AsUTF8();
-				if(props.GetWild("command.compile.", FileNameExt().AsUTF8().c_str()).size() != 0) {
-					cmd += ".lc\n";
-					name.replace(name.end()-strlen(".lua"),name.end(),str1);
-				} else {
-					cmd += ".lua\n";
-				}
-				GroupSetCurrentTab(BOARD_CONSOLE_TAB);
-				serial->Send(cmd.c_str(),-1);
-				serial->XmodemTransmitFile(name.c_str());
-				WindowSetFocus(wConsole);
-			}
-		}
-		break;
-	case IDM_RUN_MMC: {
-			SString extfs = props.Get("elua.extfs");
-			std::string cmd = "lua ";
-			if (extfs.size())
-				cmd += props.Get("elua.extfs").c_str();
-			else
-				cmd += "/mmc/";
-
-			if (SaveIfUnsureForBuilt() != IDCANCEL) {
-				SelectionIntoProperties();
-				cmd += FileNameExt().BaseName().AsUTF8();
-				if(props.GetWild("command.compile.", FileNameExt().AsUTF8().c_str()).size() != 0) {
-					cmd += ".lc\n";
-				} else {
-					cmd += ".lua\n";
-				}
-				GroupSetCurrentTab(BOARD_CONSOLE_TAB);
-				serial->Send(cmd.c_str(),-1);
-				WindowSetFocus(wConsole);
-			}
-		}
-		break;
-	case IDM_RUN_RAM: {
-			std::string cmd = "recv\n";
-			std::string name;
-			std::string str1=".lc";
-
-			if (SaveIfUnsureForBuilt() != IDCANCEL) {
-				SelectionIntoProperties();
-				name = filePath.AbsolutePath().AsUTF8();
-				if(props.GetWild("command.compile.", FileNameExt().AsUTF8().c_str()).size() != 0) {
-					name.replace(name.end()-strlen(".lua"),name.end(),str1);
-				}
-				GroupSetCurrentTab(BOARD_CONSOLE_TAB);
-				serial->Send(cmd.c_str(),-1);
-				serial->XmodemTransmitFile(name.c_str());
-				WindowSetFocus(wConsole);
-			}
-		}
-		break;
 	case IDM_MODE_TERMINAL: {
 			if(term.isTermActive())
 				term.setTermActiveOff();
@@ -3630,7 +3591,6 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		}
 		break;
 
-#if 0 // Unused in Goat
 	case IDM_GO: {
 			if (SaveIfUnsureForBuilt() != IDCANCEL) {
 				SelectionIntoProperties();
@@ -3652,16 +3612,9 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 			}
 		}
 		break;
-#endif
-	case IDM_STOPEXECUTE: {
-		//StopExecute();
-		char ch = 26;
-		std::string cmd = &ch;
-			if (SaveIfUnsureForBuilt() != IDCANCEL) {
-				SelectionIntoProperties();
-				serial->Send(cmd.c_str(),-1);
-			}
-		}
+
+	case IDM_STOPEXECUTE:
+		StopExecute();
 		break;
 	case IDM_OPEN_UART:
 		if (serial->Start()) {
@@ -3671,7 +3624,7 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 			CheckMenus();
 			term.Clear();
 			if ((props.Get("serial.tx1cr").size() != 0) && props.GetInt ("serial.tx1cr") == 1) {
-				serial->OutByte('\r'); /* Send the first \r in order to get eLua prompt */
+				serial->OutByte('\r'); /* Send the first \r in order to get Target prompt */
 			}
 		}
 	    break;
@@ -3809,7 +3762,7 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		        (cmdID < importCmdID + importMax)) {
 			ImportMenu(cmdID - importCmdID);
 		} else if (cmdID >= IDM_TOOLS && cmdID < IDM_TOOLS + toolMax) {
-			GroupSetCurrentTab(SYS_CONSOLE_TAB);
+			GroupSetCurrentTab(GOA_CON_HOST);
 			WindowSetFocus(wOutput);
 			ToolsMenu(cmdID - IDM_TOOLS);
 		} else if (cmdID >= IDM_LANGUAGE && cmdID < IDM_LANGUAGE + 100) {
@@ -3921,11 +3874,11 @@ void SciTEBase::GotoLineEnsureVisible(int line) {
 	wEditor.Call(SCI_GOTOLINE, line);
 }
 
-void SciTEBase::EnsureRangeVisible(int posStart, int posEnd, bool enforcePolicy) {
-	int lineStart = wEditor.Call(SCI_LINEFROMPOSITION, Minimum(posStart, posEnd));
-	int lineEnd = wEditor.Call(SCI_LINEFROMPOSITION, Maximum(posStart, posEnd));
+void SciTEBase::EnsureRangeVisible(GUI::ScintillaWindow &win, int posStart, int posEnd, bool enforcePolicy) {
+	int lineStart = win.Call(SCI_LINEFROMPOSITION, Minimum(posStart, posEnd));
+	int lineEnd = win.Call(SCI_LINEFROMPOSITION, Maximum(posStart, posEnd));
 	for (int line = lineStart; line <= lineEnd; line++) {
-		wEditor.Call(enforcePolicy ? SCI_ENSUREVISIBLEENFORCEPOLICY : SCI_ENSUREVISIBLE, line);
+		win.Call(enforcePolicy ? SCI_ENSUREVISIBLEENFORCEPOLICY : SCI_ENSUREVISIBLE, line);
 	}
 }
 
@@ -4106,6 +4059,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 		break;
 
 	case SCN_MODIFIED:
+		CurrentBuffer()->DocumentModified();
 		if (notification->modificationType & SC_LASTSTEPINUNDOREDO) {
 			//when the user hits undo or redo, several normal insert/delete
 			//notifications may fire, but we will end up here in the end
@@ -4141,7 +4095,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 		break;
 
 	case SCN_NEEDSHOWN: {
-			EnsureRangeVisible(notification->position, notification->position + notification->length, false);
+			EnsureRangeVisible(wEditor, notification->position, notification->position + notification->length, false);
 		}
 		break;
 
@@ -4193,6 +4147,10 @@ void SciTEBase::Notify(SCNotification *notification) {
 	case SCN_ZOOM:
 		SetLineNumberWidth();
 		break;
+
+	case SCN_MODIFYATTEMPTRO:
+		AbandonAutomaticSave();
+		break;
 	}
 }
 
@@ -4206,11 +4164,9 @@ void SciTEBase::CheckMenusClipboard() {
 
 void SciTEBase::CheckMenus() {
 	CheckMenusClipboard();
-	EnableAMenuItem(IDM_SAVE, CurrentBuffer()->isDirty);
 	EnableAMenuItem(IDM_UNDO, CallFocused(SCI_CANUNDO));
 	EnableAMenuItem(IDM_REDO, CallFocused(SCI_CANREDO));
 	EnableAMenuItem(IDM_DUPLICATE, !isReadOnly);
-	EnableAMenuItem(IDM_FINDINFILES, !jobQueue.IsExecuting());
 	EnableAMenuItem(IDM_SHOWCALLTIP, apis != 0);
 	EnableAMenuItem(IDM_COMPLETE, apis != 0);
 	CheckAMenuItem(IDM_SPLITVERTICAL, splitVertical);
@@ -4234,20 +4190,10 @@ void SciTEBase::CheckMenus() {
 	CheckAMenuItem(IDM_MONOFONT, CurrentBuffer()->useMonoFont);
 	EnableAMenuItem(IDM_COMPILE, !jobQueue.IsExecuting() &&
 	        props.GetWild("command.compile.", FileNameExt().AsUTF8().c_str()).size() != 0);
-
-	EnableAMenuItem(IDM_SEND_MMC, !jobQueue.IsExecuting() &&
-			serial->IsConnected() &&
-			!CurrentBuffer()->IsUntitled() &&
-			!CurrentBuffer()->isDirty);
-	EnableAMenuItem(IDM_RUN_MMC,!jobQueue.IsExecuting() &&
-			serial->IsConnected() &&
-			!CurrentBuffer()->IsUntitled() &&
-			!CurrentBuffer()->isDirty);
-	EnableAMenuItem(IDM_RUN_RAM, !jobQueue.IsExecuting() &&
-			serial->IsConnected() &&
-			!CurrentBuffer()->IsUntitled() &&
-			!CurrentBuffer()->isDirty);
-
+	EnableAMenuItem(IDM_BUILD, !jobQueue.IsExecuting() &&
+	        props.GetWild("command.build.", FileNameExt().AsUTF8().c_str()).size() != 0);
+	EnableAMenuItem(IDM_GO, !jobQueue.IsExecuting() &&
+	        props.GetWild("command.go.", FileNameExt().AsUTF8().c_str()).size() != 0);
 	EnableAMenuItem(IDM_OPEN_UART, !serial->IsConnected());
 	EnableAMenuItem(IDM_CLOSE_UART, serial->IsConnected());
 	CheckAMenuItem(IDM_MODE_TERMINAL, serial->IsConnected() && term.isTermActive());
@@ -4256,9 +4202,7 @@ void SciTEBase::CheckMenus() {
 	EnableAMenuItem(IDM_OPENDIRECTORYPROPERTIES, props.GetInt("properties.directory.enable") != 0);
 	for (int toolItem = 0; toolItem < toolMax; toolItem++)
 		EnableAMenuItem(IDM_TOOLS + toolItem, !jobQueue.IsExecuting());
-
-	EnableAMenuItem(IDM_STOPEXECUTE, serial->IsConnected());
-
+	EnableAMenuItem(IDM_STOPEXECUTE, jobQueue.IsExecuting());
 	if (buffers.size > 0) {
 		TabSelect(buffers.Current());
 		for (int bufferItem = 0; bufferItem < buffers.lengthVisible; bufferItem++) {
@@ -4285,9 +4229,12 @@ void SciTEBase::ContextMenu(GUI::ScintillaWindow &wSource, GUI::Point pt, GUI::W
 	AddToPopUp("");
 	AddToPopUp("Select All", IDM_SELECTALL);
 	AddToPopUp("");
-	if (wSource.GetID() == wOutput.GetID() || wSource.GetID() == wConsole.GetID()) {
-		AddToPopUp("eLua", IDM_OUT_CONSOLE, true);
-		AddToPopUp("System", IDM_OUT_SYSTEM, true);
+	if (wSource.GetID() == wOutput.GetID()) {
+		AddToPopUp("Hide", IDM_TOGGLEOUTPUT, true);
+		AddToPopUp("Target Console", IDM_OUT_CONSOLE, true);
+	} else if ( wSource.GetID() == wConsole.GetID()) {
+		AddToPopUp("Hide", IDM_TOGGLEOUTPUT, true);
+		AddToPopUp("Host Console", IDM_OUT_SYSTEM, true);
 	} else {
 		AddToPopUp("Close", IDM_CLOSE, true);
 	}
@@ -4340,11 +4287,35 @@ void SciTEBase::MoveSplit(GUI::Point ptNewDrag) {
 	previousHeightOutput = newHeightOutput;
 }
 
+void SciTEBase::TimerStart(int /* mask */) {
+}
+
+void SciTEBase::TimerEnd(int /* mask */) {
+}
+
+void SciTEBase::OnTimer() {
+	if (delayBeforeAutoSave) {
+		// First save the visible buffer to avoid any switching if not needed
+		if (CurrentBuffer()->NeedsSave(delayBeforeAutoSave)) {
+			Save(sfNone);
+		}
+		// Then look through the other buffers to save any that need to be saved
+		int currentBuffer = buffers.Current();
+		for (int i = 0; i < buffers.length; i++) {
+			if (buffers.buffers[i].NeedsSave(delayBeforeAutoSave)) {
+				SetDocumentAt(i);
+				Save(sfNone);
+			}
+		}
+		SetDocumentAt(currentBuffer);
+	}
+}
+
 void SciTEBase::UIAvailable() {
 	SetImportMenu();
 	if (extender) {
-		FilePath homepath = GetScitePropertiesHome();
-		props.Set(APP_NAME"PropertiesHome", homepath.AsUTF8().c_str());
+		FilePath homepath = GetSciteDefaultHome();
+		props.Set(APP_NAME"DefaultHome", homepath.AsUTF8().c_str());
 		homepath = GetSciteUserHome();
 		props.Set(APP_NAME"UserHome", homepath.AsUTF8().c_str());
 		extender->Initialise(this);
@@ -4836,7 +4807,6 @@ bool SciTEBase::ProcessCommandLine(GUI::gui_string &args, int phase) {
 
 // Implement ExtensionAPI methods
 sptr_t SciTEBase::Send(Pane p, unsigned int msg, uptr_t wParam, sptr_t lParam) {
-	MYDEBUG("some work to do here\n");
 	switch (p) {
 	case  paneEditor:
 		return wEditor.Call(msg, wParam, lParam);
@@ -4852,7 +4822,6 @@ sptr_t SciTEBase::Send(Pane p, unsigned int msg, uptr_t wParam, sptr_t lParam) {
 
 char *SciTEBase::Range(Pane p, int start, int end) {
 	int len = end - start;
-	MYDEBUG("some work to do here\n");
 	char *s = new char[len + 1];
 	switch (p) {
 	case  paneEditor:
@@ -4872,7 +4841,6 @@ char *SciTEBase::Range(Pane p, int start, int end) {
 }
 
 void SciTEBase::Remove(Pane p, int start, int end) {
-	MYDEBUG("some work to do here\n");
 	// Should have a scintilla call for this
 	switch (p) {
 	case  paneEditor:
@@ -4891,7 +4859,6 @@ void SciTEBase::Remove(Pane p, int start, int end) {
 }
 
 void SciTEBase::Insert(Pane p, int pos, const char *s) {
-	MYDEBUG("some work to do here\n");
 	switch (p) {
 	case  paneEditor:
 		wEditor.CallString(SCI_INSERTTEXT, pos, s);
@@ -4954,4 +4921,32 @@ void SciTEBase::Perform(const char *actionList) {
 void SciTEBase::DoMenuCommand(int cmdID) {
 	MenuCommand(cmdID, 0);
 }
+
+int SciTEBase::SerialXmodemTxFile(const char *name) {
+
+	if(serial->IsConnected())
+		return serial->XmodemTransmitFile(name);
+
+	return -1;
+}
+int SciTEBase::SerialSend(const char *string, int length) {
+
+	if(serial->IsConnected())
+		return serial->Send(string, length);
+
+	return -1;
+}
+void SciTEBase::SelectConsoleTab(int tab) {
+	if (wGroupTab.GetID()) {
+		GroupSetCurrentTab(tab);
+		WindowSetFocus(wConsole);
+	}
+}
+void SciTEBase::AskForFile(const char *dirName, const char *filter) {
+	AskForFileDialog(FilePath(GUI::StringFromUTF8(dirName).c_str()),GUI::StringFromUTF8(filter).c_str());
+}
+void SciTEBase::AskQuestion(const char *str) {
+	QuestionDialog(str);
+}
+
 

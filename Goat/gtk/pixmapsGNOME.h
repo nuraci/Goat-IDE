@@ -1,7 +1,12 @@
 // Set of images for tool bar buttons
+// Icons  Copyright(C) 1998  by  Dean S. Jones
+// http://jfa.javalobby.org/projects/icons/
+// Modified to have same names as tigert.h
+// Not really anything to do with Gnome - just calling this 
+// file pixmapsGNOME to fit in with previous code.
 
 /* XPM */
-static char * term_xpm[] = {
+static const char * term_xpm[] = {
 "21 21 411 2",
 "  	c #F9F8F3",
 ". 	c #FEFDFE",
@@ -436,8 +441,9 @@ static char * term_xpm[] = {
 "%#&#*#=#-#;#>#>#,#'#)#!#~#{#]#^#/#(#_#:#<#",
 "[#}#|#1#2#3#3#3#4#1#5#6#7#8#9#9#0#a#b#c#d#"};
 
+#if 0
 /* XPM */
-static char * chip_xpm[] = {
+static const char * chip_xpm[] = {
 "21 21 344 2",
 "  	c None",
 ". 	c #FFF9FE",
@@ -804,6 +810,8 @@ static char * chip_xpm[] = {
 "$ $           H c@d@e@f@g@h@i@j@k@  l@    ",
 "              m@n@o@p@q@r@s@t@            ",
 "              u@v@w@x@y@z@A@      B@  C@  "};
+#endif
+/* XPM */
 static const char * editcopy_xpm[] = {
 		"21 21 8 1",
 		" 	c None",
@@ -1647,6 +1655,7 @@ static const char * stop_xpm[] = {
 		"                     ",
 		"                     "};
 
+/* XPM */
 static const char * goat_big_xpm[] = {
 		"128 128 1843 2",
 		"  	c #FFFFFF",

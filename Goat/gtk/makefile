@@ -28,7 +28,7 @@ endif
 
 # For the Gnome desktop stuff to work, prefix must point to where Gnome thinks it is.
 CONFIGFLAGS:=$(shell pkg-config --cflags $(GTKVERSION))
-CONFIGLIB:=$(shell pkg-config --libs $(GTKVERSION) gthread-2.0)
+CONFIGLIB:=$(shell pkg-config --libs $(GTKVERSION) gthread-2.0 gmodule-no-export-2.0)
 CONFIGTHREADS:=
 gnomeprefix:=$(shell pkg-config --variable=prefix $(GTKVERSION) 2>/dev/null)
 ifndef prefix
@@ -65,9 +65,9 @@ endif
 CXXBASEFLAGS=-W -Wall -Wno-char-subscripts -pedantic -DGTK -DSCI_LEXER $(INCLUDEDIRS) $(DEPRECATED)
 
 ifdef DEBUG
-CXXTFLAGS=-DDEBUG -g $(CXXBASEFLAGS)
+CXXTFLAGS=-DDEBUG -g $(CXXFLAGS) $(CXXBASEFLAGS)
 else
-CXXTFLAGS=-DNDEBUG -Os $(CXXBASEFLAGS)
+CXXTFLAGS=-DNDEBUG -Os $(CXXFLAGS) $(CXXBASEFLAGS)
 endif
 
 ifndef NO_LUA
@@ -88,27 +88,27 @@ INCLUDEDIRS=-I ../../scintilla/include -I ../src -I../lua/include
 	$(CCOMP) $(CFLAGS) $(INCLUDEDIRS) -DLUA_USE_POSIX $(CXXTFLAGS) -c $< -o $@
 
 else
-CXXFLAGS+=-DNO_LUA
+CXXTFLAGS+=-DNO_LUA
 endif
 
-CXXFLAGS:=$(CXXFLAGS) $(CXXTFLAGS) -Wno-long-long
+CXXTFLAGS:=$(CXXTFLAGS) -Wno-long-long
 
 UNAME:=$(shell uname -s)
 ifeq ($(UNAME), Linux)
 LIBDL:=-ldl
 endif
 ifeq ($(UNAME), Darwin)
-CXXFLAGS:=$(CXXFLAGS) -Dunix
+CXXTFLAGS:=$(CXXTFLAGS) -Dunix
 endif
 
 .cxx.o:
-	$(CC) $(CONFIGFLAGS) $(CXXFLAGS) -c $< -o $@
+	$(CC) $(CONFIGFLAGS) $(CXXTFLAGS) -c $< -o $@
 
 clean:
 	rm -f *.o $(PROG)
 
 deps:
-	$(CC) -MM $(CONFIGFLAGS) $(CXXFLAGS) *.cxx ../src/*.cxx | sed -e 's/\/usr.* //' | grep [a-zA-Z] >deps.mak
+	$(CC) -MM $(CONFIGFLAGS) $(CXXTFLAGS) *.cxx ../src/*.cxx | sed -e 's/\/usr.* //' | grep [a-zA-Z] >deps.mak
 
 # make should be run in ../../scintilla/gtk to compile all the lexers.
 COMPLIB=../../scintilla/bin/scintilla.a
@@ -132,20 +132,20 @@ install:
 	$(INSTALL) -m 755 $(DFU-P) $(bindir)
 
 	# Properties
-	$(INSTALL) -m 777 -d $(propsdir)/script
-	$(INSTALL) -m 777 ../properties/conf.properties $(propsdir); 
-	$(INSTALL) -m 777 ../properties/cpp.properties $(propsdir); 
-	$(INSTALL) -m 777 ../properties/elua.properties $(propsdir); 
-	$(INSTALL) -m 777 ../properties/Embedded.properties $(propsdir); 
+	$(INSTALL) -m 777 ../properties/others.properties $(propsdir);
+	$(INSTALL) -m 777 ../properties/cpp.properties $(propsdir);
+	$(INSTALL) -m 777 ../properties/elua.properties $(propsdir);
+	$(INSTALL) -m 777 ../properties/Embedded.properties $(propsdir);
 	$(INSTALL) -m 777 ../properties/Goat.properties $(propsdir); 
-	$(INSTALL) -m 777 ../properties/GoatGlobal.properties $(propsdir); 
-	$(INSTALL) -m 777 ../properties/locale.it.properties $(propsdir); 
-	$(INSTALL) -m 777 ../properties/others.properties $(propsdir); 
-	$(INSTALL) -m 777 ../properties/elua.api $(propsdir); 
-	$(INSTALL) -m 777 ../properties/extman.lua $(propsdir); 
-	$(INSTALL) -m 777 ../properties/script/list.lua $(propsdir)/script; 
-	$(INSTALL) -m 777 ../properties/script/GoatElizaClassic.lua $(propsdir)/script; 
-	$(INSTALL) -m 777 ../properties/script/GoatTicTacToe.lua $(propsdir)/script; 
+	$(INSTALL) -m 777 ../properties/GoatGlobal.properties $(propsdir);
+	$(INSTALL) -m 777 ../properties/locale.it.properties $(propsdir);
+
+	# Properties (eLua)
+	$(INSTALL) -m 777 -d $(propsdir)/elua
+	for files in ../properties/elua/*;  \
+	do \
+		$(INSTALL) -m 644 $$files $(propsdir)/elua; \
+	done
 	
 	# Docs
 	$(INSTALL) -m 777 -d $(docsdir)/img $(docsdir)/it $(docsdir)/en  

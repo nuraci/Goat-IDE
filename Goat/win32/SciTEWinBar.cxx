@@ -319,6 +319,29 @@ void SciTEWin::ActivateWindow(const char *) {
 	// This does nothing as, on Windows, you can no longer activate yourself
 }
 
+enum { tickerID = 100 };
+
+void SciTEWin::TimerStart(int mask) {
+	int maskNew = timerMask | mask;
+	if (timerMask != maskNew) {
+		if (timerMask == 0) {
+			// Create a 1 second ticker
+			::SetTimer(reinterpret_cast<HWND>(wSciTE.GetID()), tickerID, 1000, NULL);
+		}
+		timerMask = maskNew;
+	}
+}
+
+void SciTEWin::TimerEnd(int mask) {
+	int maskNew = timerMask & ~mask;
+	if (timerMask != maskNew) {
+		if (maskNew == 0) {
+			::KillTimer(reinterpret_cast<HWND>(wSciTE.GetID()), tickerID);
+		}
+		timerMask = maskNew;
+	}
+}
+
 /**
  * Resize the content windows, embedding the editor and output windows.
  */
@@ -331,10 +354,10 @@ void SciTEWin::SizeContentWindows() {
 
 	if (splitVertical) {
 		wEditor.SetPosition(GUI::Rectangle(0, 0, w - heightOutput - heightBar, h));
-		//wGroupTab.SetPosition(GUI::Rectangle(w - heightOutput, 0, w, h));
+		//TODO BUGS HERE?? wGroupTab.SetPosition(GUI::Rectangle(w - heightOutput, 0, w, h));
 		wGroupTab.SetPosition(GUI::Rectangle(w - heightOutput, 0, w, heightTab));
 
-		if(GetGroupTabSelected() == BOARD_CONSOLE_TAB) {
+		if(GetGroupTabSelected() == GOA_CON_TARGET) {
 			wOutput.Show(false);
 			wConsole.SetPosition(GUI::Rectangle(w - (heightOutput - heightTab), heightTab, w, h));
 			wConsole.Show();
@@ -347,7 +370,7 @@ void SciTEWin::SizeContentWindows() {
 		wEditor.SetPosition(GUI::Rectangle(0, 0, w, h - heightOutput - heightBar));
 		wGroupTab.SetPosition(GUI::Rectangle(0, h - heightOutput, w, (h - heightOutput) + heightTab));
 
-		if(GetGroupTabSelected() == BOARD_CONSOLE_TAB) {
+		if(GetGroupTabSelected() == GOA_CON_TARGET) {
 			wOutput.Show(false);
 			wConsole.SetPosition(GUI::Rectangle(0, h - (heightOutput - heightTab), w, h));
 			wConsole.Show();
@@ -390,6 +413,8 @@ void SciTEWin::SizeSubWindows() {
 	bands[bandTab].height = r.bottom - r.top - 4;
 
 	bands[bandBackground].visible = backgroundStrip.visible;
+	bands[bandUser].height = userStrip.Height();
+	bands[bandUser].visible = userStrip.visible;
 	bands[bandSearch].visible = searchStrip.visible;
 	bands[bandFind].visible = findStrip.visible;
 	bands[bandReplace].visible = replaceStrip.visible;
@@ -1182,8 +1207,8 @@ void SciTEWin::Creation() {
 
 	wGroupTab.Show();
 
-	GroupTabInsert(BOARD_CONSOLE_TAB, GUI_TEXT("Console"));
-	GroupTabInsert(SYS_CONSOLE_TAB, GUI_TEXT("System"));
+	GroupTabInsert(GOA_CON_TARGET, GUI_TEXT("Target"));
+	GroupTabInsert(GOA_CON_HOST, GUI_TEXT("Host"));
 
 	wOutput.SetID(::CreateWindowEx(
 	              0,
@@ -1313,6 +1338,18 @@ void SciTEWin::Creation() {
 	::CreateWindowEx(
 	               0,
 	               classNameInternal,
+	               TEXT("userStrip"),
+	               WS_CHILD | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
+	               0, 0,
+	               100, 100,
+	               MainHWND(),
+	               reinterpret_cast<HMENU>(2001),
+	               hInstance,
+	               reinterpret_cast<LPSTR>(&userStrip));
+
+	::CreateWindowEx(
+	               0,
+	               classNameInternal,
 	               TEXT("backgroundStrip"),
 	               WS_CHILD | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
 	               0, 0,
@@ -1383,6 +1420,7 @@ void SciTEWin::Creation() {
 	bands.push_back(Band(true, heightTools, false, wToolBar));
 	bands.push_back(Band(true, heightTab, false, wTabBar));
 	bands.push_back(Band(true, 100, true, wContent));
+	bands.push_back(Band(true, userStrip.Height(), false, userStrip));
 	bands.push_back(Band(true, backgroundStrip.Height(), false, backgroundStrip));
 	bands.push_back(Band(true, searchStrip.Height(), false, searchStrip));
 	bands.push_back(Band(true, findStrip.Height(), false, findStrip));

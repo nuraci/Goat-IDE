@@ -145,6 +145,7 @@ bool SciTEWin::ModelessHandler(MSG *pmsg) {
 		               (pmsg->wParam != VK_TAB) &&
 		               (pmsg->wParam != VK_ESCAPE) &&
 		               (pmsg->wParam != VK_RETURN) &&
+		               (pmsg->wParam < 'A' || pmsg->wParam > 'Z') &&
 		               (IsKeyDown(VK_CONTROL) || !IsKeyDown(VK_MENU));
 		if (!menuKey && DialogHandled(wParameters.GetID(), pmsg))
 			return true;
@@ -155,6 +156,8 @@ bool SciTEWin::ModelessHandler(MSG *pmsg) {
 		if (findStrip.KeyDown(pmsg->wParam))
 			return true;
 		if (replaceStrip.KeyDown(pmsg->wParam))
+			return true;
+		if (userStrip.KeyDown(pmsg->wParam))
 			return true;
 	}
 	if (pmsg->message == WM_KEYDOWN || pmsg->message == WM_SYSKEYDOWN) {
@@ -267,6 +270,50 @@ bool SciTEWin::OpenDialog(FilePath directory, const GUI::gui_char *filter) {
 	return succeeded;
 }
 
+void SciTEWin::AskForFileDialog(FilePath directory, const GUI::gui_char *filter) {
+	enum {maxBufferSize=2048};
+
+	GUI::gui_string openFilter = DialogFilterFromProperty(filter);
+	if (!openWhat[0]) {
+		wcscpy(openWhat, localiser.Text("Custom Filter").c_str());
+		openWhat[wcslen(openWhat) + 1] = '\0';
+	}
+
+	GUI::gui_char openName[maxBufferSize]; // maximum common dialog buffer size (says mfc..)
+	openName[0] = '\0';
+
+	OPENFILENAMEW ofn = {
+	       sizeof(ofn), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	};
+	ofn.hwndOwner = MainHWND();
+	ofn.hInstance = hInstance;
+	ofn.lpstrFile = openName;
+	ofn.nMaxFile = maxBufferSize;
+	ofn.lpstrFilter = openFilter.c_str();
+	ofn.lpstrCustomFilter = openWhat;
+	ofn.nMaxCustFilter = ELEMENTS(openWhat);
+	ofn.nFilterIndex = filterDefault;
+	GUI::gui_string translatedTitle = localiser.Text("Open File");
+	ofn.lpstrTitle = translatedTitle.c_str();
+	if (props.GetInt("open.dialog.in.file.directory")) {
+		ofn.lpstrInitialDir = directory.AsInternal();
+	}
+	ofn.Flags = OFN_HIDEREADONLY;
+
+	if (buffers.size > 1) {
+		ofn.Flags |=
+		    OFN_EXPLORER |
+		    OFN_PATHMUSTEXIST |
+		    OFN_NOCHANGEDIR;
+	}
+	if (::GetOpenFileNameW(&ofn)) {
+		filterDefault = ofn.nFilterIndex;
+		// if single selection then have path+file
+		if (wcslen(openName) > static_cast<size_t>(ofn.nFileOffset)) {
+			props.Set("FileSelected", (const char*)openName);
+		}
+	}
+}
 FilePath SciTEWin::ChooseSaveName(FilePath directory, const char *title, const GUI::gui_char *filter, const char *ext) {
 	FilePath path;
 	if (0 == dialogsOnScreen) {
@@ -310,7 +357,7 @@ bool SciTEWin::SaveAsDialog() {
 void SciTEWin::SaveACopy() {
 	FilePath path = ChooseSaveName(filePath.Directory(), "Save a Copy");
 	if (path.IsSet()) {
-		SaveBuffer(path, true);
+		SaveBuffer(path, sfNone);
 	}
 }
 
@@ -816,6 +863,35 @@ static void FillComboFromProps(HWND combo, PropSetFile &props) {
 	}
 }
 
+void SciTEWin::UserStripShow(const char *description) {
+	userStrip.visible = *description != 0;
+	if (userStrip.visible) {
+		userStrip.SetSciTE(this);
+		userStrip.SetExtender(extender);
+		userStrip.SetDescription(description);
+	}
+	SizeSubWindows();
+}
+
+void SciTEWin::UserStripSet(int control, const char *value) {
+	userStrip.Set(control, value);
+}
+
+void SciTEWin::UserStripSetList(int control, const char *value) {
+	userStrip.SetList(control, value);
+}
+
+const char *SciTEWin::UserStripValue(int control) {
+	std::string val = userStrip.GetValue(control);
+	char *ret = new char[val.size() + 1];
+	strcpy(ret, val.c_str());
+	return ret;
+}
+
+void SciTEWin::UserStripClosed() {
+	SizeSubWindows();
+}
+
 void SciTEWin::ShowBackgroundProgress(const GUI::gui_string &explanation, int size, int progress) {
 	backgroundStrip.visible = !explanation.empty();
 	SizeSubWindows();
@@ -1162,6 +1238,11 @@ BOOL SciTEWin::GrepMessage(HWND hDlg, UINT message, WPARAM wParam) {
 			return FALSE;
 
 		} else if (ControlIDOfWParam(wParam) == IDOK) {
+			if (jobQueue.IsExecuting()) {
+				GUI::gui_string msgBuf = LocaliseMessage("Job is currently executing. Wait until it finishes.");
+				WindowMessageBox(wFindInFiles, msgBuf, MB_OK | MB_ICONWARNING);
+				return FALSE;
+			}
 			findWhat = dlg.ItemTextU(IDFINDWHAT);
 			props.Set("find.what", findWhat.c_str());
 			memFinds.Insert(findWhat.c_str());
@@ -1209,7 +1290,7 @@ BOOL SciTEWin::GrepMessage(HWND hDlg, UINT message, WPARAM wParam) {
 				memset(&info, 0, sizeof(info));
 				info.hwndOwner = hDlg;
 				info.pidlRoot = NULL;
-				TCHAR szDisplayName[MAX_PATH];
+				TCHAR szDisplayName[MAX_PATH] = TEXT("");
 				info.pszDisplayName = szDisplayName;
 				GUI::gui_string title = localiser.Text("Select a folder to search from");
 				info.lpszTitle = title.c_str();
@@ -1249,9 +1330,14 @@ BOOL CALLBACK SciTEWin::GrepDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
 }
 
 void SciTEWin::FindInFiles() {
-	if (wFindInFiles.Created())
-		return;
 	SelectionIntoFind();
+	if (wFindInFiles.Created()) {
+		HWND hDlg = reinterpret_cast<HWND>(wFindInFiles.GetID());
+		Dialog dlg(hDlg);
+		dlg.SetItemTextU(IDFINDWHAT, findWhat);
+		::SetFocus(hDlg);
+		return;
+	}
 	props.Set("find.what", findWhat.c_str());
 	FilePath findInDir = filePath.Directory();
 	props.Set("find.directory", findInDir.AsUTF8().c_str());
@@ -1374,12 +1460,91 @@ BOOL SciTEWin::GoLineMessage(HWND hDlg, UINT message, WPARAM wParam) {
 	return FALSE;
 }
 
+
+BOOL SciTEWin::QuestionMessage(HWND hDlg, UINT message, WPARAM wParam) {
+	switch (message) {
+
+	case WM_INITDIALOG: {
+			int position = wEditor.Call(SCI_GETCURRENTPOS);
+			int lineNumber = wEditor.Call(SCI_LINEFROMPOSITION, position) + 1;
+			int lineStart = wEditor.Call(SCI_POSITIONFROMLINE, lineNumber - 1);
+			int characterOnLine = 1;
+			while (position > lineStart) {
+				position = wEditor.Call(SCI_POSITIONBEFORE, position);
+				characterOnLine++;
+			}
+
+			LocaliseDialog(hDlg);
+			::SendDlgItemMessage(hDlg, IDGOLINE, EM_LIMITTEXT, 10, 1);
+			::SendDlgItemMessage(hDlg, IDGOLINECHAR, EM_LIMITTEXT, 10, 1);
+			::SetDlgItemInt(hDlg, IDCURRLINE, lineNumber, FALSE);
+			::SetDlgItemInt(hDlg, IDCURRLINECHAR, characterOnLine, FALSE);
+			::SetDlgItemInt(hDlg, IDLASTLINE, wEditor.Call(SCI_GETLINECOUNT), FALSE);
+                }
+		return TRUE;
+
+	case WM_CLOSE:
+		::SendMessage(hDlg, WM_COMMAND, IDCANCEL, 0);
+		break;
+
+	case WM_COMMAND:
+		if (ControlIDOfWParam(wParam) == IDCANCEL) {
+			::EndDialog(hDlg, IDCANCEL);
+			return FALSE;
+		} else if (ControlIDOfWParam(wParam) == IDOK) {
+			BOOL bHasLine;
+			int lineNumber = static_cast<int>(
+			                     ::GetDlgItemInt(hDlg, IDGOLINE, &bHasLine, FALSE));
+			BOOL bHasChar;
+			int characterOnLine = static_cast<int>(
+			                     ::GetDlgItemInt(hDlg, IDGOLINECHAR, &bHasChar, FALSE));
+
+			if (bHasLine || bHasChar) {
+				if (!bHasLine)
+					lineNumber = wEditor.Call(SCI_LINEFROMPOSITION, wEditor.Call(SCI_GETCURRENTPOS)) + 1;
+
+				GotoLineEnsureVisible(lineNumber - 1);
+
+				if (bHasChar && characterOnLine > 1 && lineNumber <= wEditor.Call(SCI_GETLINECOUNT)) {
+					// Constrain to the requested line
+					int lineStart = wEditor.Call(SCI_POSITIONFROMLINE, lineNumber - 1);
+					int lineEnd = wEditor.Call(SCI_GETLINEENDPOSITION, lineNumber - 1);
+
+					int position = lineStart;
+					while (--characterOnLine && position < lineEnd)
+						position = wEditor.Call(SCI_POSITIONAFTER, position);
+
+					wEditor.Call(SCI_GOTOPOS, position);
+				}
+			}
+			::EndDialog(hDlg, IDOK);
+			return TRUE;
+		}
+	}
+
+	return FALSE;
+}
+
 BOOL CALLBACK SciTEWin::GoLineDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	return Caller(hDlg, message, lParam)->GoLineMessage(hDlg, message, wParam);
 }
 
 void SciTEWin::GoLineDialog() {
 	DoDialog(hInstance, TEXT("GoLine"), MainHWND(), reinterpret_cast<DLGPROC>(GoLineDlg));
+	WindowSetFocus(wEditor);
+}
+
+BOOL CALLBACK SciTEWin::QuestionDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
+	return Caller(hDlg, message, lParam)->QuestionMessage(hDlg, message, wParam);
+}
+
+void SciTEWin::QuestionDialog(const char *str) {
+
+	int cchWide = ::MultiByteToWideChar(CP_UTF8, 0, str, static_cast<int>(strlen(str)), NULL, 0);
+	wchar_t *pszWide = new wchar_t[cchWide + 1];
+	::MultiByteToWideChar(CP_UTF8, 0, str, static_cast<int>(strlen(str)), pszWide, cchWide + 1);
+
+	DoDialog(hInstance, pszWide, MainHWND(), reinterpret_cast<DLGPROC>(QuestionDlg));
 	WindowSetFocus(wEditor);
 }
 

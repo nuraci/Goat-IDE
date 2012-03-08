@@ -65,6 +65,7 @@
 #include "Worker.h"
 #include "SciTEBase.h"
 #include "SciTEKeys.h"
+#include "StripDefinition.h"
 
 #include "Uart.h"
 
@@ -316,6 +317,11 @@ public:
 	WEntry entryGoto;
 };
 
+class DialogQuestion : public Dialog {
+public:
+	WEntry entryQuestion;
+};
+
 class DialogAbbrev : public Dialog {
 public:
 	WComboBoxEntry comboAbbrev;
@@ -427,6 +433,34 @@ public:
 	gboolean Focus(GtkDirectionType direction);
 };
 
+class UserStrip : public Strip {
+public:
+	StripDefinition *psd;
+	Extension *extender;
+	SciTEGTK *pSciTEGTK;
+	WTable tableUser;
+
+	UserStrip() : psd(0), extender(0), pSciTEGTK(0), tableUser(1, 1){
+	}
+	virtual void Creation(GtkWidget *boxMain);
+	virtual void Destruction();
+	virtual void Show(int buttonHeight);
+	virtual void Close();
+	virtual bool KeyDown(GdkEventKey *event);
+	static void ActivateSignal(GtkWidget *w, UserStrip *pStrip);
+	static gboolean EscapeSignal(GtkWidget *w, GdkEventKey *event, UserStrip *pStrip);
+	void ClickThis(GtkWidget *w);
+	static void ClickSignal(GtkWidget *w, UserStrip *pStrip);
+	virtual void ChildFocus(GtkWidget *widget);
+	gboolean Focus(GtkDirectionType direction);
+	void SetDescription(const char *description);
+	void SetExtender(Extension *extender_);
+	void SetSciTE(SciTEGTK *pSciTEGTK_);
+	void Set(int control, const char *value);
+	void SetList(int control, const char *value);
+	std::string GetValue(int control);
+};
+
 // Manage the use of the GDK thread lock within glib signal handlers
 class ThreadLockMinder {
 public:
@@ -439,6 +473,8 @@ public:
 };
 
 class SciTEGTK : public SciTEBase, public Worker {
+
+	friend class UserStrip;
 
 protected:
 
@@ -470,12 +506,16 @@ protected:
 	char uniqueInstance[MAX_PATH];
 	guint32 startupTimestamp;
 	
+	guint timerID;
+	
 	BackgroundStrip backgroundStrip;
+	UserStrip userStrip;
 
 	enum FileFormat { sfSource, sfCopy, sfHTML, sfRTF, sfPDF, sfTEX, sfXML } saveFormat;
 	Dialog dlgFileSelector;
 	DialogFindInFiles dlgFindInFiles;
 	DialogGoto dlgGoto;
+	DialogQuestion dlgQuestion;
 	DialogAbbrev dlgAbbrev;
 	DialogTabSize dlgTabSize;
 
@@ -489,7 +529,8 @@ protected:
 	DialogParameters dlgParameters;
 
 	GtkWidget *btnCompile;
-	GtkWidget *btnSendRam;
+	GtkWidget *btnBuild;
+	GtkWidget *btnStop;
 	GtkWidget *btnModeTerminal;
 
 	GtkWidget *menuBar;
@@ -519,6 +560,11 @@ protected:
 	virtual void ReadLocalization();
 	virtual void ReadPropertiesInitial();
 	virtual void ReadProperties();
+
+	static gboolean TimerTick(SciTEGTK *scitew);
+	virtual void TimerStart(int mask);
+	virtual void TimerEnd(int mask);
+
 	virtual void GetWindowPosition(int *left, int *top, int *width, int *height, int *maximize);
 
 	virtual void SizeContentWindows();
@@ -587,13 +633,16 @@ protected:
 	virtual void FindReplace(bool replace);
 	virtual void DestroyFindReplace();
 	virtual void GoLineDialog();
+	virtual void QuestionDialog(const char *str);
+	virtual void AskForFileDialog(FilePath directory, const char *filter);
 	virtual bool AbbrevDialog();
 	virtual void TabSizeDialog();
 	virtual bool ParametersDialog(bool modal);
 
 	virtual FilePath GetExeDirectory(char *name);
+	virtual const char * GetGoatDefaultDirectory();
 	virtual FilePath GetDefaultDirectory();
-	virtual FilePath GetScitePropertiesHome();
+	virtual FilePath GetSciteDefaultHome();
 	virtual FilePath GetSciteUserHome();
 
 	virtual void SetStatusBarText(const char *s);
@@ -615,6 +664,11 @@ protected:
 	void Command(unsigned long wParam, long lParam = 0);
 	void ContinueExecute(int fromPoll);
 
+	virtual void UserStripShow(const char *description);
+	virtual void UserStripSet(int control, const char *value);
+	virtual void UserStripSetList(int control, const char *value);
+	virtual const char *UserStripValue(int control);
+	void UserStripClosed();
 	virtual void ShowBackgroundProgress(const GUI::gui_string &explanation, int size, int progress);
 
 	// Single instance
@@ -629,6 +683,8 @@ protected:
 
 	void GotoCmd();
 	void GotoResponse(int responseID);
+	void QuestionCmd();
+	void QuestionResponse(int responseID);
 
 	void AbbrevCmd();
 	void AbbrevResponse(int responseID);
@@ -687,16 +743,12 @@ protected:
 	static gint TabBarScrollSignal(GtkNotebook *, GdkEventScroll *event, SciTEGTK *scitew) {
 		return scitew->TabBarScroll(event);
 	}
-	
-//	gint TabGroupRelease(GtkNotebook *notebook, GdkEventButton *event);
+
 	gint TabGroupScroll(GdkEventScroll *event);
-//	static gint TabGroupReleaseSignal(GtkNotebook *notebook, GdkEventButton *event, SciTEGTK *scitew) {
-//		return scitew->TabGroupRelease(notebook, event);
-//	}
+
 	static gint TabGroupScrollSignal(GtkNotebook *, GdkEventScroll *event, SciTEGTK *scitew) {
 		return scitew->TabGroupScroll(event);
 	}
-
 public:
 
 	// TODO: get rid of this - use callback argument to find SciTEGTK
@@ -753,6 +805,8 @@ SciTEGTK::SciTEGTK(Extension *ext) : SciTEBase(ext) {
 
 	uniqueInstance[0] = '\0';
 	startupTimestamp = 0;
+	
+	timerID = 0;
 
 	PropSetFile::SetCaseSensitiveFilenames(true);
 	propsEmbed.Set("PLAT_GTK", "1");
@@ -766,9 +820,9 @@ SciTEGTK::SciTEGTK(Extension *ext) : SciTEBase(ext) {
 	wIncrementPanel = 0;
 	IncSearchEntry = 0;
 	btnCompile = 0;
-	btnSendRam = 0;
 	btnModeTerminal = 0;
-
+	btnBuild = 0;
+	btnStop = 0;
 	menuBar = 0;
 	accelGroup = 0;
 
@@ -872,25 +926,53 @@ FilePath SciTEGTK::GetExeDirectory(char *name) {
 
 	return Executable;
 }
+const char * SciTEGTK::GetGoatDefaultDirectory() {
+	static string root;
 
-
-FilePath SciTEGTK::GetDefaultDirectory() {
-	string root;
-
-	root = GetExeDirectory(ExeName).Directory().AsUTF8();
-	root.erase(root.find_last_of("/"),root.length());
-	root.append("/"PROPERTIES_DIR_NAME);
-
-	return FilePath(root.c_str());
+	if (root.empty()) {
+		root = GetExeDirectory(ExeName).Directory().AsUTF8();
+		root.erase(root.find_last_of("/"),root.length());
+		root.append("/"GOAT_DEFAULT_HOME);
+	}
+	return root.c_str();
 }
 
-FilePath SciTEGTK::GetScitePropertiesHome() {
+FilePath SciTEGTK::GetDefaultDirectory() {
+	const static char *where = getenv("GOAT_HOME");
 	string root;
+#ifdef SYSCONF_PATH
+	if (!where) {
+		where = SYSCONF_PATH;
+	}
+#else
+	if (!where) {
+		where = GetGoatDefaultDirectory();
+	}
+#endif
 
-	root = GetExeDirectory(ExeName).Directory().AsUTF8();
-	root.erase(root.find_last_of("/"),root.length());
-	root.append("/"PROPERTIES_DIR_NAME);
-	return FilePath(root.c_str());
+	if (where) {
+		return FilePath(where);
+	}
+
+	return FilePath("");
+}
+
+FilePath SciTEGTK::GetSciteDefaultHome() {
+	const char *where = getenv("GOAT_HOME");
+#ifdef SYSCONF_PATH
+	if (!where) {
+		where = SYSCONF_PATH;
+	}
+#else
+	if (!where) {
+		where = GetGoatDefaultDirectory();
+	}
+#endif
+	if (where) {
+		return FilePath(where);
+
+	}
+	return FilePath("");
 }
 
 FilePath SciTEGTK::GetSciteUserHome() {
@@ -925,7 +1007,7 @@ void SciTEGTK::TabInsert(int index, const GUI::gui_char *title) {
 	if (wTabBar.GetID()) {
 		GtkWidget *tablabel = gtk_label_new(title);
 		GtkWidget *tabcontent;
-		if (props.GetInt("pathbar.visible,1")) {
+		if (props.GetInt("pathbar.visible")) {
 			if (buffers.buffers[index].IsUntitled())
 				tabcontent = gtk_label_new(localiser.Text("Untitled").c_str());
 			else
@@ -1116,7 +1198,6 @@ void SciTEGTK::Command(unsigned long wParam, long) {
 	default:
 		SciTEBase::MenuCommand(cmdID, menuSource);
 		menuSource = 0;
-		break;
 	}
 	if (notifyCode != SCEN_CHANGE) {
 		// Changes to document produce SCN_UPDATEUI as well as SCEN_CHANGE
@@ -1124,55 +1205,7 @@ void SciTEGTK::Command(unsigned long wParam, long) {
 		UpdateStatusBar(true);
 	}
 }
-#if 0
-void SciTEGTK::Console(unsigned long wParam, long) {
-	int cmdID = ControlIDOfCommand(wParam);
-	int notifyCode = wParam >> 16;
-	switch (cmdID) {
 
-	case IDM_SRCWIN:
-		if (notifyCode == SCEN_SETFOCUS) {
-			Activate(true);
-			CheckMenus();
-		} else if (notifyCode == SCEN_KILLFOCUS) {
-			Activate(false);
-		}
-		break;
-
-	case IDM_RUNWIN:
-		if (notifyCode == SCEN_SETFOCUS)
-			CheckMenus();
-		break;
-
-	case IDM_CONSOLEWIN:
-		if (notifyCode == SCEN_SETFOCUS)
-			CheckMenus();
-		break;
-
-	case IDM_FULLSCREEN:
-		fullScreen = !fullScreen;
-		{
-			GdkWindow *parent_w = WindowFromWidget(PWidget(wSciTE));
-			if (fullScreen)
-				gdk_window_fullscreen(parent_w);
-			else
-				gdk_window_unfullscreen(parent_w);
-		}
-		SizeSubWindows();
-		CheckMenus();
-		break;
-
-	default:
-		SciTEBase::MenuCommand(cmdID, menuSource);
-		menuSource = 0;
-	}
-	if (notifyCode != SCEN_CHANGE) {
-		// Changes to document produce SCN_UPDATEUI as well as SCEN_CHANGE
-		// and SCN_UPDATEUI updates the status bar but not too frequently.
-		UpdateStatusBar(true);
-	}
-}
-#endif
 void SciTEGTK::ReadLocalization() {
 	SciTEBase::ReadLocalization();
 	SString encoding = localiser.Get("translation.encoding");
@@ -1220,6 +1253,33 @@ void SciTEGTK::ReadProperties() {
 	ShowTabBar();
 }
 
+gboolean SciTEGTK::TimerTick(SciTEGTK *scitew) {
+	scitew->OnTimer();
+	return TRUE;
+}
+
+void SciTEGTK::TimerStart(int mask) {
+	int maskNew = timerMask | mask;
+	if (timerMask != maskNew) {
+		if (timerMask == 0) {
+			// Create a 1 second ticker
+			timerID = g_timeout_add(1000, reinterpret_cast<GSourceFunc>(TimerTick), this);
+		}
+		timerMask = maskNew;
+	}
+}
+
+void SciTEGTK::TimerEnd(int mask) {
+	int maskNew = timerMask & ~mask;
+	if (timerMask != maskNew) {
+		if (maskNew == 0) {
+			g_source_remove(timerID);
+			timerID = 0;
+		}
+		timerMask = maskNew;
+	}
+}
+
 void SciTEGTK::GetWindowPosition(int *left, int *top, int *width, int *height, int *maximize) {
 	gtk_window_get_position(GTK_WINDOW(PWidget(wSciTE)), left, top);
 	gtk_window_get_size(GTK_WINDOW(PWidget(wSciTE)), width, height);
@@ -1242,10 +1302,18 @@ void SciTEGTK::SizeContentWindows() {
 	gtk_paned_set_position(GTK_PANED(splitPane), max - heightOutput);
 
 	// Make sure the focus is somewhere
-	if (heightOutput == max) {
-		WindowSetFocus(wOutput);
-	} else if (heightOutput == 0 || (!wEditor.HasFocus() && !wOutput.HasFocus())) {
-		WindowSetFocus(wEditor);
+	if (!userStrip.VisibleHasFocus()) {
+		int wGroupTabCurrentPage = 0;
+		if ( wGroupTab.GetID())
+				wGroupTabCurrentPage = GroupGetCurrentTab();
+		if (heightOutput == max) {
+			if (wGroupTabCurrentPage == GOA_CON_TARGET)
+					WindowSetFocus(wConsole);
+				else
+					WindowSetFocus(wOutput);
+		} else if (heightOutput == 0 || (!wEditor.HasFocus() && !wOutput.HasFocus())) {
+			WindowSetFocus(wEditor);
+		}
 	}
 }
 
@@ -1263,31 +1331,36 @@ GtkWidget *SciTEGTK::MenuItemFromAction(int itemID) {
 		return it->second;
 }
 
+static SString GtkFromWinCaption(const char *text) {
+	SString sCaption(text);
+	// Escape underlines
+	sCaption.substitute("_", "__");
+	// Replace Windows-style ampersands with GTK+ underlines
+	int posFound = sCaption.search("&");
+	while (posFound >= 0) {
+		SString nextChar = sCaption.substr(posFound + 1, 1);
+		if (nextChar == "&") {
+			// Escaped, move on
+			posFound += 2;
+		} else {
+			sCaption.remove(posFound, 1);
+			sCaption.insert(posFound, "_", 1);
+			posFound += 1;
+		}
+		posFound = sCaption.search("&", posFound);
+	}
+	// Unescape ampersands
+	sCaption.substitute("&&", "&");
+	return sCaption;
+}
+
 void SciTEGTK::SetMenuItem(int, int, int itemID, const char *text, const char *mnemonic) {
 	DestroyMenuItem(0, itemID);
 
 	// On GTK+ the menuNumber and position are ignored as the menu item already exists and is in the right
 	// place so only needs to be shown and have its text set.
 
-	SString itemText(text);
-	// Escape underlines
-	itemText.substitute("_", "__");
-	// Replace Windows-style ampersands with GTK+ underlines
-	int posFound = itemText.search("&");
-	while (posFound >= 0) {
-		SString nextChar = itemText.substr(posFound + 1, 1);
-		if (nextChar == "&") {
-			// Escaped, move on
-			posFound += 2;
-		} else {
-			itemText.remove(posFound, 1);
-			itemText.insert(posFound, "_", 1);
-			posFound += 1;
-		}
-		posFound = itemText.search("&", posFound);
-	}
-	// Unescape ampersands
-	itemText.substitute("&&", "&");
+	SString itemText = GtkFromWinCaption(text);
 
 	long keycode = 0;
 	if (mnemonic && *mnemonic) {
@@ -1381,12 +1454,16 @@ void SciTEGTK::CheckMenus() {
 	CheckAMenuItem(IDM_VIEWSTATUSBAR, sbVisible);
 	CheckAMenuItem(IDM_VIEWTABBAR, tabVisible);
 
-	if (btnCompile) {
+	if (btnBuild) {
+        gtk_widget_set_sensitive(btnBuild, !jobQueue.IsExecuting() &&
+		        props.GetWild("command.build.", FileNameExt().AsUTF8().c_str()).size() != 0);
+
 		gtk_widget_set_sensitive(btnCompile, !jobQueue.IsExecuting() &&
-			props.GetWild("command.compile.", FileNameExt().AsUTF8().c_str()).size() != 0);
-		gtk_widget_set_sensitive(btnSendRam, serial->IsConnected() &&
-							!CurrentBuffer()->IsUntitled() &&
-							!CurrentBuffer()->isDirty);
+				props.GetWild("command.compile.", FileNameExt().AsUTF8().c_str()).size() != 0);
+
+		gtk_widget_set_sensitive(btnStop, jobQueue.IsExecuting() &&
+		        props.GetWild("command.go.", FileNameExt().AsUTF8().c_str()).size() != 0);
+
 		gtk_widget_set_sensitive(btnModeTerminal,serial->IsConnected());
 	}
 }
@@ -1515,7 +1592,7 @@ bool SciTEGTK::OpenDialog(FilePath directory, const char *filter) {
 bool SciTEGTK::HandleSaveAs(const char *savePath) {
 	switch (saveFormat) {
 	case sfCopy:
-		SaveBuffer(savePath, true);
+		SaveBuffer(savePath, sfNone);
 		break;
 	case sfHTML:
 		SaveToHTML(savePath);
@@ -1676,11 +1753,10 @@ static PangoLayout *PangoLayoutFromStyleDefinition(GtkPrintContext *context, con
 }
 
 void SciTEGTK::SetupFormat(Sci_RangeToFormat &frPrint, GtkPrintContext *context) {
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(2,10,0)
 	cairo_t *cr = gtk_print_context_get_cairo_context(context);
 	frPrint.hdc = cr;
 	frPrint.hdcTarget = cr;
-#else
 #endif
 
 	gdouble width = gtk_print_context_get_width(context);
@@ -1836,7 +1912,7 @@ void SciTEGTK::DrawPage(GtkPrintOperation *operation, GtkPrintContext *context, 
 void SciTEGTK::Print(bool) {
 	RemoveFindMarks();
 	SelectionIntoProperties();
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(2,10,0)
 	// Printing through the GTK+ API
 	GtkPrintOperation *printOp = gtk_print_operation_new();
 
@@ -1874,7 +1950,7 @@ void SciTEGTK::Print(bool) {
 }
 
 void SciTEGTK::PrintSetup() {
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(2,10,0)
 	if (printSettings == NULL)
 		printSettings = gtk_print_settings_new();
 
@@ -2502,7 +2578,7 @@ void SciTEGTK::ResetExecution() {
 		ReadProperties();
 	CheckReload();
 	CheckMenus();
-	ClearJobQueue();
+	jobQueue.ClearJobs();
 }
 
 void SciTEGTK::ExecuteNext() {
@@ -2544,10 +2620,9 @@ void SciTEGTK::ContinueExecute(int fromPoll) {
 
 		/* An error here, shows the system tab */
 		if (exitStatus && wGroupTab.GetID()) {
-			gtk_notebook_set_current_page(GTK_NOTEBOOK(wGroupTab.GetID()), SYS_CONSOLE_TAB);
+			gtk_notebook_set_current_page(GTK_NOTEBOOK(wGroupTab.GetID()), GOA_CON_HOST);
 		}
-		// TODO exitStatus jobQueue.SetExitStatus(exitStatus);
-
+		
 		// Move selection back to beginning of this run so that F4 will go
 		// to first error of this run.
 		if ((scrollOutput == 1) && returnOutputToCommand)
@@ -2583,6 +2658,35 @@ void SciTEGTK::ShowBackgroundProgress(const GUI::gui_string &explanation, int si
 	} else {
 		backgroundStrip.Close();
 	}
+}
+
+void SciTEGTK::UserStripShow(const char *description) {
+	if (*description) {
+		userStrip.SetDescription(description);
+		userStrip.Show(props.GetInt("strip.button.height", -1));
+	} else {
+		userStrip.Close();
+		SizeSubWindows();
+	}
+}
+
+void SciTEGTK::UserStripSet(int control, const char *value) {
+	userStrip.Set(control, value);
+}
+
+void SciTEGTK::UserStripSetList(int control, const char *value) {
+	userStrip.SetList(control, value);
+}
+
+const char *SciTEGTK::UserStripValue(int control) {
+	std::string val = userStrip.GetValue(control);
+	char *ret = new char[val.size() + 1];
+	strcpy(ret, val.c_str());
+	return ret;
+}
+
+void SciTEGTK::UserStripClosed() {
+	SizeSubWindows();
 }
 
 gboolean SciTEGTK::IOSignal(GIOChannel *, GIOCondition, SciTEGTK *scitew) {
@@ -2725,6 +2829,110 @@ void SciTEGTK::GoLineDialog() {
 
 	dlgGoto.Display(PWidget(wSciTE));
 }
+
+void SciTEGTK::QuestionCmd() {
+	const GUI::gui_char *paramVal = dlgQuestion.entryQuestion.Text();
+	props.Set("Answer", paramVal);
+	dlgQuestion.Destroy();
+}
+
+void SciTEGTK::QuestionResponse(int responseID) {
+	switch (responseID) {
+		case GTK_RESPONSE_OK:
+			QuestionCmd() ;
+			break;
+
+		case GTK_RESPONSE_CANCEL:
+			dlgQuestion.Destroy();
+			break;
+	}
+}
+void SciTEGTK::QuestionDialog(const char *str) {
+
+	dlgQuestion.Create(localiser.Text(str));
+
+	gtk_container_set_border_width(GTK_CONTAINER(PWidget(dlgQuestion)), 0);
+
+	WTable table(1, 2);
+	table.PackInto(GTK_BOX(dlgQuestion.ContentArea()));
+
+	GtkWidget *labelQuestion = TranslatedLabel(str);
+	table.Label(labelQuestion);
+
+	dlgQuestion.entryQuestion.Create();
+	table.Add(dlgQuestion.entryQuestion);
+	dlgQuestion.entryQuestion.ActivatesDefault();
+	gtk_widget_grab_focus(dlgQuestion.entryQuestion);
+	gtk_label_set_mnemonic_widget(GTK_LABEL(labelQuestion), dlgQuestion.entryQuestion);
+
+	AttachResponse<&SciTEGTK::QuestionResponse>(PWidget(dlgQuestion), this);
+	dlgQuestion.ResponseButton(localiser.Text("_Cancel"), GTK_RESPONSE_CANCEL);
+	dlgQuestion.ResponseButton(localiser.Text("_Execute"), GTK_RESPONSE_OK);
+	gtk_dialog_set_default_response(GTK_DIALOG(PWidget(dlgQuestion)), GTK_RESPONSE_OK);
+
+	dlgQuestion.Display(PWidget(wSciTE));
+}
+
+void SciTEGTK::AskForFileDialog(FilePath directory, const char *f) {
+	directory.SetWorkingDirectory();
+	if (!dlgFileSelector.Created()) {
+		GtkWidget *dlg = gtk_file_chooser_dialog_new(
+					localiser.Text("Open File").c_str(),
+				      GTK_WINDOW(wSciTE.GetID()),
+				      GTK_FILE_CHOOSER_ACTION_OPEN,
+				      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+				      GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+				      NULL);
+		gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(dlg), FALSE);
+		gtk_dialog_set_default_response(GTK_DIALOG(dlg), GTK_RESPONSE_ACCEPT);
+		if (props.GetInt("open.dialog.in.file.directory")) {
+			gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(dlg),
+				// NUCCIO maybe a bug here: filePath.Directory().AsInternal());
+				directory.AsInternal());
+		}
+
+		SString openFilter = f;
+		if (openFilter.length()) {
+			openFilter.substitute('|', '\0');
+			size_t start = 0;
+			while (start < openFilter.length()) {
+				const char *filterName = openFilter.c_str() + start;
+				GUI::gui_string localised = localiser.Text(filterName, false);
+				if (localised.length()) {
+					openFilter.remove(start, strlen(filterName));
+					openFilter.insert(start, localised.c_str());
+				}
+				if (openFilter.c_str()[start] == '#') {
+					start += strlen(openFilter.c_str() + start) + 1;
+				} else {
+					GtkFileFilter *filter = gtk_file_filter_new();
+					gtk_file_filter_set_name(filter, openFilter.c_str() + start);
+					start += strlen(openFilter.c_str() + start) + 1;
+					SString oneSet(openFilter.c_str() + start);
+					oneSet.substitute(';', '\0');
+					size_t item = 0;
+					while (item < oneSet.length()) {
+						gtk_file_filter_add_pattern(filter, oneSet.c_str() + item);
+						item += strlen(oneSet.c_str() + item) + 1;
+					}
+					gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dlg), filter);
+				}
+				start += strlen(openFilter.c_str() + start) + 1;
+			}
+		}
+
+		gtk_window_set_default_size(GTK_WINDOW(dlg), fileSelectorWidth, fileSelectorHeight);
+		if (gtk_dialog_run(GTK_DIALOG(dlg)) == GTK_RESPONSE_ACCEPT) {
+			char *fname = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dlg));
+			if (fname) {
+				props.Set("FileSelected", fname);
+			}
+		}
+
+		gtk_widget_destroy(dlg);
+	}
+}
+
 
 void SciTEGTK::AbbrevCmd() {
 	SString sAbbrev = dlgAbbrev.comboAbbrev.Text();
@@ -3408,7 +3616,7 @@ gint SciTEGTK::Key(GdkEventKey *event) {
 		}
 	}
 
-	if (findStrip.KeyDown(event) || replaceStrip.KeyDown(event)) {
+	if (findStrip.KeyDown(event) || replaceStrip.KeyDown(event) || userStrip.KeyDown(event)) {
 		g_signal_stop_emission_by_name(G_OBJECT(PWidget(wSciTE)), "key_press_event");
 		return 1;
 	}
@@ -3447,6 +3655,9 @@ gint SciTEGTK::Mouse(GdkEventButton *event) {
 			if (WindowFromWidget(PWidget(wOutput)) == event->window) {
 				menuSource = IDM_RUNWIN;
 				w = &wOutput;
+			} else if(WindowFromWidget(PWidget(wConsole)) == event->window) {
+				menuSource = IDM_CONSOLEWIN;
+				w = &wConsole;
 			} else {
 				menuSource = 0;
 				//fprintf(stderr, "Menu source focus\n");
@@ -3505,31 +3716,6 @@ gint SciTEGTK::TabBarRelease(GtkNotebook *notebook, GdkEventButton *event) {
 }
 
 gint SciTEGTK::TabGroupRelease(GtkNotebook *notebook, GdkEventButton *event) {
-
-/* NUCCIO TODO */
-#if 0
-	if (event->button == 1) {
-		SetDocumentAt(gtk_notebook_get_current_page(GTK_NOTEBOOK(wGroupBar.GetID())));
-		CheckReload();
-	} else if (event->button == 2) {
-		for (int pageNum=0;pageNum<gtk_notebook_get_n_pages(notebook);pageNum++) {
-			GtkWidget *page = gtk_notebook_get_nth_page(notebook, pageNum);
-			if (page) {
-				GtkWidget *label = gtk_notebook_get_tab_label(notebook, page);
-				GtkAllocation allocation;
-#if GTK_CHECK_VERSION(3,0,0)
-				gtk_widget_get_allocation(label, &allocation);
-#else
-				allocation = label->allocation;
-#endif
-				if (event->x < (allocation.x + allocation.width)) {
-					CloseTab(pageNum);
-					break;
-				}
-			}
-		}
-	}
-#endif
 	return FALSE;
 }
 
@@ -3550,22 +3736,19 @@ gint SciTEGTK::TabBarScroll(GdkEventScroll *event) {
 	return TRUE;
 }
 
-/* NUCCIO TODO */
 gint SciTEGTK::TabGroupScroll(GdkEventScroll *event) {
 	switch (event->direction) {
 		case GDK_SCROLL_RIGHT:
 		case GDK_SCROLL_DOWN:
-			//Next();
 			//WindowSetFocus(wEditor);
 			break;
 		case GDK_SCROLL_LEFT:
 		case GDK_SCROLL_UP:
-			//Prev();
 			//WindowSetFocus(wEditor);
 			break;
 	}
 	// Return true because Next() or Prev() already switches the tab
-	return TRUE;
+	return true;
 }
 
 static GtkWidget *pixmap_new(gchar **xpm) {
@@ -3618,7 +3801,8 @@ void SciTEGTK::AddToolBar() {
 
 		AddToolSpace(GTK_TOOLBAR(PWidget(wToolBar)));
 		btnCompile = AddToolButton("Compile", IDM_COMPILE, gtk_image_new_from_stock("gtk-execute", GTK_ICON_SIZE_LARGE_TOOLBAR));
-		btnSendRam = AddToolButton("Send & Run on RAM", IDM_RUN_RAM, gtk_image_new_from_stock("gtk-send-ram", GTK_ICON_SIZE_LARGE_TOOLBAR));
+		btnBuild = AddToolButton("Build", IDM_BUILD, gtk_image_new_from_stock("gtk-convert", GTK_ICON_SIZE_LARGE_TOOLBAR));
+		btnStop = AddToolButton("Stop", IDM_STOPEXECUTE, gtk_image_new_from_stock("gtk-stop", GTK_ICON_SIZE_LARGE_TOOLBAR));
 		btnModeTerminal = AddToolButton("Mode Terminal", IDM_MODE_TERMINAL, gtk_image_new_from_stock("gtk-mode-terminal", GTK_ICON_SIZE_LARGE_TOOLBAR));
 
 		AddToolSpace(GTK_TOOLBAR(PWidget(wToolBar)));
@@ -3648,7 +3832,8 @@ void SciTEGTK::AddToolBar() {
 
 	AddToolSpace(GTK_TOOLBAR(PWidget(wToolBar)));
 	btnCompile = AddToolButton("Compile", IDM_COMPILE, pixmap_new((gchar**)compile_xpm));
-	btnSendRam = AddToolButton("Send & Run on RAM", IDM_RUN_RAM, pixmap_new((gchar**)chip_xpm));
+	btnBuild = AddToolButton("Build", IDM_BUILD, pixmap_new((gchar**)build_xpm));
+	btnStop = AddToolButton("Stop", IDM_STOPEXECUTE, pixmap_new((gchar**)stop_xpm));
 	btnModeTerminal = AddToolButton("Mode Terminal", IDM_MODE_TERMINAL, pixmap_new((gchar**)term_xpm));
 
 	AddToolSpace(GTK_TOOLBAR(PWidget(wToolBar)));
@@ -3825,7 +4010,6 @@ void SciTEGTK::CreateMenu() {
 	                                      {"/File/_New", "<control>N", menuSig, IDM_NEW, 0},
 	                                      {"/File/_Open...", "<control>O", menuSig, IDM_OPEN, 0},
 	                                      {"/File/Open _Example", NULL, menuSig, IDM_EXAMPLE_OPEN, 0},
-	                                      {"/File/Open Flash Image", NULL, menuSig, IDM_FLASH_IMGS__OPEN, 0},
 	                                      {"/File/Open Selected _Filename", "<control><shift>O", menuSig, IDM_OPENSELECTED, 0},
 	                                      {"/File/_Revert", "<control>R", menuSig, IDM_REVERT, 0},
 	                                      {"/File/_Close", "<control>W", menuSig, IDM_CLOSE, 0},
@@ -3845,7 +4029,7 @@ void SciTEGTK::CreateMenu() {
 	                                      {"/File/Export/As _PDF...", NULL, menuSig, IDM_SAVEASPDF, 0},
 	                                      {"/File/Export/As _LaTeX...", NULL, menuSig, IDM_SAVEASTEX, 0},
 	                                      {"/File/Export/As _XML...", NULL, menuSig, IDM_SAVEASXML, 0},
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(2,10,0)
 	                                      {"/File/Page Set_up", NULL, menuSig, IDM_PRINTSETUP, 0},
 #endif
 	                                      {"/File/_Print", "<control>P", menuSig, IDM_PRINT, 0},
@@ -3923,17 +4107,16 @@ void SciTEGTK::CreateMenu() {
 	                                      {"/View/_Line Numbers", "", menuSig, IDM_LINENUMBERMARGIN, "<CheckItem>"},
 	                                      {"/View/_Margin", NULL, menuSig, IDM_SELMARGIN, "<CheckItem>"},
 	                                      {"/View/_Fold Margin", NULL, menuSig, IDM_FOLDMARGIN, "<CheckItem>"},
+	                                      {"/View/_Output", "F8", menuSig, IDM_TOGGLEOUTPUT, "<CheckItem>"},
 	                                      {"/View/_Parameters", NULL, menuSig, IDM_TOGGLEPARAMETERS, "<CheckItem>"},
 
 	                                      {"/_Tools", NULL, NULL, 0, "<Branch>"},
 	                                      {"/Tools/_Compile", "<control>F7", menuSig, IDM_COMPILE, 0},
-	                                      {"/Tools/Send & Run on RAM", "F5", menuSig, IDM_RUN_RAM, 0},
- 										  {"/Tools/_Send to MMC", NULL, menuSig, IDM_SEND_MMC, 0},
-	                                      {"/Tools/_Run from MMC", NULL, menuSig, IDM_RUN_MMC, 0},
+	                                      {"/Tools/_Build", "F7", menuSig, IDM_BUILD, 0},
+	                                      {"/Tools/_Go", "F5", menuSig, IDM_GO, 0},
 	                                      {"/Tools/Port", NULL, NULL, 0, "<Separator>"},
 	                                      {"/Tools/Open Serial Port", NULL, menuSig, IDM_OPEN_UART, 0},
 	                                      {"/Tools/Close Serial Port", NULL, menuSig, IDM_CLOSE_UART, 0},
-	                                      {"/Tools/_Send <Ctrl+Z>", "<control>z", menuSig, IDM_STOPEXECUTE, NULL},
 	                                      {"/Tools/Tool", NULL, NULL, 0, "<Separator>"},
 	                                      {"/Tools/Tool0", NULL, menuSig, IDM_TOOLS + 0, 0},
 	                                      {"/Tools/Tool1", NULL, menuSig, IDM_TOOLS + 1, 0},
@@ -3989,6 +4172,9 @@ void SciTEGTK::CreateMenu() {
 	                                      {"/Tools/Tool47", NULL, menuSig, IDM_TOOLS + 47, 0},
 	                                      {"/Tools/Tool48", NULL, menuSig, IDM_TOOLS + 48, 0},
 	                                      {"/Tools/Tool49", NULL, menuSig, IDM_TOOLS + 49, 0},
+
+
+	                                      {"/Tools/_Stop Executing", "<control>.", menuSig, IDM_STOPEXECUTE, NULL},
 	                                      {"/Tools/sep1", NULL, NULL, 0, "<Separator>"},
 	                                      {"/Tools/_Next Message", "F4", menuSig, IDM_NEXTMSG, 0},
 	                                      {"/Tools/_Previous Message", "<shift>F4", menuSig, IDM_PREVMSG, 0},
@@ -4024,6 +4210,11 @@ void SciTEGTK::CreateMenu() {
 	            {"/Options/sep4", NULL, NULL, 0, "<Separator>"},
 	            {"/Options/_Edit Properties", "", 0, 0, "<Branch>"},
 	        };
+
+	SciTEItemFactoryEntry menuItemsLanguage[] = {
+	            {"/_Language", NULL, NULL, 0, "<Branch>"},
+	        };
+
 	SciTEItemFactoryEntry menuItemsBuffer[] = {
 	                                            {"/_Buffers", NULL, NULL, 0, "<Branch>"},
 	                                            {"/Buffers/_Previous", "<shift>F6", menuSig, IDM_PREVFILE, 0},
@@ -4046,8 +4237,8 @@ void SciTEGTK::CreateMenu() {
 	SciTEItemFactoryEntry menuItemsHelp[] = {
 	                                          {"/_Help", NULL, NULL, 0, "<Branch>"},
 	                                          {"/Help/Help", "F1", menuSig, IDM_HELP, 0},
-	                                          {"/Help/"APP_NAME" _Help " , "", menuSig, IDM_HELP_GOAT, 0},
-	                                          {"/Help/_About " APP_NAME, "", menuSig, IDM_ABOUT, 0},
+	                                          {"/Help/"APP_NAME" Help" , "", menuSig, IDM_HELP_GOAT, 0},
+	                                          {"/Help/About " APP_NAME, "", menuSig, IDM_ABOUT, 0},
 	                                      };
 
 	accelGroup = gtk_accel_group_new();
@@ -4057,7 +4248,8 @@ void SciTEGTK::CreateMenu() {
 
 	CreateTranslatedMenu(ELEMENTS(menuItemsOptions), menuItemsOptions,
 	                     50, "/Options/Edit Properties/Props", 0, IDM_IMPORT, 0);
-
+	CreateTranslatedMenu(ELEMENTS(menuItemsLanguage), menuItemsLanguage,
+	                     100, "/Language/Language", 0, IDM_LANGUAGE, 0);
 	if (props.GetInt("buffers") > 1)
 		CreateTranslatedMenu(ELEMENTS(menuItemsBuffer), menuItemsBuffer,
 		                     30, "/Buffers/Buffer", 10, bufferCmdID, "/Buffers/Buffer0");
@@ -4478,9 +4670,230 @@ gboolean ReplaceStrip::Focus(GtkDirectionType direction) {
 	return FALSE;
 }
 
+void UserStrip::Creation(GtkWidget *container) {
+	SetID(tableUser);
+	Strip::Creation(container);
+	gtk_container_set_border_width(GTK_CONTAINER(GetID()), 1);
+	tableUser.PackInto(GTK_BOX(container), false);
+	g_signal_connect(G_OBJECT(GetID()), "set-focus-child", G_CALLBACK(ChildFocusSignal), this);
+}
+
+void UserStrip::Destruction() {
+}
+
+void UserStrip::Show(int buttonHeight) {
+	Strip::Show(buttonHeight);
+	for (std::vector<std::vector<UserControl> >::iterator line=psd->controls.begin(); line != psd->controls.end(); ++line) {
+		for (std::vector<UserControl>::iterator ctl=line->begin(); ctl != line->end(); ++ctl) {
+			if (ctl->controlType == UserControl::ucStatic) {
+				gtk_widget_set_size_request(GTK_WIDGET(ctl->w.GetID()), -1, heightStatic);
+			} else if (ctl->controlType == UserControl::ucEdit) {
+				gtk_widget_set_size_request(GTK_WIDGET(ctl->w.GetID()), -1, buttonHeight);
+			} else if (ctl->controlType == UserControl::ucCombo) {
+				GtkEntry *entry = GTK_ENTRY(gtk_bin_get_child(GTK_BIN(ctl->w.GetID())));
+				gtk_widget_set_size_request(GTK_WIDGET(entry), -1, buttonHeight);
+			} else if (ctl->controlType == UserControl::ucButton) {
+				gtk_widget_set_size_request(GTK_WIDGET(ctl->w.GetID()), -1, buttonHeight);
+			}
+		}
+	}
+}
+
+void UserStrip::Close() {
+	if (visible) {
+		Strip::Close();
+		if (pSciTEGTK)
+			pSciTEGTK->UserStripClosed();
+	}
+}
+
+bool UserStrip::KeyDown(GdkEventKey *event) {
+	if (visible) {
+		if (Strip::KeyDown(event))
+			return true;
+	}
+	return false;
+}
+
+void UserStrip::ActivateSignal(GtkWidget *, UserStrip *pStrip) {
+	// Treat Enter as pressing the first button
+	for (std::vector<std::vector<UserControl> >::iterator line=pStrip->psd->controls.begin(); line != pStrip->psd->controls.end(); ++line) {
+		for (std::vector<UserControl>::iterator ctl=line->begin(); ctl != line->end(); ++ctl) {
+			if (ctl->controlType == UserControl::ucButton) {
+				pStrip->extender->OnUserStrip(ctl->item, scClicked);
+				return;
+			}
+		}
+	}
+}
+
+gboolean UserStrip::EscapeSignal(GtkWidget *w, GdkEventKey *event, UserStrip *pStrip) {
+	if (event->keyval == GKEY_Escape) {
+		g_signal_stop_emission_by_name(G_OBJECT(w), "key-press-event");
+		pStrip->Close();
+	}
+	return FALSE;
+}
+
+void UserStrip::ClickThis(GtkWidget *w) {
+	for (std::vector<std::vector<UserControl> >::iterator line=psd->controls.begin(); line != psd->controls.end(); ++line) {
+		for (std::vector<UserControl>::iterator ctl=line->begin(); ctl != line->end(); ++ctl) {
+			if (w == GTK_WIDGET(ctl->w.GetID())) {
+				extender->OnUserStrip(ctl->item, scClicked);
+			}
+		}
+	}
+}
+
+void UserStrip::ClickSignal(GtkWidget *w, UserStrip *pStrip) {
+	pStrip->ClickThis(w);
+}
+
+void UserStrip::ChildFocus(GtkWidget *widget) {
+	Strip::ChildFocus(widget);
+}
+
+gboolean UserStrip::Focus(GtkDirectionType /* direction */) {
+	// Can be used to loop focus around from last widget to first
+	return FALSE;
+}
+
+void UserStrip::SetDescription(const char *description) {
+	if (psd) {
+		for (std::vector<std::vector<UserControl> >::iterator line=psd->controls.begin(); line != psd->controls.end(); ++line) {
+			for (std::vector<UserControl>::iterator ctl=line->begin(); ctl != line->end(); ++ctl) {
+				gtk_widget_destroy(GTK_WIDGET(ctl->w.GetID()));
+			}
+		}
+	}
+	delete psd;
+	psd = new StripDefinition(description);
+	tableUser.Resize(psd->controls.size(), psd->columns);
+
+	int item = 0;
+	bool hasSetFocus = false;
+	for (size_t line=0; line<psd->controls.size(); line++) {
+		std::vector<UserControl> &uc = psd->controls[line];
+		for (size_t control=0; control<uc.size(); control++) {
+			UserControl *puc = &(uc[control]);
+			puc->item = item;
+			SString sCaption = GtkFromWinCaption(puc->text.c_str());
+			switch (puc->controlType) {
+			case UserControl::ucEdit: {
+					WEntry we;
+					we.Create(puc->text.c_str());
+					puc->w.SetID(we.GetID());
+					tableUser.Add(we, 1, true, 0, 0);
+					break;
+				}
+			case UserControl::ucCombo: {
+					WComboBoxEntry wc;
+					wc.Create();
+					wc.SetText(puc->text.c_str());
+					puc->w.SetID(wc.GetID());
+					tableUser.Add(wc, 1, true, 0, 0);
+					break;
+				}
+			case UserControl::ucButton: {
+					WButton wb;
+					wb.Create(sCaption.c_str(), reinterpret_cast<GCallback>(UserStrip::ClickSignal), this);
+					puc->w.SetID(wb.GetID());
+					tableUser.Add(wb, 1, false, 0, 0);
+					break;
+				}
+			default: {
+					WStatic ws;
+					ws.Create(sCaption.c_str());
+					puc->w.SetID(ws.GetID());
+					gtk_misc_set_alignment(GTK_MISC(puc->w.GetID()), 1.0, 0.5);
+					tableUser.Add(ws, 1, false, 5, 0);
+				}
+			}
+			gtk_widget_show(GTK_WIDGET(puc->w.GetID()));
+			if (!hasSetFocus && (puc->controlType != UserControl::ucStatic)) {
+				gtk_widget_grab_focus(GTK_WIDGET(puc->w.GetID()));
+				hasSetFocus = true;
+			}
+			item++;
+		}
+		tableUser.NextLine() ;
+	}
+
+	for (std::vector<std::vector<UserControl> >::iterator line=psd->controls.begin(); line != psd->controls.end(); ++line) {
+		for (std::vector<UserControl>::iterator ctl=line->begin(); ctl != line->end(); ++ctl) {
+			if ((ctl->controlType == UserControl::ucEdit) || (ctl->controlType == UserControl::ucCombo)) {
+				GtkEntry *entry;
+				if (ctl->controlType == UserControl::ucEdit)
+					entry = GTK_ENTRY(ctl->w.GetID());
+				else
+					entry = GTK_ENTRY(gtk_bin_get_child(GTK_BIN(ctl->w.GetID())));
+
+				g_signal_connect(G_OBJECT(entry), "key-press-event", G_CALLBACK(EscapeSignal), this);
+				g_signal_connect(G_OBJECT(entry), "activate", G_CALLBACK(ActivateSignal), this);
+			}
+		}
+	}
+}
+
+void UserStrip::SetExtender(Extension *extender_) {
+	extender = extender_;
+}
+
+void UserStrip::SetSciTE(SciTEGTK *pSciTEGTK_) {
+	pSciTEGTK = pSciTEGTK_;
+}
+
+void UserStrip::Set(int control, const char *value) {
+	if (psd) {
+		UserControl *ctl = psd->FindControl(control);
+		if (ctl) {
+			if (ctl->controlType == UserControl::ucEdit) {
+				WEntry *pwe = static_cast<WEntry *>(&(ctl->w));
+				pwe->SetText(value);
+			} else if (ctl->controlType == UserControl::ucCombo) {
+				WComboBoxEntry *pwc = static_cast<WComboBoxEntry *>(&(ctl->w));
+				pwc->SetText(value);
+			}
+		}
+	}
+}
+
+void UserStrip::SetList(int control, const char *value) {
+	if (psd) {
+		UserControl *ctl = psd->FindControl(control);
+		if (ctl) {
+			if (ctl->controlType == UserControl::ucCombo) {
+				GUI::gui_string sValue = GUI::StringFromUTF8(value);
+				std::vector<std::string> listValues = ListFromString(sValue);
+				WComboBoxEntry *pwc = static_cast<WComboBoxEntry *>(&(ctl->w));
+				pwc->FillFromMemory(listValues);
+			}
+		}
+	}
+}
+
+std::string UserStrip::GetValue(int control) {
+	if (psd) {
+		UserControl *ctl = psd->FindControl(control);
+		if (ctl->controlType == UserControl::ucEdit) {
+			WEntry *pwe = static_cast<WEntry *>(&(ctl->w));
+			return pwe->Text();
+		} else if (ctl->controlType == UserControl::ucCombo) {
+			WComboBoxEntry *pwc = static_cast<WComboBoxEntry *>(&(ctl->w));
+			return pwc->Text();
+		}
+	}
+	return "";
+}
+
 void SciTEGTK::CreateStrips(GtkWidget *boxMain) {
 	backgroundStrip.SetLocalizer(&localiser);
 	backgroundStrip.Creation(boxMain);
+
+	userStrip.SetSciTE(this);
+	userStrip.SetExtender(extender);
+	userStrip.SetLocalizer(&localiser);
+	userStrip.Creation(boxMain);
 
 	findStrip.SetLocalizer(&localiser);
 	findStrip.SetSearcher(this);
@@ -4492,11 +4905,12 @@ void SciTEGTK::CreateStrips(GtkWidget *boxMain) {
 }
 
 bool SciTEGTK::StripHasFocus() {
-	return findStrip.VisibleHasFocus() || replaceStrip.VisibleHasFocus();
+	return findStrip.VisibleHasFocus() || replaceStrip.VisibleHasFocus() || userStrip.VisibleHasFocus();
 }
 
 void SciTEGTK::LayoutUI() {
-	//gboolean focusOutput = false;
+	bool focusOutput = false;
+    bool focusConsole = false;
 
 	if (splitPane) {
 #if GTK_CHECK_VERSION(2,16,0)
@@ -4508,7 +4922,8 @@ void SciTEGTK::LayoutUI() {
 		return;
 #endif
 
-		//focusOutput = wOutput.HasFocus();
+		focusOutput = wOutput.HasFocus();
+        focusConsole = wConsole.HasFocus();
 		gtk_container_remove(GTK_CONTAINER(splitPane), PWidget(wEditor));
 		gtk_container_remove(GTK_CONTAINER(splitPane), PWidget(wGroupTab));
 		gtk_widget_destroy(GTK_WIDGET(splitPane));
@@ -4540,20 +4955,23 @@ void SciTEGTK::LayoutUI() {
 	g_signal_connect(G_OBJECT(splitPane), "notify::position",
 	                   G_CALLBACK(PanePositionChanged), reinterpret_cast<char *>(this));
 
-#if 0		   
-
-	if (focusOutput)
+	if (focusOutput) {
+		GroupSetCurrentTab(GOA_CON_HOST);
 		WindowSetFocus(wOutput);
-	else
+	} else if (focusConsole) {
+		GroupSetCurrentTab(GOA_CON_TARGET);
+		WindowSetFocus(wConsole);
+	} else
 		WindowSetFocus(wEditor);
-#endif
 
 	gtk_widget_show_all(GTK_WIDGET(splitPane));
 }
+
 void SciTEGTK::GroupSetCurrentTab(int tab) {
 	if(wGroupTab.GetID())
 		gtk_notebook_set_current_page(GTK_NOTEBOOK(wGroupTab.GetID()),tab);
 }
+
 int SciTEGTK::GroupGetCurrentTab() {
 	if( wGroupTab.GetID())
 		return  gtk_notebook_get_current_page(GTK_NOTEBOOK(wGroupTab.GetID()));
@@ -4699,10 +5117,6 @@ void SciTEGTK::CreateUI() {
 	g_object_ref(G_OBJECT(PWidget(wConsole)));
 	scintilla_set_id(SCINTILLA(PWidget(wConsole)), IDM_CONSOLEWIN);
 	wConsole.Call(SCI_USEPOPUP, 0);
-	/*
-	g_signal_connect(G_OBJECT(PWidget(wConsole)), "command",
-	                   G_CALLBACK(CommandSignal), this);
-  */
 	g_signal_connect(G_OBJECT(PWidget(wConsole)), SCINTILLA_NOTIFY,
 	                   G_CALLBACK(NotifySignal), this);
 	   
@@ -4727,7 +5141,6 @@ void SciTEGTK::CreateUI() {
 	CreateStrips(boxMain);
 
 	wOutput.Call(SCI_SETMARGINWIDTHN, 1, 0);
-
 
 	wStatusBar = gtk_statusbar_new();
 	sbContextID = gtk_statusbar_get_context_id(
@@ -4757,13 +5170,14 @@ void SciTEGTK::CreateUI() {
 		gtk_window_maximize(GTK_WINDOW(PWidget(wSciTE)));
 
 	gtk_widget_hide(PWidget(backgroundStrip));
+	gtk_widget_hide(PWidget(userStrip));
 	gtk_widget_hide(wIncrementPanel);
 	gtk_widget_hide(PWidget(findStrip));
 	gtk_widget_hide(PWidget(replaceStrip));
 
-	GtkWidget *tablabel1   = gtk_label_new(localiser.Text("eLua Console").c_str());
+	GtkWidget *tablabel1   = gtk_label_new(localiser.Text("Target Console").c_str());
 	GtkWidget *tabcontent1 = PWidget(wConsole);
-	GtkWidget *tablabel2   = gtk_label_new(localiser.Text("System Console").c_str());
+	GtkWidget *tablabel2   = gtk_label_new(localiser.Text("Host Console").c_str());
 	GtkWidget *tabcontent2 = PWidget(wOutput);
 
 	gtk_widget_show(tablabel1);
@@ -4775,8 +5189,6 @@ void SciTEGTK::CreateUI() {
 	gtk_notebook_append_page(GTK_NOTEBOOK(wGroupTab.GetID()), tabcontent2, tablabel2);
 	
 	UIAvailable();
-	ToggleOutputVisible();
-	CheckMenus();
 }
 
 void SciTEGTK::FindIncrementSetColour(const GdkColor colourBack) {
@@ -4874,17 +5286,13 @@ struct CallbackData {
 	}
 };
 
-
 void SciTEGTK::PostOnMainThread(int cmd, Worker *pWorker) {
-#if GTK_CHECK_VERSION(2,12,0)
 	CallbackData *pcbd = new CallbackData(this, cmd, pWorker);
-	gdk_threads_add_idle(PostCallback, pcbd);
-#endif
+	g_idle_add(PostCallback, pcbd);
 }
 
 gboolean SciTEGTK::PostCallback(void *ptr) {
-	// This callback was installed with gdk_threads_add_idle instead of g_idle_add
-	// so already holds the lock and does not need to call gdk_threads_enter/leave.
+	ThreadLockMinder minder;
 	CallbackData *pcbd = static_cast<CallbackData *>(ptr);
 	pcbd->pSciTE->WorkerCommand(pcbd->cmd, pcbd->pWorker);
 	delete pcbd;
@@ -5093,31 +5501,31 @@ void SciTEGTK::Run(int argc, char *argv[]) {
     if (root.size() > 1 ) {
 		root.erase(root.find_last_of("/"),root.length());
 		root.append("/");
-		props.Set(ROOT_PROPS_DIR_NAME, root.c_str());
+		props.Set(ROOT_DIR_P, root.c_str());
 
 		tmp = root;
-		tmp.append(EXAMPLES_DIR_NAME);
-		props.Set(EXAMPLES_PROPS_DIR_NAME,tmp.c_str());
+		tmp.append(EXAMPLES_DIR);
+		props.Set(EXAMPLES_DIR_P,tmp.c_str());
 
 		tmp = root;
-		tmp.append(BIN_DIR_NAME);
-		props.Set(BIN_PROPS_DIR_NAME,tmp.c_str());
+		tmp.append(BIN_DIR);
+		props.Set(BIN_DIR_P,tmp.c_str());
 
 		tmp = root;
-		tmp.append(DOCS_DIR_NAME);
-		props.Set(DOCS_PROPS_DIR_NAME,tmp.c_str());
+		tmp.append(DOCS_DIR);
+		props.Set(DOCS_DIR_P,tmp.c_str());
 
     }
 
     if (props.Get("target.board").size() != 0)
-    	props.Set(PROPERTIES_BOARD_NAME,props.Get("target.board").c_str());
+    	props.Set(TARGET_BOARD_P,props.Get("target.board").c_str());
     else
-    	props.Set(PROPERTIES_BOARD_NAME,"none");
+    	props.Set(TARGET_BOARD_P,"none");
 
     if (props.Get("target.cpu").size() != 0)
-    	props.Set(PROPERTIES_CPU_NAME,props.Get("target.cpu").c_str());
+    	props.Set(TARGET_CPU_P,props.Get("target.cpu").c_str());
     else
-    	props.Set(PROPERTIES_CPU_NAME,"none");
+    	props.Set(TARGET_CPU_P,"none");
 
 
 	gtk_widget_grab_focus(GTK_WIDGET(PWidget(wSciTE)));
@@ -5156,7 +5564,7 @@ gboolean SciTEGTK::DoItLater(SciTEGTK *scite)
 	if(scite->serial->Start()) {
 		if ((scite->props.Get("serial.tx1cr").size() != 0) &&
 						scite->props.GetInt ("serial.tx1cr") == 1) {
-			scite->serial->OutByte('\r'); /* Send the first \r in order to get eLua prompt */
+			scite->serial->OutByte('\r'); /* Send the first \r in order to get Target prompt */
 		}
 	}
 

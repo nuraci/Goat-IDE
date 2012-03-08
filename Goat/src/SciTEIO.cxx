@@ -69,7 +69,7 @@
 #include "Utf8_16.h"
 
 #if defined(GTK)
-const GUI::gui_char propUserFileName[] = GUI_TEXT(APP_NAME"User.properties");
+const GUI::gui_char propUserFileName[] = GUI_TEXT("."APP_NAME"User.properties");
 #elif defined(__APPLE__)
 const GUI::gui_char propUserFileName[] = GUI_TEXT(APP_NAME"User.properties");
 #else
@@ -77,7 +77,7 @@ const GUI::gui_char propUserFileName[] = GUI_TEXT(APP_NAME"User.properties");
 const GUI::gui_char propUserFileName[] = GUI_TEXT("GoatUser.properties");
 #endif
 const GUI::gui_char propGlobalFileName[] = GUI_TEXT("GoatGlobal.properties");
-const GUI::gui_char propAbbrevFileName[] = GUI_TEXT("GoatAbbrev.properties");
+const GUI::gui_char propAbbrevFileName[] = GUI_TEXT("abbrev.properties");
 
 void SciTEBase::SetFileName(FilePath openName, bool fixCase) {
 	if (openName.AsInternal()[0] == '\"') {
@@ -360,7 +360,7 @@ void SciTEBase::TextRead(FileWorker *pFileWorker) {
 void SciTEBase::PerformDeferredTasks() {
 	if (buffers.buffers[buffers.Current()].futureDo & Buffer::fdFinishSave) {
 		wEditor.Call(SCI_SETSAVEPOINT);
-		wEditor.Call(SCI_SETREADONLY, isReadOnly);
+		wEditor.Call(SCI_SETREADONLY, CurrentBuffer()->isReadOnly);
 		buffers.FinishedFuture(buffers.Current(), Buffer::fdFinishSave);
 	}
 }
@@ -371,6 +371,7 @@ void SciTEBase::CompleteOpen(OpenCompletion oc) {
 		SString languageOverride = DiscoverLanguage();
 		if (languageOverride.length()) {
 			CurrentBuffer()->overrideExtension = languageOverride;
+			CurrentBuffer()->lifeState = Buffer::open;
 			ReadProperties();
 			SetIndentSettings();
 		}
@@ -418,20 +419,19 @@ void SciTEBase::TextWritten(FileWorker *pFileWorker) {
 
 	FilePath pathSaved = pFileStorer->path;
 	int errSaved = pFileStorer->err;
+	bool cancelledSaved = pFileStorer->cancelling;
 
 	// May not be found if save cancelled or buffer closed
 	if (iBuffer >= 0) {
 		// Complete and release
-		//pFileStorer->pStorer->SaveCompleted();
-		//pFileStorer->pStorer = 0;
 		buffers.buffers[iBuffer].CompleteStoring();
-		if (errSaved) {
+		if (errSaved || cancelledSaved) {
 			// Background save failed (possibly out-of-space) so resurrect the 
 			// buffer so can be saved to another disk or retried after making room.
 			buffers.SetVisible(iBuffer, true);
 			SetBuffersMenu();
 			if (iBuffer == buffers.Current()) {
-				wEditor.Call(SCI_SETREADONLY, isReadOnly);
+				wEditor.Call(SCI_SETREADONLY, CurrentBuffer()->isReadOnly);
 			}
 		} else {
 			if (!buffers.GetVisible(iBuffer)) {
@@ -439,12 +439,14 @@ void SciTEBase::TextWritten(FileWorker *pFileWorker) {
 			}
 			if (iBuffer == buffers.Current()) {
 				wEditor.Call(SCI_SETSAVEPOINT);
-				wEditor.Call(SCI_SETREADONLY, isReadOnly);
+				wEditor.Call(SCI_SETREADONLY, CurrentBuffer()->isReadOnly);
 				if (extender)
 					extender->OnSave(buffers.buffers[iBuffer].AsUTF8().c_str());
 			} else {
+				buffers.buffers[iBuffer].isDirty = false;
 				// Need to make writable and set save point when next receive focus.
 				buffers.AddFuture(iBuffer, Buffer::fdFinishSave);
+				SetBuffersMenu();
 			}
 		}
 	} else {
@@ -585,6 +587,7 @@ bool SciTEBase::Open(FilePath file, OpenFlags of) {
 			wEditor.Call(SCI_EMPTYUNDOBUFFER);
 		}
 		isReadOnly = props.GetInt("read.only");
+		CurrentBuffer()->isReadOnly = isReadOnly;
 		wEditor.Call(SCI_SETREADONLY, isReadOnly);
 	}
 	RemoveFileFromStack(filePath);
@@ -601,7 +604,8 @@ bool SciTEBase::Open(FilePath file, OpenFlags of) {
 
 // Returns true if editor should get the focus
 bool SciTEBase::OpenSelected() {
-	char selectedFilename[MAX_PATH];
+	char targetFilename[MAX_PATH];
+	char *selectedFilename = targetFilename;
 	char cTag[200];
 	unsigned long lineNumber = 0;
 
@@ -612,6 +616,27 @@ bool SciTEBase::OpenSelected() {
 		WarnUser(warnWrongFile);
 		return false;	// No selection
 	}
+
+#if !defined(GTK)
+	if (strncmp(selectedFilename, "http:", 5) == 0 ||
+	        strncmp(selectedFilename, "https:", 6) == 0 ||
+	        strncmp(selectedFilename, "ftp:", 4) == 0 ||
+	        strncmp(selectedFilename, "ftps:", 5) == 0 ||
+	        strncmp(selectedFilename, "news:", 5) == 0 ||
+	        strncmp(selectedFilename, "mailto:", 7) == 0) {
+		SString cmd = selectedFilename;
+		AddCommand(cmd, "", jobShell);
+		return false;	// Job is done
+	}
+#endif
+
+	if (strncmp(selectedFilename, "file://", 7) == 0) {
+		selectedFilename += 7;
+		if (selectedFilename[0] == '/' && selectedFilename[2] == ':') { // file:///C:/filename.ext
+			selectedFilename++;
+		}
+	}
+
 	SString fileNameForExtension = ExtensionFileName();
 	SString openSuffix = props.GetNewExpand("open.suffix.", fileNameForExtension.c_str());
 	strcat(selectedFilename, openSuffix.c_str());
@@ -647,19 +672,6 @@ bool SciTEBase::OpenSelected() {
 		if (lineNumber > 0) {
 			*endPath = '\0';
 		}
-
-#if !defined(GTK)
-		if (strncmp(selectedFilename, "http:", 5) == 0 ||
-		        strncmp(selectedFilename, "https:", 6) == 0 ||
-		        strncmp(selectedFilename, "ftp:", 4) == 0 ||
-		        strncmp(selectedFilename, "ftps:", 5) == 0 ||
-		        strncmp(selectedFilename, "news:", 5) == 0 ||
-		        strncmp(selectedFilename, "mailto:", 7) == 0) {
-			SString cmd = selectedFilename;
-			AddCommand(cmd, "", jobShell);
-			return false;	// Job is done
-		}
-#endif
 
 		// Support the ctags format
 
@@ -905,10 +917,8 @@ void SciTEBase::EnsureFinalNewLine() {
 	}
 }
 
-/**
- * Writes the buffer to the given filename.
- */
-bool SciTEBase::SaveBuffer(FilePath saveName, bool asynchronous) {
+// Perform any changes needed before saving such as normalizing spaces and line ends.
+bool SciTEBase::PrepareBufferForSave(FilePath saveName) {
 	bool retVal = false;
 	// Perform clean ups on text before saving
 	wEditor.Call(SCI_BEGINUNDOACTION);
@@ -924,15 +934,24 @@ bool SciTEBase::SaveBuffer(FilePath saveName, bool asynchronous) {
 
 	wEditor.Call(SCI_ENDUNDOACTION);
 
+	return retVal;
+}
+
+/**
+ * Writes the buffer to the given filename.
+ */
+bool SciTEBase::SaveBuffer(FilePath saveName, SaveFlags sf) {
+	bool retVal = PrepareBufferForSave(saveName);
+
 	if (!retVal) {
 
 		FILE *fp = saveName.Open(fileWrite);
 		if (fp) {
 			int lengthDoc = LengthDocument();
-			if (asynchronous) {
+			if (!(sf & sfSynchronous)) {
 				wEditor.Call(SCI_SETREADONLY, 1);
 				const char *documentBytes = reinterpret_cast<const char *>(wEditor.CallReturnPointer(SCI_GETCHARACTERPOINTER));
-				CurrentBuffer()->pFileWorker = new FileStorer(this, documentBytes, filePath, lengthDoc, fp, CurrentBuffer()->unicodeMode);
+				CurrentBuffer()->pFileWorker = new FileStorer(this, documentBytes, filePath, lengthDoc, fp, CurrentBuffer()->unicodeMode, (sf & sfProgressVisible));
 				CurrentBuffer()->pFileWorker->sleepTime = props.GetInt("asynchronous.sleep");
 				PerformOnNewThread(CurrentBuffer()->pFileWorker);
 				retVal = true;
@@ -983,7 +1002,7 @@ void SciTEBase::ReloadProperties() {
 }
 
 // Returns false if cancelled or failed to save
-bool SciTEBase::Save() {
+bool SciTEBase::Save(SaveFlags sf) {
 	if (!filePath.IsUntitled()) {
 		GUI::gui_string msg;
 		if (CurrentBuffer()->ShouldNotSave()) {
@@ -1021,10 +1040,11 @@ bool SciTEBase::Save() {
 			}
 		}
 
-		bool asynchronous = LengthDocument() > props.GetInt("background.save.size", -1);
-		if (SaveBuffer(filePath, asynchronous)) {
+		if (LengthDocument() <= props.GetInt("background.save.size", -1))
+			sf = static_cast<SaveFlags>(sf | sfSynchronous);
+		if (SaveBuffer(filePath, sf)) {
 			CurrentBuffer()->SetTimeFromFile();
-			if (!asynchronous) {
+			if (sf & sfSynchronous) {
 				wEditor.Call(SCI_SETSAVEPOINT);
 				if (IsPropertiesFile(filePath)) {
 					ReloadProperties();
@@ -1070,6 +1090,10 @@ bool SciTEBase::SaveIfNotOpen(const FilePath &destFile, bool fixCase) {
 		SaveAs(absPath.AsInternal(), fixCase);
 		return true;
 	}
+}
+
+void SciTEBase::AbandonAutomaticSave() {
+	CurrentBuffer()->AbandonAutomaticSave();
 }
 
 bool SciTEBase::IsStdinBlocked() {

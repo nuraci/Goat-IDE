@@ -40,9 +40,9 @@
 static void *XmodemTransmitThread(void *ptr);
 
 /*
- * Elua: SciTEGTK::ExecuteOnConsole -> SciTEGTK::PostCallbackConsole -> SciTEBase::ConsoleInsertChars()
+ * Target: SciTEGTK::ExecuteOnConsole -> SciTEGTK::PostCallbackConsole -> SciTEBase::ConsoleInsertChars()
  *
- * PC:   SciTEBase::CharAddedConsole() ->  UART::SendChars()
+ * Host:   SciTEBase::CharAddedConsole() ->  UART::SendChars()
  */
 
 /* CRC16 code.....*/

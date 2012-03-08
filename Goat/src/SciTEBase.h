@@ -49,19 +49,11 @@ inline Colour ColourRGB(unsigned int red, unsigned int green, unsigned int blue)
  * The order of menus on Windows - the Buffers menu may not be present
  * and there is a Help menu at the end.
  */
-#ifdef HAVE_MENU_LANGUAGES
 enum {
     menuFile = 0, menuEdit = 1, menuSearch = 2, menuView = 3,
     menuTools = 4, menuOptions = 5, menuLanguage = 6, menuBuffers = 7,
     menuHelp = 8
 };
-#else
-enum {
-    menuFile = 0, menuEdit = 1, menuSearch = 2, menuView = 3,
-    menuTools = 4, menuOptions = 5, menuBuffers = 6,
-    menuHelp = 7
-};
-#endif
 
 struct SelectedRange {
 	int position;
@@ -104,11 +96,13 @@ class Buffer : public RecentFile {
 public:
 	sptr_t doc;
 	bool isDirty;
+	bool isReadOnly;
 	bool useMonoFont;
 	enum { empty, reading, readAll, open } lifeState;
 	UniMode unicodeMode;
 	time_t fileModTime;
 	time_t fileModLastAsk;
+	time_t documentModTime;
 	enum { fmNone, fmMarked, fmModified} findMarks;
 	SString overrideExtension;	///< User has chosen to use a particular language
 	std::vector<int> foldState;
@@ -117,17 +111,20 @@ public:
 	PropSetFile props;
 	enum FutureDo { fdNone=0, fdFinishSave=1 } futureDo;
 	Buffer() :
-			RecentFile(), doc(0), isDirty(false), useMonoFont(false), lifeState(empty),
-			unicodeMode(uni8Bit), fileModTime(0), fileModLastAsk(0), findMarks(fmNone), pFileWorker(0), futureDo(fdNone) {}
+			RecentFile(), doc(0), isDirty(false), isReadOnly(false), useMonoFont(false), lifeState(empty),
+			unicodeMode(uni8Bit), fileModTime(0), fileModLastAsk(0), documentModTime(0),
+			findMarks(fmNone), pFileWorker(0), futureDo(fdNone) {}
 
 	void Init() {
 		RecentFile::Init();
 		isDirty = false;
+		isReadOnly = false;
 		useMonoFont = false;
 		lifeState = empty;
 		unicodeMode = uni8Bit;
 		fileModTime = 0;
 		fileModLastAsk = 0;
+		documentModTime = 0;
 		findMarks = fmNone;
 		overrideExtension = "";
 		foldState.clear();
@@ -139,10 +136,15 @@ public:
 	void SetTimeFromFile() {
 		fileModTime = ModifiedTime();
 		fileModLastAsk = fileModTime;
+		documentModTime = fileModTime;
 	}
+
+	void DocumentModified();
+	bool NeedsSave(int delayBeforeSave);
 
 	void CompleteLoading();
 	void CompleteStoring();
+	void AbandonAutomaticSave();
 
 	bool ShouldNotSave() const {
 		return lifeState != open;
@@ -363,7 +365,6 @@ public:
 	}
 };
 
-
 class SciTEBase : public ExtensionAPI, public Searcher, public WorkerListener, public Term {
 protected:
 	GUI::gui_string windowName;
@@ -459,16 +460,15 @@ protected:
 	bool needReadProperties;
 	bool quitting;
 
+	int timerMask;
+	enum { timerAutoSave=1 };
+	int delayBeforeAutoSave;
+
 	int heightOutput;
 	int heightOutputStartDrag;
-//TODO remove following two items?
-	int heightConsole;
-	int heightConsoleStartDrag;	
 	GUI::Point ptStartDrag;
 	bool capturedMouse;
 	int previousHeightOutput;
-//TODO Remove?
-	int previousHeightConsole;
 	bool firstPropertiesRead;
 	bool splitVertical;	///< @c true if the split bar between editor and output is vertical.
 	bool bufferedDraw;
@@ -480,8 +480,8 @@ protected:
 
 	bool indentationWSVisible;
 	int indentExamine;
-
 	bool autoCompleteIgnoreCase;
+	bool callTipUseEscapes;
 	bool callTipIgnoreCase;
 	bool autoCCausedByOnlyOne;
 	SString calltipWordCharacters;
@@ -646,13 +646,20 @@ protected:
 	int SaveIfUnsureAll(bool forceQuestion = false);
 	int SaveIfUnsureForBuilt();
 	bool SaveIfNotOpen(const FilePath &destFile, bool fixCase);
-	bool Save();
+	void AbandonAutomaticSave();
+	enum SaveFlags {
+	    sfNone = 0, 		// Default
+	    sfProgressVisible = 1, 	// Show in background save strip
+	    sfSynchronous = 16	// Write synchronously blocking UI
+	};
+	bool Save(SaveFlags sf = sfProgressVisible);
 	void SaveAs(const GUI::gui_char *file, bool fixCase);
 	virtual void SaveACopy() = 0;
 	void SaveToHTML(FilePath saveName);
 	void StripTrailingSpaces();
 	void EnsureFinalNewLine();
-	bool SaveBuffer(FilePath saveName, bool asynchronous);
+	bool PrepareBufferForSave(FilePath saveName);
+	bool SaveBuffer(FilePath saveName, SaveFlags sf);
 	virtual void SaveAsHTML() = 0;
 	void SaveToRTF(FilePath saveName, int start = 0, int end = -1);
 	virtual void SaveAsRTF() = 0;
@@ -662,8 +669,9 @@ protected:
 	virtual void SaveAsTEX() = 0;
 	void SaveToXML(FilePath saveName);
 	virtual void SaveAsXML() = 0;
+	virtual const GUI::gui_char *GetGoatDefaultDirectory() = 0;
 	virtual FilePath GetDefaultDirectory() = 0;
-	virtual FilePath GetScitePropertiesHome() = 0;
+	virtual FilePath GetSciteDefaultHome() = 0;
 	virtual FilePath GetSciteUserHome() = 0;
 	FilePath GetDefaultPropertiesFileName();
 	FilePath GetUserPropertiesFileName();
@@ -674,6 +682,10 @@ protected:
 	int GetMenuCommandAsInt(SString commandName);
 	virtual void Print(bool) {}
 	virtual void PrintSetup() {}
+	virtual void UserStripShow(const char * /* description */) {}
+	virtual void UserStripSet(int /* control */, const char * /* value */) {}
+	virtual void UserStripSetList(int /* control */, const char * /* value */) {}
+	virtual const char *UserStripValue(int /* control */) { return 0; }
 	virtual void ShowBackgroundProgress(const GUI::gui_string & /* explanation */, int /* size */, int /* progress */) {}
 	Sci_CharacterRange GetSelection();
 	SelectedRange GetSelectedRange();
@@ -715,6 +727,8 @@ protected:
 	virtual void UIHasFocus();
 	virtual void DestroyFindReplace() = 0;
 	virtual void GoLineDialog() = 0;
+	virtual void AskForFileDialog(FilePath directory, const GUI::gui_char *filter) = 0;
+	virtual void QuestionDialog(const char *str) = 0;
 	virtual bool AbbrevDialog() = 0;
 	virtual void TabSizeDialog() = 0;
 	virtual bool ParametersOpen() = 0;
@@ -728,8 +742,8 @@ protected:
 	void OutputAppendString(const char *s, int len = -1);
 	void OutputAppendStringSynchronised(const char *s, int len = -1);
 	void MakeOutputVisible();
+// TODO is it used?
 	void ConsoleAppendStringSynchronised(const char *s, int len = -1);
-	void ClearJobQueue();
 	virtual void Execute();
 	virtual void StopExecute() = 0;
 	void ShowMessages(int line);
@@ -786,7 +800,7 @@ protected:
 	void FoldAll();
 	void ToggleFoldRecursive(int line, int level);
 	void EnsureAllChildrenVisible(int line, int level);
-	void EnsureRangeVisible(int posStart, int posEnd, bool enforcePolicy = true);
+	void EnsureRangeVisible(GUI::ScintillaWindow &win, int posStart, int posEnd, bool enforcePolicy = true);
 	void GotoLineEnsureVisible(int line);
 	bool MarginClick(int position, int modifiers);
 	void NewLineInOutput();
@@ -817,7 +831,7 @@ protected:
 	virtual void CheckMenusClipboard();
 	virtual void CheckMenus();
 	virtual void AddToPopUp(const char *label, int cmd = 0, bool enabled = true) = 0;
-	virtual void GroupSetCurrentTab(int tab = BOARD_CONSOLE_TAB ) = 0;
+	virtual void GroupSetCurrentTab(int tab = GOA_CON_TARGET ) = 0;
 	virtual int  GroupGetCurrentTab() = 0;
 
 	void ContextMenu(GUI::ScintillaWindow &wSource, GUI::Point pt, GUI::Window wCmd);
@@ -876,6 +890,10 @@ protected:
 	int NormaliseSplit(int splitPos);
 	void MoveSplit(GUI::Point ptNewDrag);
 
+	virtual void TimerStart(int mask);
+	virtual void TimerEnd(int mask);
+	void OnTimer();
+
 	void UIAvailable();
 	void PerformOne(char *action);
 	void StartRecordMacro();
@@ -915,6 +933,11 @@ protected:
 	void ShutDown();
 	void Perform(const char *actions);
 	void DoMenuCommand(int cmdID);
+	void SelectConsoleTab(int tab);
+	void AskQuestion(const char *str);
+	void AskForFile(const char *dirName, const char *filter);
+	int SerialXmodemTxFile(const char *name);
+	int SerialSend(const char *string, int length);
 
 	// Valid CurrentWord characters
 	bool iswordcharforsel(char ch);
@@ -959,6 +982,7 @@ private:
 
 int ControlIDOfCommand(unsigned long);
 void LowerCaseString(char *s);
+std::vector<GUI::gui_string> ListFromString(const GUI::gui_string &args);
 long ColourOfProperty(PropSetFile &props, const char *key, Colour colourDefault);
 void WindowSetFocus(GUI::ScintillaWindow &w);
 

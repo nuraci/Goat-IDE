@@ -76,12 +76,10 @@ static void HackColour(int &n) {
 }
 
 void SciTEBase::SetAboutMessage(GUI::ScintillaWindow &wsci, const char *appTitle) {
-
-
 	if (wsci.Created()) {
 		wsci.Send(SCI_SETSTYLEBITS, 7, 0);
 		wsci.Send(SCI_STYLERESETDEFAULT, 0, 0);
-		int fontSize = 14;
+		int fontSize;
 
 #if defined(WIN32)
 		wsci.Send(SCI_STYLESETFONT, STYLE_DEFAULT,

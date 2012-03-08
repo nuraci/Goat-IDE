@@ -226,6 +226,9 @@
 				RelativePath="..\..\scintilla\src\Indicator.cxx">
 			</File>
 			<File
+				RelativePath="..\src\JobQueue.cxx">
+			</File>
+			<File
 				RelativePath="..\..\scintilla\src\KeyMap.cxx">
 			</File>
 			<File
@@ -280,6 +283,9 @@
 				RelativePath="..\..\scintilla\lexers\LexAVE.cxx">
 			</File>
 			<File
+				RelativePath="..\..\scintilla\lexers\LexAVS.cxx">
+			</File>
+			<File
 				RelativePath="..\..\scintilla\lexers\LexBaan.cxx">
 			</File>
 			<File
@@ -323,6 +329,9 @@
 			</File>
 			<File
 				RelativePath="..\..\scintilla\lexers\LexD.cxx">
+			</File>
+			<File
+				RelativePath="..\..\scintilla\lexers\LexECL.cxx">
 			</File>
 			<File
 				RelativePath="..\..\scintilla\lexers\LexEiffel.cxx">
@@ -479,6 +488,9 @@
 			</File>
 			<File
 				RelativePath="..\..\scintilla\lexers\LexTCL.cxx">
+			</File>
+			<File
+				RelativePath="..\..\scintilla\lexers\LexTCMD.cxx">
 			</File>
 			<File
 				RelativePath="..\..\scintilla\lexers\LexTeX.cxx">

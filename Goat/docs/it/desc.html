@@ -1,35 +1,70 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml"><head>
+    <meta name="generator" content="Bluefish 2.0.3" />
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<style type="text/css">
+        table {
+            border: 1px solid #1F1F1F;
+            border-collapse: collapse;
+        }
+        ul {
+            padding: 10px 30px 10px 10px;
+        }
+        li {
+          
+            padding: 10px 10px 10px q0px;
+        }
+ 
+        h3 {
+            border: 1px solid #FFCC00;
+            background-color: #FFF7EE;
+            padding: 10px 10px;
+				font-size: 150%;
+				font-family: cursive;
+        }
+ </style>
 </head>
 <body>
 
 <h3>
-Ho creato "Goat" come personale contributo al software libero nella speranza che possa essere utile a chi,
- appassionato come me di microcontrollori e sistemi embedded, non voglia (o non possa) spendere soldi in software commerciali. <br /><br />
-Il mio obiettivo e' farlo crescere sulla spinta dei suggerimenti di chi lo usera'.<br /><br />
-Usatelo e per favore inviatemi consigli, segnalazioni e suggerimenti...<br /><br />
+"The Go @ IDE" e' il mio contributo al software libero nella speranza che possa essere utile a chi,
+ appassionato come me di microcontrollori e sistemi embedded, non voglia (o non possa) spendere soldi in software commerciali. <br />
+"The Go @ IDE" vuole essere il punto di congiunzione tra hardware e software, che unisce le caratteristiche di strumenti software specifici per l'hardware
+(emulatore di terminale, dfu-programmer,...) con un potente ed altamente personalizzabile <a href="http://it.wikipedia.org/wiki/Integrated_development_environment" target="body"></a>IDE<br /> 
+Attualmente Goat include il supporto per <a href="http://www.eluaproject.net/" target="body" title="eLua">eLua</a>, 
+inoltre per alcuni target(*) e' anche possibile sostituire facilmente l'immagine della flash.<br />
+Il mio obiettivo e'farlo crescere sulla spinta dei suggerimenti di chi lo usera'.<br />
+Usatelo e per favore inviatemi consigli, segnalazioni e suggerimenti...<br />
 </h3>
 
-
-Alcune caratteristiche:<br /> <br />
+Alcune caratteristiche:<br />
 <ul>
-
 <li> Il suo editor (basato sulla grandiosa libreria "scintilla" http://www.scintilla.org/), e' leggero e potente. </li>
 <br />
-<li> Possiede caratteristiche addizionali uniche come "l'evidenzazione della sintassi", il "code folding" e il "completamento del codice" basato sulla API di eLua.</li>
+<li> Possiede caratteristiche addizionali uniche come "l'evidenzazione della sintassi", il "code folding" e il "completamento del codice" basato sulle API del linguaggio che stiamo usando.</li>
 <br />
-<li> Include la capacita' di connettersi con la board Hardware (attraverso la seriale o la porta USB) ottenendo il prompt di Elua dentro una sua finestra.</li>
+<li> Include la capacita' di connettersi con la board Hardware (attraverso la seriale o la porta USB) ottenendo il prompt del target(*) dentro una sua finestra.</li>
 <br />
-<li> E' capace di mandare i file .lua/.lc sulla board (usando il protocollo "xmodem" reso disponibile da eLua).</li>
+<li> E' capace di mandare file sulla board usando il protocollo <a href="http://en.wikipedia.org/wiki/XMODEM" target="body">xmodem</a> (se supportato dal target(*)).</li>
 <br />
-<li> Supporta alcuni comandi TERM (standard ansi/vt100), e' quindi in grado di visualizzare giochi ed applicazioni es. "hanoi" o "hungman" (usando le funzioni TERM di eLua).</li>
+<li> Supporta alcuni comandi TERM (standard ansi/vt100), e' quindi in grado di visualizzare giochi ed applicazioni es. "hanoi" o "hungman" (usando le funzioni ansi/vt100 del target(*)).</li>
 <br />
-<li> Supporta la programmazione della FLASH (del target) attraverso il DFU boot loader (inizialmente solo per l' architettura avr32).</li>
+<li> Supporta la programmazione della FLASH (del target(*)) attraverso il DFU boot loader (inizialmente solo per l' architettura avr32).</li>
 <br />
 <li> E' facilmente espandibile attraverso script Lua.</li>
 <br />
 <li> Quasi qualsiasi cosa che <a href="http://www.scintilla.org/SciTE.html" target="body">SciTE</a> e' in grado di fare.</li>
 <br />
 </ul>
+
+<cite>
+target(*) e' un piccolo hardware con un <a href="http://en.wikipedia.org/wiki/Microcontroller" target="body">microcontrollore</a>,
+ gestito da un <a href="http://en.wikipedia.org/wiki/Real-time_operating_system" target="body"> RTOS </a><br />
+capace di eseguire una applicazione monolitica ma molto veloce..<br />
+Ecco alcuni esempi: <br /><br />
+<a href="http://wiki.eluaproject.net/Mizar32" target="body" name="The Mizar32">The Mizar32 ( low-cost Stackable Multi-Board Computer)</a><br />
+<a href="http://wiki.eluaproject.net/STM32F4DISCOVERY" target="body" name="STM32F4Dicscover">STM32F4Dicscover board</a><br />
+
+</cite>
 
 </body></html>

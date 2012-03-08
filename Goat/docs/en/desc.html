@@ -1,33 +1,65 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml"><head>
+    <meta name="generator" content="Bluefish 2.0.3" />
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<style type="text/css">
+        table {
+            border: 1px solid #1F1F1F;
+            border-collapse: collapse;
+        }
+        ul {
+            padding: 10px 30px 10px 10px;
+        }
+        li {
+          
+            padding: 10px 10px 10px q0px;
+        }
+ 
+        h3 {
+            border: 1px solid #FFCC00;
+            background-color: #FFF7EE;
+            padding: 10px 10px;
+				font-size: 150%;
+				font-family: cursive;
+        }
+ </style>
 </head>
 <body>
 <h3>
-I created "Goat" as a personal contribution to the free software in the hope that it will be useful to those,
-  passionate as me about microcontrollers and embedded systems, do not want (or can not) spend money on commercial software.<br /><br />
-My goal is make it grow in the wake of the suggestions of those who will use.<br /><br />
-Use it and please send tips, comments and suggestions ...<br /><br />
+"The Go @ IDE" is my personal contribution to the free software in the hope that it will be useful to those,
+passionate as me about microcontrollers and embedded systems, do not want (or can not) spend money on commercial software.<br />
+"The Go @ IDE" wants to be the junction point between hardware and software, combining features of software specific hardware tools,<br />
+(terminal emulator, dfu-programmer,...) with a powerful and highly customizable <a href="http://it.wikipedia.org/wiki/Integrated_development_environment" target="body"></a>IDE<br />
+Goat currently includes the support for <a href="http://www.eluaproject.net/" target="body">eLua</a>,
+ for some targets(*) is also possible replace easily the content of the flash memory.<br />
+My goal is make it grow in the wake of the suggestions of those who will use.<br />
+Use it and please send tips, comments and suggestions ...<br />
 </h3>
-
-Some features:<br /> <br />
-
+Some features:<br />
 <ul>
 <li> Its editor (based on the wonderful library "scintilla" http://www.scintilla.org/), is lightweight and powerful. </li>
 <br />
-<li> Has additional features such as "syntax highlighting", "code folding" and "code completion" based on the eLua API.</li>
+<li> Has additional features such as "syntax highlighting", "code folding" and "code completion" based on the API of the language we are using.</li>
 <br />
-<li> Includes the capability to connect with the real hardware (through the serial or the USB port) obtaining the prompt of Elua inside it.</li>
+<li> Includes the capability to connect with the real hardware (through the serial or the USB port) obtaining the prompt of the target(*) inside it.</li>
 <br />
-<li> It's able to send the .lua/.lc  file on the Hardware (using the eLua xmodem protocol).</li>
+<li> It's able to send files on the Hardware (using the <a href="http://en.wikipedia.org/wiki/XMODEM" target="body">xmodem</a> protocol).</li>
 <br />
-<li> Supports some terminal commands (standard ansi/vt100), so it's able to play games like "hanoi" or "hungman" (using the eLua TERM capability).</li>
+<li> Supports some terminal commands (standard ansi/vt100), so it's able to play games like "hanoi" or "hungman" (using the target(*) ansi/vt100 capabilities).</li>
 <br />
-<li> Supports the FLASH (on the target) programming through the DFU boot loader (initially only for the avr32 architecure).</li>
+<li> Supports the FLASH (on the target(*)) programming through the DFU boot loader (initially only for the avr32 architecture).</li>
 <br />
 <li> It's easily extensible through Lua scripts.</li>
 <br />
 <li> Almost everything that <a href="http://www.scintilla.org/SciTE.html" target="body">SciTE</a> is able to do.</li>
 <br />
 </ul>
-
+<cite>
+target(*) is a small hardware with a <a href="http://en.wikipedia.org/wiki/Microcontroller" target="body">microcontroller</a>,
+ managed by an <a href="http://en.wikipedia.org/wiki/Real-time_operating_system" target="body"> RTOS </a><br />
+and able to run a monolithic but very fast application.<br />
+Some examples are: <br /><br />
+<a href="http://wiki.eluaproject.net/Mizar32" target="body" name="The Mizar32">The Mizar32 ( low-cost Stackable Multi-Board Computer)</a><br />
+<a href="http://wiki.eluaproject.net/STM32F4DISCOVERY" target="body" name="STM32F4Dicscover">STM32F4Dicscover board</a><br />
+</cite>
 </body></html>

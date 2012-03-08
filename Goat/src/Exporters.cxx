@@ -1,4 +1,4 @@
-// SciTE - Scintilla based Text Editor
+// SciTE - Scintilla based Text Editor
 /** @file Exporters.cxx
  ** Export the current document to various markup languages.
  **/

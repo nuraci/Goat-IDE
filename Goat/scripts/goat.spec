@@ -16,7 +16,7 @@
 #
 ####
 
-Name:           scite
+Name:           Goat
 Version:        1.39
 Release:        1
 Summary:        SciTE code editor with syntax highlighting for building and running programs.
@@ -63,7 +63,7 @@ GTK+.
 %build
 cd $RPM_BUILD_DIR/%{name}-%{version}/scintilla/gtk
 make
-cd $RPM_BUILD_DIR/%{name}-%{version}/scite/gtk
+cd $RPM_BUILD_DIR/%{name}-%{version}/Goat/gtk
 make
 
 ####
@@ -72,7 +72,7 @@ make
 %install
 rm -rf $RPM_BUILD_ROOT
 install -m0755 --directory      $RPM_BUILD_ROOT/usr/bin
-install -m0755 --directory      $RPM_BUILD_ROOT/usr/share/scite
+install -m0755 --directory      $RPM_BUILD_ROOT/usr/share/Goat
 install -m0755 --directory      $RPM_BUILD_ROOT/usr/share/man/man1
 install -m0755 --directory      $RPM_BUILD_ROOT/usr/share/pixmaps
 install -m0755 --directory      $RPM_BUILD_ROOT/usr/share/gnome/apps/Applications
@@ -92,7 +92,7 @@ rm -rf ${RPM_BUILD_DIR}/%{name}-%{version}
 %attr(0644,root,root)	%doc 	scite/doc/*.html scite/doc/*.png scite/doc/*.jpg
 %attr(0755,root,root)	%dir	/usr/share/scite
 %attr(0755,root,root)	/usr/bin/SciTE
-%attr(0644,root,root)	/usr/share/scite/*
+%attr(0644,root,root)	/usr/share/goat/*
 %attr(0644,root,root)	/usr/share/pixmaps/Sci48M.png
 %attr(0644,root,root)	/usr/share/gnome/apps/Development/SciTE.desktop
 %attr(0644,root,root)	/usr/share/man/man1/scite.1*
