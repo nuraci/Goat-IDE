@@ -9,6 +9,7 @@
 #CROSSWIN32PREFIX=i586-mingw32msvc-
 #DEBUG=1
 
+
 ifndef CYGWIN
 CC = g++
 DEL = del /q
