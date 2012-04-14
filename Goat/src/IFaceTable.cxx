@@ -166,6 +166,8 @@ static IFaceConstant ifaceConstants[] = {
 	{"IDM_CLOSEALL",503},
 	{"IDM_CLOSE_UART",482},
 	{"IDM_COMPILE",301},
+	{"IDM_CONFIGURE",308},
+	{"IDM_CLEAN",309},
 	{"IDM_COMPLETE",233},
 	{"IDM_COMPLETEWORD",234},
 	{"IDM_CONSOLEWIN",475},

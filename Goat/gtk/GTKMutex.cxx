@@ -12,7 +12,6 @@
 #include "Mutex.h"
 
 class GTKMutex : public Mutex {
-
 private:
 	pthread_mutex_t mutex;
 	virtual void Lock() {pthread_mutex_lock( &mutex ); }

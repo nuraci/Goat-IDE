@@ -337,7 +337,7 @@ public:
 	virtual void MoveBack(int distance) = 0;
 	virtual void ScrollEditorIfNeeded() = 0;
 
-	virtual int FindNext(bool reverseDirection, bool showWarnings = true) = 0;
+	virtual int FindNext(bool reverseDirection, bool showWarnings = true, bool allowRegExp=true) = 0;
 	virtual int MarkAll() = 0;
 	virtual int ReplaceAll(bool inSelection) = 0;
 	virtual void ReplaceOnce() = 0;
@@ -714,7 +714,7 @@ protected:
 	virtual void SetReplace(const char *sReplace);
 	virtual void MoveBack(int distance);
 	virtual void ScrollEditorIfNeeded();
-	int FindNext(bool reverseDirection, bool showWarnings = true);
+	int FindNext(bool reverseDirection, bool showWarnings = true, bool allowRegExp=true);
 	virtual void FindIncrement() = 0;
 	int IncrementSearchMode();
 	virtual void FindInFiles() = 0;
@@ -831,7 +831,7 @@ protected:
 	virtual void CheckMenusClipboard();
 	virtual void CheckMenus();
 	virtual void AddToPopUp(const char *label, int cmd = 0, bool enabled = true) = 0;
-	virtual void GroupSetCurrentTab(int tab = GOA_CON_TARGET ) = 0;
+	virtual void GroupSetCurrentTab(int tab = GOA_CON_HOST ) = 0;
 	virtual int  GroupGetCurrentTab() = 0;
 
 	void ContextMenu(GUI::ScintillaWindow &wSource, GUI::Point pt, GUI::Window wCmd);

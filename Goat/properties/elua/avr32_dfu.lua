@@ -12,8 +12,33 @@ local DfuDebug  	= " --debug 40"
 local FileSelected = ""
 local err 				= ""
 
- scite.StripShow("!'Explanation:'{}(&Search)\n'Name:'[Name](OK)(Cancel)")
+trace ("start\n")
 
+function onOrOff()
+	if editor.SelectionStart == editor.SelectionEnd then
+		scite.StripShow("")
+		trace ("no\n")
+	else
+		trace ("yes\n")
+		scite.StripShow("!'Explanation:'{}(&Search)\n'Name:'[Name](OK)(Cancel)")
+		scite.StripSet(4,"A longer name")
+		scite.StripSetList(1,"Apple\nBanana\nOrange\nPear")
+	end
+end
+ 
+ function onStrip(control,change)
+	local changeNames = {'unknow','clicked','change','focusIn','focusOut'}
+	if control == 2 and change == 1 then
+		local search = scite.StripValue(1)
+		print('Search for' .. search)
+	else
+		print ('OnStrip' .. control ..' ' .. changeName[change+1])
+	end
+end
+
+onOrOff()
+
+--[[
 goat.ChoiceConsole(GOA_CON_HOST)
 
 goat.AskForFile(examples,"Flash Image (*.hex)|*.hex")
@@ -39,5 +64,5 @@ if err == "" then
 else	
 	output:AddText("Error programming flash: ".. FileSelected .. " " .. err .."\n")
 end
-
+--]]
 -- end of script

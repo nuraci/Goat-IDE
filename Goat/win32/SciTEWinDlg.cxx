@@ -890,6 +890,7 @@ const char *SciTEWin::UserStripValue(int control) {
 
 void SciTEWin::UserStripClosed() {
 	SizeSubWindows();
+	WindowSetFocus(wEditor);
 }
 
 void SciTEWin::ShowBackgroundProgress(const GUI::gui_string &explanation, int size, int progress) {
@@ -1194,7 +1195,7 @@ void SciTEWin::PerformGrep() {
 			   props.Get("find.directory"),
 			   jobCLI, findInput, flags);
 	}
-	if (jobQueue.commandCurrent > 0) {
+	if (jobQueue.HasCommandToRun()) {
 		Execute();
 	}
 }

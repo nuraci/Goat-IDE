@@ -463,7 +463,7 @@ void SciTEBase::TextWritten(FileWorker *pFileWorker) {
 		ReloadProperties();
 	}
 	UpdateStatusBar(true);
-	if (!jobQueue.executing && (jobQueue.commandCurrent > 0)) {
+	if (!jobQueue.executing && (jobQueue.HasCommandToRun())) {
 		Execute();
 	}
 	if (quitting && !buffers.SavingInBackground()) {
@@ -1321,7 +1321,7 @@ void SciTEBase::GrepRecursive(GrepFlags gf, FilePath baseDir, const char *search
 		if (jobQueue.Cancelled())
 			return;
 		FilePath fPath = files[i];
-		if (fPath.Matches(fileTypes)) {
+		if (*fileTypes == '\0' || fPath.Matches(fileTypes)) {
 			//OutputAppendStringSynchronised(i->AsInternal());
 			//OutputAppendStringSynchronised("\n");
 			FileReader fr(fPath, gf & grepMatchCase);

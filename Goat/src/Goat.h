@@ -12,8 +12,8 @@
 #define APP_NAME "Goat"
 #define APP_NAME_TITLE "The Go @ IDE"
 #define APP_NAME_STATIC_BUILD "GoatIDE"
-#define VERSION_GOAT "0.6.0"
-#define VERSION_GOAT_WORDS 0, 6, 0, 0
+#define VERSION_GOAT "0.6.1"
+#define VERSION_GOAT_WORDS 0, 6, 0, 1
 #define COPYRIGHT_GOAT_DATES "March 2012"
 #define COPYRIGHT_GOAT_YEARS "2012"
 // Version numbers and dates
@@ -26,9 +26,11 @@
 #define GOAT_DEFAULT_HOME 	"properties"
 #define GOAT_USER_HOME_P	"GoatUserHome"
 
-#define ROOT_DIR_P			"RootDir"
+#define GOAT_DIR_P			"GoatDir"
 #define BIN_DIR		 		"bin"
 #define BIN_DIR_P 			"BinDir"
+#define PLUGINS_DIR			"plugins"
+#define PLUGINS_DIR_P		"PluginsDir"
 #define DOCS_DIR	 		"docs"
 #define DOCS_DIR_P		 	"DocsDir"
 #define EXAMPLES_DIR		"examples"
@@ -81,6 +83,7 @@ void __cdecl myDbgPrint(const char *s, ...);
 #define IDM_SAVEACOPY		116
 #define IDM_SAVEASXML		117
 #define IDM_COPYPATH			118
+#define IDM_ALLOWACCESS		119
 #define IDM_MRU_SEP			120
 #define IDM_MRU_SUB			121
 #define IDM_PRINTSETUP		130
@@ -164,6 +167,8 @@ void __cdecl myDbgPrint(const char *s, ...);
 #define IDM_FINISHEDEXECUTE	305
 #define IDM_NEXTMSG			306
 #define IDM_PREVMSG			307
+#define IDM_CONFIGURE		308
+#define IDM_CLEAN			309
 
 #define IDM_MACRO_SEP		310
 #define IDM_MACRORECORD		311

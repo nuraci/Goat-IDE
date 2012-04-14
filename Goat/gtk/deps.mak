@@ -92,3 +92,4 @@ StyleWriter.o: ../src/StyleWriter.cxx ../../scintilla/include/Scintilla.h \
 Utf8_16.o: ../src/Utf8_16.cxx ../src/Utf8_16.h
 Uart.o: ../src/Uart.cxx ../src/Uart.h ../src/Goat.h 
 Term.o: ../src/Term.cxx ../src/Term.h ../src/Goat.h 
+lua.o:  ../src/lua.c ../src/Goat.h

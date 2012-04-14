@@ -1059,7 +1059,7 @@ void SciTEBase::ScrollEditorIfNeeded() {
 		wEditor.Call(SCI_SCROLLCARET);
 }
 
-int SciTEBase::FindNext(bool reverseDirection, bool showWarnings) {
+int SciTEBase::FindNext(bool reverseDirection, bool showWarnings, bool allowRegExp) {
 	if (findWhat.length() == 0) {
 		Find();
 		return -1;
@@ -1079,7 +1079,7 @@ int SciTEBase::FindNext(bool reverseDirection, bool showWarnings) {
 
 	int flags = (wholeWord ? SCFIND_WHOLEWORD : 0) |
 	        (matchCase ? SCFIND_MATCHCASE : 0) |
-	        (regExp ? SCFIND_REGEXP : 0) |
+	        ((allowRegExp && regExp) ? SCFIND_REGEXP : 0) |
 	        (props.GetInt("find.replace.regexp.posix") ? SCFIND_POSIX : 0);
 
 	wEditor.Call(SCI_SETSEARCHFLAGS, flags);
@@ -1381,9 +1381,10 @@ void SciTEBase::Execute() {
 	}
 
 	jobQueue.cancelFlag = 0L;
-	jobQueue.SetExecuting(true);
+	if (jobQueue.HasCommandToRun()) {
+		jobQueue.SetExecuting(true);
+	}
 	CheckMenus();
-	filePath.Directory().SetWorkingDirectory();
 	dirNameAtExecute = filePath.Directory();
 }
 
@@ -2986,21 +2987,20 @@ void SciTEBase::GoMatchingPreprocCond(int direction, bool select) {
 }
 
 void SciTEBase::AddCommand(const SString &cmd, const SString &dir, JobSubsystem jobType, const SString &input, int flags) {
-	if (jobQueue.commandCurrent >= jobQueue.commandMax)
-		return;
-	if (jobQueue.commandCurrent == 0)
-		jobQueue.jobUsesOutputPane = false;
-	if (cmd.length()) {
-		jobQueue.jobQueue[jobQueue.commandCurrent].command = cmd;
-		jobQueue.jobQueue[jobQueue.commandCurrent].directory.Set(GUI::StringFromUTF8(dir.c_str()));
-		jobQueue.jobQueue[jobQueue.commandCurrent].jobType = jobType;
-		jobQueue.jobQueue[jobQueue.commandCurrent].input = input;
-		jobQueue.jobQueue[jobQueue.commandCurrent].flags = flags;
-		jobQueue.commandCurrent++;
-		if (jobType == jobCLI)
-			jobQueue.jobUsesOutputPane = true;
-		// For jobExtension, the Trace() method shows output pane on demand.
+	// If no explicit directory, use the directory of the current file
+	FilePath directoryRun;
+	if (dir.length()) {
+		FilePath directoryExplicit(GUI::StringFromUTF8(dir.c_str()));
+		if (directoryExplicit.IsAbsolute()) {
+			directoryRun = directoryExplicit;
+		} else {
+			// Relative paths are relative to the current file
+			directoryRun = FilePath(filePath.Directory(), directoryExplicit).NormalizePath();
+		}
+	} else {
+		directoryRun = filePath.Directory();
 	}
+	jobQueue.AddCommand(cmd, directoryRun, jobType, input, flags);
 }
 
 int ControlIDOfCommand(unsigned long wParam) {
@@ -3271,7 +3271,7 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 
 	case IDM_FINDNEXTSEL:
 		SelectionIntoFind();
-		FindNext(reverseFind);
+		FindNext(reverseFind, true, false);
 		break;
 
 	case IDM_ENTERSELECTION:
@@ -3554,13 +3554,32 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 			Redraw();
 		}
 		break;
-
+	case IDM_CONFIGURE: {
+			if (SaveIfUnsureForBuilt() != IDCANCEL) {
+				SelectionIntoProperties();
+				AddCommand(props.GetWild("command.configure.", FileNameExt().AsUTF8().c_str()), "",
+				        SubsystemType("command.configure.subsystem."));
+				if (jobQueue.HasCommandToRun())
+					Execute();
+			}
+		}
+		break;
+	case IDM_CLEAN: {
+			if (SaveIfUnsureForBuilt() != IDCANCEL) {
+				SelectionIntoProperties();
+				AddCommand(props.GetWild("command.clean.", FileNameExt().AsUTF8().c_str()), "",
+				        SubsystemType("command.clean.subsystem."));
+				if (jobQueue.HasCommandToRun())
+					Execute();
+			}
+		}
+		break;
 	case IDM_COMPILE: {
 			if (SaveIfUnsureForBuilt() != IDCANCEL) {
 				SelectionIntoProperties();
 				AddCommand(props.GetWild("command.compile.", FileNameExt().AsUTF8().c_str()), "",
 				        SubsystemType("command.compile.subsystem."));
-				if (jobQueue.commandCurrent > 0)
+				if (jobQueue.HasCommandToRun())
 					Execute();
 			}
 		}
@@ -3573,7 +3592,7 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 				    props.GetWild("command.build.", FileNameExt().AsUTF8().c_str()),
 				    props.GetNewExpand("command.build.directory.", FileNameExt().AsUTF8().c_str()),
 				    SubsystemType("command.build.subsystem."));
-				if (jobQueue.commandCurrent > 0) {
+				if (jobQueue.HasCommandToRun()) {
 					jobQueue.isBuilding = true;
 					Execute();
 				}
@@ -3607,7 +3626,7 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 				}
 				AddCommand(props.GetWild("command.go.", FileNameExt().AsUTF8().c_str()), "",
 				        SubsystemType("command.go.subsystem."), "", flags);
-				if (jobQueue.commandCurrent > 0)
+				if (jobQueue.HasCommandToRun())
 					Execute();
 			}
 		}
@@ -3626,6 +3645,7 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 			if ((props.Get("serial.tx1cr").size() != 0) && props.GetInt ("serial.tx1cr") == 1) {
 				serial->OutByte('\r'); /* Send the first \r in order to get Target prompt */
 			}
+			GroupSetCurrentTab(GOA_CON_TARGET);
 		}
 	    break;
 	case IDM_CLOSE_UART:
@@ -3638,6 +3658,7 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		}
 		CheckMenus();
 		term.Clear();
+		GroupSetCurrentTab(GOA_CON_HOST);
 		break;
 	case IDM_NEXTMSG:
 		GoMessage(1);
@@ -3732,7 +3753,7 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 			SelectionIntoProperties();
 			AddCommand(props.GetWild("command.help.", FileNameExt().AsUTF8().c_str()), "",
 			        SubsystemType("command.help.subsystem."));
-			if (jobQueue.commandCurrent > 0) {
+			if (jobQueue.HasCommandToRun()) {
 				jobQueue.isBuilding = true;
 				Execute();
 			}
@@ -3743,7 +3764,7 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 			SelectionIntoProperties();
 			AddCommand(props.Get("command.goat.help"), "",
 			        SubsystemType(props.Get("command.goat.help.subsystem")[0]));
-			if (jobQueue.commandCurrent > 0) {
+			if (jobQueue.HasCommandToRun()) {
 				jobQueue.isBuilding = true;
 				Execute();
 			}
@@ -3941,7 +3962,7 @@ void SciTEBase::NewLineInOutput() {
 		cmd = cmd.substr(1);
 	}
 	returnOutputToCommand = false;
-	AddCommand(cmd, ".", jobCLI);
+	AddCommand(cmd, "", jobCLI);
 	Execute();
 }
 
@@ -4188,12 +4209,47 @@ void SciTEBase::CheckMenus() {
 	CheckAMenuItem(IDM_TOGGLEOUTPUT, heightOutput > 0);
 	CheckAMenuItem(IDM_TOGGLEPARAMETERS, ParametersOpen());
 	CheckAMenuItem(IDM_MONOFONT, CurrentBuffer()->useMonoFont);
+
+	if(props.GetWild("command.configure.", FileNameExt().AsUTF8().c_str()).size() != 0) {
+		SetMenuItemLocalised(menuTools, TOOLS_START, IDM_CONFIGURE, "Configure", NULL);
+		EnableAMenuItem(IDM_CONFIGURE, !jobQueue.IsExecuting());
+	} else {
+		DestroyMenuItem(menuTools, IDM_CONFIGURE);
+
+	}
+	if(props.GetWild("command.clean.", FileNameExt().AsUTF8().c_str()).size() != 0) {
+		SetMenuItemLocalised(menuTools, TOOLS_START, IDM_CLEAN, "Clean", NULL);
+		EnableAMenuItem(IDM_CLEAN, !jobQueue.IsExecuting() );
+	} else {
+		DestroyMenuItem(menuTools, IDM_CLEAN);
+	}
+	if(props.GetWild("command.compile.", FileNameExt().AsUTF8().c_str()).size() != 0) {
+		SetMenuItemLocalised(menuTools, TOOLS_START, IDM_COMPILE, "Compile", NULL);
+		EnableAMenuItem(IDM_COMPILE, !jobQueue.IsExecuting() );
+	} else {
+		DestroyMenuItem(menuTools, IDM_COMPILE);
+	}
+	if(props.GetWild("command.build.", FileNameExt().AsUTF8().c_str()).size() != 0) {
+		SetMenuItemLocalised(menuTools, TOOLS_START, IDM_BUILD, "Build", NULL);
+		EnableAMenuItem(IDM_BUILD, !jobQueue.IsExecuting() );
+	} else {
+		DestroyMenuItem(menuTools, IDM_BUILD);
+	}
+	if(props.GetWild("command.go.", FileNameExt().AsUTF8().c_str()).size() != 0) {
+		SetMenuItemLocalised(menuTools, TOOLS_START, IDM_GO, "Run", NULL);
+		EnableAMenuItem(IDM_GO, !jobQueue.IsExecuting() );
+	} else {
+		DestroyMenuItem(menuTools, IDM_GO);
+	}
+
+#if 0
 	EnableAMenuItem(IDM_COMPILE, !jobQueue.IsExecuting() &&
 	        props.GetWild("command.compile.", FileNameExt().AsUTF8().c_str()).size() != 0);
 	EnableAMenuItem(IDM_BUILD, !jobQueue.IsExecuting() &&
 	        props.GetWild("command.build.", FileNameExt().AsUTF8().c_str()).size() != 0);
 	EnableAMenuItem(IDM_GO, !jobQueue.IsExecuting() &&
 	        props.GetWild("command.go.", FileNameExt().AsUTF8().c_str()).size() != 0);
+#endif
 	EnableAMenuItem(IDM_OPEN_UART, !serial->IsConnected());
 	EnableAMenuItem(IDM_CLOSE_UART, serial->IsConnected());
 	CheckAMenuItem(IDM_MODE_TERMINAL, serial->IsConnected() && term.isTermActive());
@@ -4231,12 +4287,15 @@ void SciTEBase::ContextMenu(GUI::ScintillaWindow &wSource, GUI::Point pt, GUI::W
 	AddToPopUp("");
 	if (wSource.GetID() == wOutput.GetID()) {
 		AddToPopUp("Hide", IDM_TOGGLEOUTPUT, true);
-		AddToPopUp("Target Console", IDM_OUT_CONSOLE, true);
+		AddToPopUp("Clear", IDM_CLEAROUTPUT, true);
+		AddToPopUp("Switch Console",IDM_OUT_CONSOLE, true);
 	} else if ( wSource.GetID() == wConsole.GetID()) {
 		AddToPopUp("Hide", IDM_TOGGLEOUTPUT, true);
-		AddToPopUp("Host Console", IDM_OUT_SYSTEM, true);
+		AddToPopUp("Clear", IDM_CLEARCONSOLE, true);
+		AddToPopUp("Switch Console", IDM_OUT_SYSTEM, true);
 	} else {
 		AddToPopUp("Close", IDM_CLOSE, true);
+		AddToPopUp("Toggle Bookmark", IDM_BOOKMARK_TOGGLE, true);
 	}
 	SString userContextMenu = props.GetNewExpand("user.context.menu");
 	userContextMenu.substitute('|', '\0');

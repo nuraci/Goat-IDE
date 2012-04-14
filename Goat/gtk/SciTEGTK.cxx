@@ -531,7 +531,6 @@ protected:
 	GtkWidget *btnCompile;
 	GtkWidget *btnBuild;
 	GtkWidget *btnStop;
-	GtkWidget *btnModeTerminal;
 
 	GtkWidget *menuBar;
 	std::map<std::string, GtkWidget *> pulldowns;
@@ -820,7 +819,6 @@ SciTEGTK::SciTEGTK(Extension *ext) : SciTEBase(ext) {
 	wIncrementPanel = 0;
 	IncSearchEntry = 0;
 	btnCompile = 0;
-	btnModeTerminal = 0;
 	btnBuild = 0;
 	btnStop = 0;
 	menuBar = 0;
@@ -1464,7 +1462,6 @@ void SciTEGTK::CheckMenus() {
 		gtk_widget_set_sensitive(btnStop, jobQueue.IsExecuting() &&
 		        props.GetWild("command.go.", FileNameExt().AsUTF8().c_str()).size() != 0);
 
-		gtk_widget_set_sensitive(btnModeTerminal,serial->IsConnected());
 	}
 }
 
@@ -1941,7 +1938,7 @@ void SciTEGTK::Print(bool) {
 	if (printCommand.length()) {
 		// Using a command to print
 		AddCommand(printCommand, "", SubsystemType("command.print.subsystem."));
-		if (jobQueue.commandCurrent > 0) {
+		if (jobQueue.HasCommandToRun()) {
 			jobQueue.isBuilding = true;
 			Execute();
 		}
@@ -2214,7 +2211,7 @@ void SciTEGTK::FindInFilesCmd() {
 		//~ fprintf(stderr, "%s\n", findCommand.c_str());
 	}
 	AddCommand(findCommand, props.Get("find.directory"), jobCLI);
-	if (jobQueue.commandCurrent > 0)
+	if (jobQueue.HasCommandToRun())
 		Execute();
 }
 
@@ -2776,6 +2773,7 @@ void SciTEGTK::ExecuteOnConsole() {
 			instance->props.Set("SerialMsg",mesg);
 		    instance->UpdateStatusBar(true);
 		}
+		msSleep(1);
 	}
 }
 
@@ -3803,7 +3801,6 @@ void SciTEGTK::AddToolBar() {
 		btnCompile = AddToolButton("Compile", IDM_COMPILE, gtk_image_new_from_stock("gtk-execute", GTK_ICON_SIZE_LARGE_TOOLBAR));
 		btnBuild = AddToolButton("Build", IDM_BUILD, gtk_image_new_from_stock("gtk-convert", GTK_ICON_SIZE_LARGE_TOOLBAR));
 		btnStop = AddToolButton("Stop", IDM_STOPEXECUTE, gtk_image_new_from_stock("gtk-stop", GTK_ICON_SIZE_LARGE_TOOLBAR));
-		btnModeTerminal = AddToolButton("Mode Terminal", IDM_MODE_TERMINAL, gtk_image_new_from_stock("gtk-mode-terminal", GTK_ICON_SIZE_LARGE_TOOLBAR));
 
 		AddToolSpace(GTK_TOOLBAR(PWidget(wToolBar)));
 		AddToolButton("Previous", IDM_PREVFILE, gtk_image_new_from_stock("gtk-go-back", GTK_ICON_SIZE_LARGE_TOOLBAR));
@@ -3834,7 +3831,6 @@ void SciTEGTK::AddToolBar() {
 	btnCompile = AddToolButton("Compile", IDM_COMPILE, pixmap_new((gchar**)compile_xpm));
 	btnBuild = AddToolButton("Build", IDM_BUILD, pixmap_new((gchar**)build_xpm));
 	btnStop = AddToolButton("Stop", IDM_STOPEXECUTE, pixmap_new((gchar**)stop_xpm));
-	btnModeTerminal = AddToolButton("Mode Terminal", IDM_MODE_TERMINAL, pixmap_new((gchar**)term_xpm));
 
 	AddToolSpace(GTK_TOOLBAR(PWidget(wToolBar)));
 	AddToolButton("Previous", IDM_PREVFILE, pixmap_new((gchar**)prev_xpm));
@@ -4107,13 +4103,17 @@ void SciTEGTK::CreateMenu() {
 	                                      {"/View/_Line Numbers", "", menuSig, IDM_LINENUMBERMARGIN, "<CheckItem>"},
 	                                      {"/View/_Margin", NULL, menuSig, IDM_SELMARGIN, "<CheckItem>"},
 	                                      {"/View/_Fold Margin", NULL, menuSig, IDM_FOLDMARGIN, "<CheckItem>"},
-	                                      {"/View/_Output", "F8", menuSig, IDM_TOGGLEOUTPUT, "<CheckItem>"},
+	                                      {"/View/Host & Target Console", "F8", menuSig, IDM_TOGGLEOUTPUT, "<CheckItem>"},
 	                                      {"/View/_Parameters", NULL, menuSig, IDM_TOGGLEPARAMETERS, "<CheckItem>"},
 
 	                                      {"/_Tools", NULL, NULL, 0, "<Branch>"},
-	                                      {"/Tools/_Compile", "<control>F7", menuSig, IDM_COMPILE, 0},
-	                                      {"/Tools/_Build", "F7", menuSig, IDM_BUILD, 0},
-	                                      {"/Tools/_Go", "F5", menuSig, IDM_GO, 0},
+
+	                                      {"/Tools/Configure", NULL, menuSig, IDM_CONFIGURE, 0},
+	                                      {"/Tools/Clean", "<control>F5", menuSig, IDM_CLEAN, 0},
+	                                      {"/Tools/Compile", "<control>F7", menuSig, IDM_COMPILE, 0},
+	                                      {"/Tools/Build", "F7", menuSig, IDM_BUILD, 0},
+	                                      {"/Tools/Run", "F5", menuSig, IDM_GO, 0},
+
 	                                      {"/Tools/Port", NULL, NULL, 0, "<Separator>"},
 	                                      {"/Tools/Open Serial Port", NULL, menuSig, IDM_OPEN_UART, 0},
 	                                      {"/Tools/Close Serial Port", NULL, menuSig, IDM_CLOSE_UART, 0},
@@ -4178,8 +4178,8 @@ void SciTEGTK::CreateMenu() {
 	                                      {"/Tools/sep1", NULL, NULL, 0, "<Separator>"},
 	                                      {"/Tools/_Next Message", "F4", menuSig, IDM_NEXTMSG, 0},
 	                                      {"/Tools/_Previous Message", "<shift>F4", menuSig, IDM_PREVMSG, 0},
-	                                      {"/Tools/Clear _Output", "<shift>F5", menuSig, IDM_CLEAROUTPUT, 0},
-	                                      {"/Tools/Clear _Console", "<shift>F5", menuSig, IDM_CLEARCONSOLE, 0},					      
+	                                      {"/Tools/Clear Host Console", "", menuSig, IDM_CLEAROUTPUT, 0},
+	                                      {"/Tools/Clear Target Console", "", menuSig, IDM_CLEARCONSOLE, 0},
 	                                      {"/Tools/_Switch Pane", "<control>F6", menuSig, IDM_SWITCHPANE, 0},
 	                                  };
 
@@ -4676,6 +4676,7 @@ void UserStrip::Creation(GtkWidget *container) {
 	gtk_container_set_border_width(GTK_CONTAINER(GetID()), 1);
 	tableUser.PackInto(GTK_BOX(container), false);
 	g_signal_connect(G_OBJECT(GetID()), "set-focus-child", G_CALLBACK(ChildFocusSignal), this);
+	g_signal_connect(G_OBJECT(GetID()), "focus", G_CALLBACK(FocusSignal), this);
 }
 
 void UserStrip::Destruction() {
@@ -4692,7 +4693,7 @@ void UserStrip::Show(int buttonHeight) {
 			} else if (ctl->controlType == UserControl::ucCombo) {
 				GtkEntry *entry = GTK_ENTRY(gtk_bin_get_child(GTK_BIN(ctl->w.GetID())));
 				gtk_widget_set_size_request(GTK_WIDGET(entry), -1, buttonHeight);
-			} else if (ctl->controlType == UserControl::ucButton) {
+			} else if (ctl->controlType == UserControl::ucButton || ctl->controlType == UserControl::ucDefaultButton) {
 				gtk_widget_set_size_request(GTK_WIDGET(ctl->w.GetID()), -1, buttonHeight);
 			}
 		}
@@ -4716,10 +4717,10 @@ bool UserStrip::KeyDown(GdkEventKey *event) {
 }
 
 void UserStrip::ActivateSignal(GtkWidget *, UserStrip *pStrip) {
-	// Treat Enter as pressing the first button
+	// Treat Enter as pressing the first default button
 	for (std::vector<std::vector<UserControl> >::iterator line=pStrip->psd->controls.begin(); line != pStrip->psd->controls.end(); ++line) {
 		for (std::vector<UserControl>::iterator ctl=line->begin(); ctl != line->end(); ++ctl) {
-			if (ctl->controlType == UserControl::ucButton) {
+			if (ctl->controlType == UserControl::ucDefaultButton) {
 				pStrip->extender->OnUserStrip(ctl->item, scClicked);
 				return;
 			}
@@ -4753,8 +4754,37 @@ void UserStrip::ChildFocus(GtkWidget *widget) {
 	Strip::ChildFocus(widget);
 }
 
-gboolean UserStrip::Focus(GtkDirectionType /* direction */) {
-	// Can be used to loop focus around from last widget to first
+static bool WidgetHasFocus(UserControl *ctl) {
+	if (!ctl) {
+		return false;
+	} else if (ctl->controlType == UserControl::ucCombo) {
+		WComboBoxEntry *pwc = static_cast<WComboBoxEntry *>(&(ctl->w));
+		return pwc->HasFocusOnSelfOrChild();
+	} else {
+		return ctl->w.HasFocus();
+	}
+}
+
+gboolean UserStrip::Focus(GtkDirectionType direction) {
+	UserControl *ctlFirstFocus = 0;
+	UserControl *ctlLastFocus = 0;
+	for (std::vector<std::vector<UserControl> >::iterator line=psd->controls.begin(); line != psd->controls.end(); ++line) {
+		for (std::vector<UserControl>::iterator ctl=line->begin(); ctl != line->end(); ++ctl) {
+			if (ctl->controlType != UserControl::ucStatic) {
+				// Widget can have focus
+				ctlLastFocus = &*ctl;
+				if (!ctlFirstFocus)
+					ctlFirstFocus = ctlLastFocus;
+			}
+		}
+	}
+	if ((direction == GTK_DIR_TAB_BACKWARD) && WidgetHasFocus(ctlFirstFocus)) {
+		gtk_widget_grab_focus(GTK_WIDGET(ctlLastFocus->w.GetID()));
+		return TRUE;
+	} else if ((direction == GTK_DIR_TAB_FORWARD) && WidgetHasFocus(ctlLastFocus)) {
+		gtk_widget_grab_focus(GTK_WIDGET(ctlFirstFocus->w.GetID()));
+		return TRUE;
+	}
 	return FALSE;
 }
 
@@ -4770,13 +4800,12 @@ void UserStrip::SetDescription(const char *description) {
 	psd = new StripDefinition(description);
 	tableUser.Resize(psd->controls.size(), psd->columns);
 
-	int item = 0;
 	bool hasSetFocus = false;
+	GtkWidget *pwWithAccelerator = 0;
 	for (size_t line=0; line<psd->controls.size(); line++) {
 		std::vector<UserControl> &uc = psd->controls[line];
 		for (size_t control=0; control<uc.size(); control++) {
 			UserControl *puc = &(uc[control]);
-			puc->item = item;
 			SString sCaption = GtkFromWinCaption(puc->text.c_str());
 			switch (puc->controlType) {
 			case UserControl::ucEdit: {
@@ -4794,11 +4823,15 @@ void UserStrip::SetDescription(const char *description) {
 					tableUser.Add(wc, 1, true, 0, 0);
 					break;
 				}
-			case UserControl::ucButton: {
+			case UserControl::ucButton:
+			case UserControl::ucDefaultButton: {
 					WButton wb;
 					wb.Create(sCaption.c_str(), reinterpret_cast<GCallback>(UserStrip::ClickSignal), this);
 					puc->w.SetID(wb.GetID());
 					tableUser.Add(wb, 1, false, 0, 0);
+					if (puc->controlType == UserControl::ucDefaultButton) {
+						gtk_widget_grab_default(GTK_WIDGET(puc->w.GetID()));
+					}
 					break;
 				}
 			default: {
@@ -4807,6 +4840,8 @@ void UserStrip::SetDescription(const char *description) {
 					puc->w.SetID(ws.GetID());
 					gtk_misc_set_alignment(GTK_MISC(puc->w.GetID()), 1.0, 0.5);
 					tableUser.Add(ws, 1, false, 5, 0);
+					if (ws.HasMnemonic())
+						pwWithAccelerator = GTK_WIDGET(puc->w.GetID());
 				}
 			}
 			gtk_widget_show(GTK_WIDGET(puc->w.GetID()));
@@ -4814,7 +4849,10 @@ void UserStrip::SetDescription(const char *description) {
 				gtk_widget_grab_focus(GTK_WIDGET(puc->w.GetID()));
 				hasSetFocus = true;
 			}
-			item++;
+			if (pwWithAccelerator && (puc->controlType != UserControl::ucStatic)) {
+				gtk_label_set_mnemonic_widget(GTK_LABEL(pwWithAccelerator), GTK_WIDGET(puc->w.GetID()));
+				pwWithAccelerator = 0;
+			}
 		}
 		tableUser.NextLine() ;
 	}
@@ -5501,19 +5539,24 @@ void SciTEGTK::Run(int argc, char *argv[]) {
     if (root.size() > 1 ) {
 		root.erase(root.find_last_of("/"),root.length());
 		root.append("/");
-		props.Set(ROOT_DIR_P, root.c_str());
-
-		tmp = root;
-		tmp.append(EXAMPLES_DIR);
-		props.Set(EXAMPLES_DIR_P,tmp.c_str());
+		props.Set(GOAT_DIR_P, root.c_str());
+		setenv("GOAT_ROOT", root.c_str(),1);
 
 		tmp = root;
 		tmp.append(BIN_DIR);
 		props.Set(BIN_DIR_P,tmp.c_str());
 
 		tmp = root;
+		tmp.append(PLUGINS_DIR);
+		props.Set(PLUGINS_DIR_P,tmp.c_str());
+
+		tmp = root;
 		tmp.append(DOCS_DIR);
 		props.Set(DOCS_DIR_P,tmp.c_str());
+
+		tmp = root;
+		tmp.append(EXAMPLES_DIR);
+		props.Set(EXAMPLES_DIR_P,tmp.c_str());
 
     }
 
@@ -5556,8 +5599,10 @@ int SciTEGTK::PollTool(SciTEGTK *scitew) {
 
 gboolean SciTEGTK::DoItLater(SciTEGTK *scite)
 {
+
 	if ((scite->props.Get("serial.autoconnect").size() == 0) ||
 					scite->props.GetInt ("serial.autoconnect") == 0) {
+		scite->GroupSetCurrentTab(GOA_CON_HOST);
 		return FALSE;
 	}
 
@@ -5566,6 +5611,7 @@ gboolean SciTEGTK::DoItLater(SciTEGTK *scite)
 						scite->props.GetInt ("serial.tx1cr") == 1) {
 			scite->serial->OutByte('\r'); /* Send the first \r in order to get Target prompt */
 		}
+		scite->GroupSetCurrentTab(GOA_CON_TARGET);
 	}
 
 	if ((scite->props.Get("term.terminal").size() != 0) &&
@@ -5621,6 +5667,7 @@ int main(int argc, char *argv[]) {
 	scite.SetStartupTime(timestamp);
 
 	g_timeout_add(500, (GSourceFunc) SciTEGTK::DoItLater, (gpointer) scite.instance);
+
 	scite.Run(argc, argv);
 
 	return 0;

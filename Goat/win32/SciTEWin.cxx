@@ -378,21 +378,30 @@ void SciTEWin::GetWindowPosition(int *left, int *top, int *width, int *height, i
 extern "C" {
 
 FILE *scite_lua_fopen(const char *filename, const char *mode) {
+#ifdef NOTDEF
 	GUI::gui_string sFilename = GUI::StringFromUTF8(filename);
 	GUI::gui_string sMode = GUI::StringFromUTF8(mode);
 	FILE *f = _wfopen(sFilename.c_str(), sMode.c_str());
-	if (f == NULL)
-		// Fallback on narrow string in case already in CP_ACP
+	if (f == NULL)// Fallback on narrow string in case already in CP_ACP
+#else
+	FILE *f;
+#endif
 		f = fopen(filename, mode);
 	return f;
 }
 
 FILE *scite_lua_popen(const char *filename, const char *mode) {
+#ifdef NOTDEF
+
 	GUI::gui_string sFilename = GUI::StringFromUTF8(filename);
 	GUI::gui_string sMode = GUI::StringFromUTF8(mode);
 	FILE *f = _wpopen(sFilename.c_str(), sMode.c_str());
 	if (f == NULL)
 		// Fallback on narrow string in case already in CP_ACP
+#else
+	FILE *f;
+
+#endif
 		f = _popen(filename, mode);
 	return f;
 }
@@ -695,10 +704,7 @@ void SciTEWin::Command(WPARAM wParam, LPARAM lParam) {
 			if (needReadProperties)
 				ReadProperties();
 			CheckMenus();
-			for (int icmd = 0; icmd < jobQueue.commandMax; icmd++) {
-				jobQueue.jobQueue[icmd].Clear();
-			}
-			jobQueue.commandCurrent = 0;
+			jobQueue.ClearJobs();
 			CheckReload();
 		}
 		break;
@@ -1242,7 +1248,7 @@ void SciTEWin::Execute() {
 		return;
 
 	SciTEBase::Execute();
-	if (cmdWorker.icmd >= jobQueue.commandCurrent)
+	if (!jobQueue.HasCommandToRun())
 		// No commands to execute - possibly cancelled in SciTEBase::Execute
 		return;
 
@@ -1285,6 +1291,7 @@ void SciTEWin::ExecuteOnConsole() {
 			props.Set("SerialMsg",mesg);
 			UpdateStatusBar(true);
 		}
+		msSleep(1);
 	}
 }
 
@@ -1571,19 +1578,25 @@ void SciTEWin::Run(const GUI::gui_char *cmdLine) {
 #endif
 
     ::WideCharToMultiByte(CP_UTF8, 0, rootExe.c_str(), -1, root, MAX_PATH, NULL, NULL);
-	props.Set(ROOT_DIR_P, root);
-
-	strncpy(tmp, root,MAX_PATH);
-	strcat(tmp,EXAMPLES_DIR);
-	props.Set(EXAMPLES_DIR_P,tmp);
+	props.Set(GOAT_DIR_P, root);
+	//setenv("GOAT_ROOT", root,1);
 
 	strncpy(tmp, root,MAX_PATH);
 	strcat(tmp,BIN_DIR);
 	props.Set(BIN_DIR_P,tmp);
 
 	strncpy(tmp, root,MAX_PATH);
+	strcat(tmp,PLUGINS_DIR);
+	props.Set(PLUGINS_DIR_P,tmp);
+
+	strncpy(tmp, root,MAX_PATH);
 	strcat(tmp,DOCS_DIR);
 	props.Set(DOCS_DIR_P,tmp);
+
+	strncpy(tmp, root,MAX_PATH);
+	strcat(tmp,EXAMPLES_DIR);
+	props.Set(EXAMPLES_DIR_P,tmp);
+
 
 	if (props.Get("target.board").size() != 0)
 	   	props.Set(TARGET_BOARD_P,props.Get("target.board").c_str());
@@ -3729,12 +3742,14 @@ bool UserStrip::KeyDown(WPARAM key) {
 	if (Strip::KeyDown(key))
 		return true;
 	if (key == VK_RETURN) {
-		// Treat Enter as pressing the first button
-		for (std::vector<std::vector<UserControl> >::iterator line=psd->controls.begin(); line != psd->controls.end(); ++line) {
-			for (std::vector<UserControl>::iterator ctl=line->begin(); ctl != line->end(); ++ctl) {
-				if (ctl->controlType == UserControl::ucButton) {
-					extender->OnUserStrip(ctl->item, scClicked);
-					return true;
+		if (IsChild(Hwnd(), ::GetFocus())) {
+			// Treat Enter as pressing the first default button
+			for (std::vector<std::vector<UserControl> >::iterator line=psd->controls.begin(); line != psd->controls.end(); ++line) {
+				for (std::vector<UserControl>::iterator ctl=line->begin(); ctl != line->end(); ++ctl) {
+					if (ctl->controlType == UserControl::ucDefaultButton) {
+						extender->OnUserStrip(ctl->item, scClicked);
+						return true;
+					}
 				}
 			}
 		}
@@ -3791,6 +3806,7 @@ int UserStrip::Lines() {
 void UserStrip::SetDescription(const char *description) {
 	entered++;
 	GUI::gui_string sDescription = GUI::StringFromUTF8(description);
+	bool resetting = psd != 0;
 	if (psd) {
 		for (std::vector<std::vector<UserControl> >::iterator line=psd->controls.begin(); line != psd->controls.end(); ++line) {
 			for (std::vector<UserControl>::iterator ctl=line->begin(); ctl != line->end(); ++ctl) {
@@ -3825,11 +3841,13 @@ void UserStrip::SetDescription(const char *description) {
 				break;
 
 			case UserControl::ucButton:
+			case UserControl::ucDefaultButton:
 				puc->widthDesired = WidthText(fontText, puc->text.c_str()) + 
 					2 * ::GetSystemMetrics(SM_CXEDGE) +
 					2 * WidthText(fontText, TEXT(" "));
 				puc->w = ::CreateWindowEx(0, TEXT("Button"), puc->text.c_str(),
-					WS_CHILD | WS_TABSTOP | WS_CLIPSIBLINGS | BS_PUSHBUTTON,
+					WS_CHILD | WS_TABSTOP | WS_CLIPSIBLINGS | 
+					((puc->controlType == UserControl::ucDefaultButton) ? BS_DEFPUSHBUTTON : BS_PUSHBUTTON),
 					60 * control, line * lineHeight + 2, puc->widthDesired, 25,
 					Hwnd(), reinterpret_cast<HMENU>(controlID), ::GetModuleHandle(NULL), 0);
 				break;
@@ -3847,6 +3865,8 @@ void UserStrip::SetDescription(const char *description) {
 			controlID++;
 		}
 	}
+	if (resetting)
+		Size();
 	entered--;
 	Focus();
 }
@@ -3866,10 +3886,8 @@ UserControl *UserStrip::FindControl(int control) {
 void UserStrip::Set(int control, const char *value) {
 	UserControl *ctl = FindControl(control);
 	if (ctl) {
-		if (ctl->controlType == UserControl::ucEdit) {
-			GUI::gui_string sValue = GUI::StringFromUTF8(value);
-			::SetWindowTextW(HwndOf(ctl->w), sValue.c_str());
-		}
+		GUI::gui_string sValue = GUI::StringFromUTF8(value);
+		::SetWindowTextW(HwndOf(ctl->w), sValue.c_str());
 	}
 }
 
@@ -3999,6 +4017,7 @@ DWORD WINAPI SciTEWin::DoItLater(LPVOID lparam)
 
 	if ((goat->props.Get("serial.autoconnect").size() == 0) ||
 					goat->props.GetInt ("serial.autoconnect") == 0) {
+		goat->GroupSetCurrentTab(GOA_CON_HOST);
 		return false;
 	}
 
@@ -4008,6 +4027,7 @@ DWORD WINAPI SciTEWin::DoItLater(LPVOID lparam)
 			char lf = '\r';
 			goat->serial->Send(&lf,1); /* Send the first \r in order to get Target prompt */
 		}
+		goat->GroupSetCurrentTab(GOA_CON_TARGET);
 	}
 	if ((goat->props.Get("term.terminal").size() != 0) &&
 			goat->props.GetInt ("term.terminal") == 1) {
