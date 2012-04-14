@@ -1,0 +1,14 @@
+return {
+	target = 'usb',
+	type = 'lua_binary_module',
+	files = {
+		dirs={source='.'},
+		"usb.c",
+	},
+	dependencies = {'usb'},
+	special = { {
+		define = { ssize_t = 'ptrdiff_t' },
+	} },
+}
+
+-- vi: ft=lua
