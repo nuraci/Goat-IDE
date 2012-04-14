@@ -1,5 +1,9 @@
 *.o
+*.so
+*.dll
 *.*~
 *~
+.hgignore
+.hg
 scintilla/bin/scintilla.a
 Goat/bin/Goat

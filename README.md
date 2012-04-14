@@ -1,4 +1,4 @@
-## Go @ IDE is an editor dedicated to the embedded eLua World: http://www.eluaproject.net/
+## Go @ IDE is an editor dedicated to the embedded World
 
 some features:
 
@@ -6,9 +6,13 @@ some features:
 * Has additional features such as "syntax highlighting", "code folding" and "code completion" based on the eLua API.
 * Includes the capability to connect with the real hardware (through the serial or the USB port) obtaining the prompt of Elua inside it.
 * It's able to send the .lua/.lc file on the Hardware (using the eLua xmodem protocol).
-* Supports some terminal commands (standard ansi/vt100), so it's able to play games like "hanoi" or "hungman" (using the eLua TERM capability).
-* Supports the FLASH (on the target) programming through the DFU boot loader (initially only for the avr32 architecure).
+* Supports some terminal commands (standard ansi/vt100), so it's able to play eLua games like "hanoi" or "hungman" (using the eLua TERM capability).
+* Supports the FLASH (on the target) programming through the DFU/Arduino boot loader.
+* Supports easily the "libusb" through Lua scripts (experimental).
 * It's easily extensible through Lua scripts.
+## Goat currently includes the support for:
+* eLua    http://www.eluaproject.net/
+* Arduino http://www.arduino.cc (the installation of the "Arduino IDE 1.0" is required)
 
 ## Videos:
 * http://www.youtube.com/watch?v=kUmujKemFjA
@@ -23,8 +27,7 @@ some features:
 * $ cd Goat-IDE
 * $ cd scintilla/gtk
 * $ make all
-* $ cd $HOME/Goat-IDE
-* $ cd Goat/gtk
+* $ cd $HOME/Goat-IDE/Goat
 * $ make all
 * $ sudo make uninstall (if isn't first installation)
 * $ sudo make install
