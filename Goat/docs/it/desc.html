@@ -19,7 +19,7 @@
             border: 1px solid #FFCC00;
             background-color: #FFF7EE;
             padding: 10px 10px;
-				font-size: 150%;
+				font-size: 120%;
 				font-family: cursive;
         }
  </style>
@@ -31,7 +31,10 @@
  appassionato come me di microcontrollori e sistemi embedded, non voglia (o non possa) spendere soldi in software commerciali. <br />
 "The Go @ IDE" vuole essere il punto di congiunzione tra hardware e software, che unisce le caratteristiche di strumenti software specifici per l'hardware
 (emulatore di terminale, dfu-programmer,...) con un potente ed altamente personalizzabile <a href="http://it.wikipedia.org/wiki/Integrated_development_environment" target="body"></a>IDE<br /> 
-Attualmente Goat include il supporto per <a href="http://www.eluaproject.net/" target="body" title="eLua">eLua</a>, 
+Attualmente Goat include il supporto per:</br>
+<a href="http://www.eluaproject.net/" target="body">eLua</a><br />
+<a href="http://www.arduino.cc" target="body">Arduino</a> (e' richiesta l'installazione dell' "Arduino IDE 1.0")<br />
+</br> 
 inoltre per alcuni target(*) e' anche possibile sostituire facilmente l'immagine della flash.<br />
 Il mio obiettivo e'farlo crescere sulla spinta dei suggerimenti di chi lo usera'.<br />
 Usatelo e per favore inviatemi consigli, segnalazioni e suggerimenti...<br />
@@ -49,7 +52,9 @@ Alcune caratteristiche:<br />
 <br />
 <li> Supporta alcuni comandi TERM (standard ansi/vt100), e' quindi in grado di visualizzare giochi ed applicazioni es. "hanoi" o "hungman" (usando le funzioni ansi/vt100 del target(*)).</li>
 <br />
-<li> Supporta la programmazione della FLASH (del target(*)) attraverso il DFU boot loader (inizialmente solo per l' architettura avr32).</li>
+<li> Supporta la programmazione della FLASH (del target(*)) attraverso il DFU/Arduino boot loader.</li>
+<br />
+<li> Supporta facilmente la libreria <a href="http://www.libusb.org" target="body">libusb</a> attraverso script Lua (sperimentale).</li>
 <br />
 <li> E' facilmente espandibile attraverso script Lua.</li>
 <br />
@@ -64,7 +69,7 @@ capace di eseguire una applicazione monolitica ma molto veloce..<br />
 Ecco alcuni esempi: <br /><br />
 <a href="http://wiki.eluaproject.net/Mizar32" target="body" name="The Mizar32">The Mizar32 ( low-cost Stackable Multi-Board Computer)</a><br />
 <a href="http://wiki.eluaproject.net/STM32F4DISCOVERY" target="body" name="STM32F4Dicscover">STM32F4Dicscover board</a><br />
-
+<a href="<a href="http://www.arduino.cc" target="body"  name="Arduino">Arduino</a>
 </cite>
 
 </body></html>

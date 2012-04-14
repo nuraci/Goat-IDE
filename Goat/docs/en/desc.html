@@ -19,7 +19,7 @@
             border: 1px solid #FFCC00;
             background-color: #FFF7EE;
             padding: 10px 10px;
-				font-size: 150%;
+				font-size: 120%;
 				font-family: cursive;
         }
  </style>
@@ -30,8 +30,10 @@
 passionate as me about microcontrollers and embedded systems, do not want (or can not) spend money on commercial software.<br />
 "The Go @ IDE" wants to be the junction point between hardware and software, combining features of software specific hardware tools,<br />
 (terminal emulator, dfu-programmer,...) with a powerful and highly customizable <a href="http://it.wikipedia.org/wiki/Integrated_development_environment" target="body"></a>IDE<br />
-Goat currently includes the support for <a href="http://www.eluaproject.net/" target="body">eLua</a>,
- for some targets(*) is also possible replace easily the content of the flash memory.<br />
+Goat currently includes the support for:</br>
+<a href="http://www.eluaproject.net/" target="body">eLua</a><br />
+<a href="http://www.arduino.cc" target="body">Arduino</a> (the installation of the "Arduino IDE 1.0" is required)<br />
+</br> 
 My goal is make it grow in the wake of the suggestions of those who will use.<br />
 Use it and please send tips, comments and suggestions ...<br />
 </h3>
@@ -45,9 +47,11 @@ Some features:<br />
 <br />
 <li> It's able to send files on the Hardware (using the <a href="http://en.wikipedia.org/wiki/XMODEM" target="body">xmodem</a> protocol).</li>
 <br />
-<li> Supports some terminal commands (standard ansi/vt100), so it's able to play games like "hanoi" or "hungman" (using the target(*) ansi/vt100 capabilities).</li>
+<li> Supports some terminal commands (standard ansi/vt100), so it's able to play eLua games like "hanoi" or "hungman" (using the target(*) ansi/vt100 capabilities).</li>
 <br />
-<li> Supports the FLASH (on the target(*)) programming through the DFU boot loader (initially only for the avr32 architecture).</li>
+<li> Supports the FLASH (on the target(*)) programming through the DFU/Arduino boot loader.</li>
+<br />
+<li> Supports easily the <a href="http://www.libusb.org" target="body">libusb</a> through Lua scripts (experimental).</li>
 <br />
 <li> It's easily extensible through Lua scripts.</li>
 <br />
@@ -61,5 +65,6 @@ and able to run a monolithic but very fast application.<br />
 Some examples are: <br /><br />
 <a href="http://wiki.eluaproject.net/Mizar32" target="body" name="The Mizar32">The Mizar32 ( low-cost Stackable Multi-Board Computer)</a><br />
 <a href="http://wiki.eluaproject.net/STM32F4DISCOVERY" target="body" name="STM32F4Dicscover">STM32F4Dicscover board</a><br />
+<a href="<a href="http://www.arduino.cc" target="body"  name="Arduino">Arduino</a>
 </cite>
 </body></html>
