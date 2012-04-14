@@ -10,7 +10,9 @@ some features:
 * Supports the FLASH (on the target) programming through the DFU/Arduino boot loader.
 * Supports easily the "libusb" through Lua scripts (experimental).
 * It's easily extensible through Lua scripts.
+
 ## Goat currently includes the support for:
+
 * eLua    http://www.eluaproject.net/
 * Arduino http://www.arduino.cc (the installation of the "Arduino IDE 1.0" is required)
 
