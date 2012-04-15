@@ -34,7 +34,7 @@ some features:
 * $ sudo make uninstall (if isn't the first installation)
 * $ sudo make install
 
-* In order to support the "dfu bootloader" the libusb1.0 library is required:
+* In order to support the "libluausb" (experimental) the libusb1.0 library is required:
 * $ sudo apt-get install libusb-1.0
 
 ## How to install on Windows:
