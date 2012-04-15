@@ -7,10 +7,13 @@ ifeq ($(OS),Windows_NT)
 	make -C win32 
 	make -C LUAplugins/luausb 
 	make -C LUAplugins/LuaBitOp-1.0.1 Makefile.mingw 
+	make -C LUAplugins/LuaBitOp-1.0.1 Makefile.mingw install
 else
 	make -C gtk all
 	make -C LUAplugins/luausb 
+	make -C LUAplugins/luausb install
 	make -C LUAplugins/LuaBitOp-1.0.1 
+	make -C LUAplugins/LuaBitOp-1.0.1 install
 endif
 
 clean:
@@ -23,15 +26,12 @@ else
 	make -C LUAplugins/luausb clean
 	make -C LUAplugins/LuaBitOp-1.0.1 clean
 endif
-	rm -f $(PREFIX)/bin/*.so
+	rm -f $(PREFIX)/bin/*.so $(PREFIX)/bin/*.dll
 
 install:all
 ifeq ($(OS),Windows_NT)
-	make -C LUAplugins/LuaBitOp-1.0.1 Makefile.mingw install
 	make -C win32 install
 else
-	sudo make -C LUAplugins/luausb install
-	make -C LUAplugins/LuaBitOp-1.0.1 install
 	sudo make -C gtk install
 endif
 
