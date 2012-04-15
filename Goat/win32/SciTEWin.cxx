@@ -246,7 +246,7 @@ SciTEWin::SciTEWin(Extension *ext) : SciTEBase(ext) {
 	uniqueInstance.Init(this);
 
 	hAccTable = ::LoadAccelerators(hInstance, TEXT("ACCELS")); // md
-	GroupTabSelected = GOA_CON_TARGET;
+	GroupTabSelected = GOA_CON_HOST;
 	cmdWorker.pSciTE = this;
 }
 
