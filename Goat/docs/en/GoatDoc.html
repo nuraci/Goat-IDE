@@ -73,14 +73,14 @@
 			<br />
 			You need to indicate all "properties" you architecture needs.<br />
 			The first of all could be the Serial port your PC is using in order to connect the "target" console.<br />
-			For Linux os (just an example, unfortunately you need to discover the exact name):<br />
+			For Linux Os: (just an example, unfortunately you need to discover the exact name):<br />
 					
 	 <blockquote>
         <code>
         serial.port=/dev/ttyACM0
 	        </code>
     </blockquote>        
-    For Windows os: (just an example, you need to discover the exact name) <br />
+    For Windows Os: (just an example, you need to discover the exact name) <br />
 					
 	 <blockquote>
         <code>
@@ -93,13 +93,15 @@
     <br />     
 <blockquote>
 <code>
+# following are related to the platform WIN (Windows)<br /> 
 if PLAT_WIN<br />
-&nbsp;&nbsp;&nbsp; # Windows USB serial port  <br />
-&nbsp;&nbsp;&nbsp; serial.port=COM6 <br />
-
-if PLAT_GTK <br />
-&nbsp;&nbsp;&nbsp # Linux first serial port on USB. <br />
-&nbsp;&nbsp;&nbsp serial.port=/dev/ttyACM0 <br />
+&nbsp; &nbsp;# Windows USB serial port<br />
+&nbsp; &nbsp;serial.port=COM6 <br />
+<br />
+# following are related to the platform GTK (Linux)<br /> 
+if PLAT_GTK<br />
+&nbsp; &nbsp;# Linux first serial port on USB.<br />
+&nbsp; &nbsp;serial.port=/dev/ttyACM0 <br />
 </code>
 </blockquote>        
 <br /> 
@@ -131,8 +133,7 @@ Do you prefer that Goat (after the Serial connection) sends a &laquo;cr&raquo; c
 <code>
 serial.tx1cr=1<br />
 </code>
-</blockquote>
-   
+</blockquote>  
 <br />
 Following is about the terminal capabilities.<br />
 <br />
@@ -142,7 +143,6 @@ term.columns=80 <br />
 term.lines=30 <br />
 </code>
 </blockquote>
-
 <br />
 Do you want the terminal emulation (mode terminal) active as default?<br />
 (otherwise from menu "Options" | "Mode Terminal")<br />
@@ -152,9 +152,10 @@ Do you want the terminal emulation (mode terminal) active as default?<br />
 term.terminal=0<br />
 </code>
 </blockquote>
-<br />
-Following are some TARGET settings, useful subsequently to manage the Hardware<br />
-(here are some setting for Mizar32/EVK1100).<br /> 
+<strong><h2>
+Following are some settings specific to eLua<br />
+</strong></h2>
+(The following example is related to Mizar32/EVK1100).<br /> 
 <br />
 <blockquote>
 <code>
@@ -170,6 +171,50 @@ Following is the path which Goat prepends in order to access the MMC card <br />
 <code>
 # target.extfs=/semi/<br />
 target.extfs=/mmc/<br />
+</code>
+</blockquote>
+<strong><h2>
+Here are some settings specific to Arduino/Wiring). <br />
+</strong></h2>
+(Please note that Goat in order to work, needs the Arduino IDE.)<br />
+<a href="http://arduino.cc/hu/Main/Software">the Arduino framework</a>
+<br /> 
+<br />
+The arduino board name:<br />
+(eg: uno, atmega328, diecimila, nano328, nano, mega2560, mega, ...)<br />
+<br />
+<blockquote>
+<code>
+arduino.board_tag=uno<br />
+</code>
+</blockquote>
+and some paths to the Arduino IDE installation<br />
+<br />
+<blockquote>
+<code>
+# following are related to the platform GTK (Linux)<br /> 
+if PLAT_GTK<br />
+&nbsp; &nbsp;arduino.dir=/opt/arduino-1.0<br />
+&nbsp; &nbsp;arduino.avr_tools_path=/usr/bin/<br />
+<br />       
+# following are related to the platform WIN (Windows)<br /> 
+if PLAT_WIN<br />
+&nbsp; &nbsp;arduino.dir=C:\arduino 1.0<br />
+<br />
+</code>
+</blockquote>
+also Goot needs to know the Serial port name we are using in order to program the Arduino board.<br />
+<br />
+<blockquote>
+<code>
+# following are related to the platform GTK (Linux)<br /> 
+if PLAT_GTK<br />
+&nbsp; &nbsp;arduino.port=/dev/ttyACM0<br />
+<br />   
+# following are related to the platform WIN (Windows)<br /> 
+if PLAT_WIN<br />
+&nbsp; &nbsp;arduino.port=COM6<br />
+<br />
 </code>
 </blockquote>
 <br />  
@@ -999,14 +1044,35 @@ eLua# <br />
           target.extfs<br />
         </td>
         <td>
-          Set some TARGET properties, useful subsequently to manage the Hardware:<br />
+          Set some eLua target properties, useful subsequently to manage the Hardware:<br />
           (example for Mizar32/EVK1100):<br />
           target.avr32=1<br />
           target.board=mizar32<br />
           target.cpu=at32uc3a0512<br />
           target.extfs=/mmc/<br />
-          </td>
-      </tr>       
+          </td>         
+      </tr>
+             <tr>
+        <td>
+          arduino.board_tag<br />
+          arduino.dir<br />
+   		 arduino.avr_tools_path<br />
+          arduino.port<br />
+        </td>
+        <td>
+          Set some Arduino target properties, useful subsequently to manage the Hardware:<br />
+          (example for Arduino "one"):<br />
+          <br />
+          arduino.board_tag=one<br />
+          if PLAT_GTK<br />
+       	 &nbsp; &nbsp;arduino.dir=/opt/arduino-1.0<br />
+       	 &nbsp; &nbsp;arduino.avr_tools_path=/usr/bin/<br />
+       	 &nbsp; &nbsp;arduino.port=/dev/ttyACM0<br />
+			 if PLAT_WIN<br />
+       	 &nbsp; &nbsp;arduino.dir=C:\arduino-1.0<br />
+       	 &nbsp; &nbsp;arduino.port=COM6<br />
+          </td>         
+      </tr>   
 <!-- goat new -->    
  <tr id='property-position.left'>
         <td>
