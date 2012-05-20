@@ -12,7 +12,7 @@
 #define APP_NAME "Goat"
 #define APP_NAME_TITLE "The Go @ IDE"
 #define APP_NAME_STATIC_BUILD "GoatIDE"
-#define VERSION_GOAT "0.6.1"
+#define VERSION_GOAT "0.6.2"
 #define VERSION_GOAT_WORDS 0, 6, 0, 1
 #define COPYRIGHT_GOAT_DATES "March 2012"
 #define COPYRIGHT_GOAT_YEARS "2012"

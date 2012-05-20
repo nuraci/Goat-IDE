@@ -361,10 +361,9 @@ void SciTEWin::SizeContentWindows() {
 
 	if (splitVertical) {
 		wEditor.SetPosition(GUI::Rectangle(0, 0, w - heightOutput - heightBar, h));
-		//TODO BUGS HERE?? wGroupTab.SetPosition(GUI::Rectangle(w - heightOutput, 0, w, h));
 		wGroupTab.SetPosition(GUI::Rectangle(w - heightOutput, 0, w, heightTab));
-		wConsole.SetPosition(GUI::Rectangle(w - (heightOutput - heightTab), heightTab, w, h));
-		wOutput.SetPosition(GUI::Rectangle(w - (heightOutput - heightTab), heightTab, w, h));
+		wConsole.SetPosition(GUI::Rectangle(w - heightOutput, heightTab, w, h));
+		wOutput.SetPosition(GUI::Rectangle(w - heightOutput, heightTab, w, h));
 
 		if(GetGroupTabSelected() == GOA_CON_TARGET) {
 			wOutput.Show(false);

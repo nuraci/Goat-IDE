@@ -175,7 +175,7 @@ install:
 	
 	# Properties (Wiring)
 	$(INSTALL) -m 777 -d $(propsdir)/wiring
-	for files in ../properties/wiring/*;  \
+	for files in ../properties/wiring/*.api;  \
 	do \
 		$(INSTALL) -m 644 $$files $(propsdir)/wiring; \
 	done
@@ -183,6 +183,11 @@ install:
 	for files in ../properties/wiring/arduino-mk/*;  \
 	do \
 		$(INSTALL) -m 644 $$files $(propsdir)/wiring/arduino-mk; \
+	done
+	$(INSTALL) -m 777 -d $(propsdir)/wiring/windows-cli
+	for files in ../properties/wiring/windows-cli/*;  \
+	do \
+		$(INSTALL) -m 644 $$files $(propsdir)/wiring/windows-cli; \
 	done
 	
 	# Docs
