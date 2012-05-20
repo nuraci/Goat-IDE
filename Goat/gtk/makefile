@@ -175,7 +175,7 @@ install:
 	
 	# Properties (Wiring)
 	$(INSTALL) -m 777 -d $(propsdir)/wiring
-	for files in ../properties/wiring/*.api;  \
+	for files in ../properties/wiring/*.*;  \
 	do \
 		$(INSTALL) -m 644 $$files $(propsdir)/wiring; \
 	done
