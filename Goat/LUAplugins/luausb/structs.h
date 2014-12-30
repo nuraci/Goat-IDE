@@ -1,6 +1,11 @@
 /* this is a generated file, see gen.lua */
 #include <lua.h>
+
+#ifdef __WIN32__
+#include <libusb.h>
+#else
 #include <libusb-1.0/libusb.h>
+#endif
 
 struct libusb_device_descriptor* luausb_to_device_descriptor(lua_State* L, int index);
 struct libusb_device_descriptor* luausb_check_device_descriptor(lua_State* L, int index);

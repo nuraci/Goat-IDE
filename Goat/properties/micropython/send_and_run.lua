@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Nunzio Raciti for Goat <raciti.nunzio@gmail.com>
+-- Nunzio Raciti for Goat <nunzio.raciti@gmail.com>
 -- This program is PUBLIC DOMAIN
 ------------------------------------------------------------------------
 
@@ -12,15 +12,11 @@ goat.ChoiceConsole(GOA_CON_HOST)
 
 if name ==  "" then
 	err= "- attempting to send an empty file!"
-elseif ext ~= "lua"  then
+elseif ext ~= "py"  then
 	err = " \"." .. ext .. "\" files are not supported!"
-elseif serial.SendString("recv\n") < 0 then
-	err = "accessing the serial port!"
-end
-
-if err == "" then 
+elseif err == "" then 
 	goat.ChoiceConsole(GOA_CON_TARGET)
-	serial.XmodemSendFile(file)
+	serial.RawReplySendFile(file)
 else	
 	output:AddText("Error sending: ".. file .. " " .. err .."\n")
 end

@@ -20,6 +20,7 @@
 #include "StyleWriter.h"
 #include "Extender.h"
 #include "LuaExtension.h"
+#include "Uart.h"
 
 #include "IFaceTable.h"
 #include "SciTEKeys.h"
@@ -777,7 +778,18 @@ static int cf_serial_xtx_file(lua_State *L) {
 	int ret = -1;
 
 	if (name)
-		ret = host->SerialXmodemTxFile(name);
+		ret = host->SerialSendFile(name, UART_SEND_XMODEM);
+
+	lua_pushinteger(L, ret);
+	return 1;
+}
+
+static int cf_serial_raw_repl_xtx_file(lua_State *L) {
+	const char *name = luaL_checkstring(L, 1);
+	int ret = -1;
+
+	if (name)
+		ret = host->SerialSendFile(name, UART_SEND_RAW_REPL);
 
 	lua_pushinteger(L, ret);
 	return 1;
@@ -1476,7 +1488,10 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	lua_setfield(luaState, -2, "SendString");
 
 	lua_pushcfunction(luaState, cf_serial_xtx_file);
-	lua_setfield(luaState, -2, "SendFile");
+	lua_setfield(luaState, -2, "XmodemSendFile");
+
+	lua_pushcfunction(luaState, cf_serial_raw_repl_xtx_file);
+	lua_setfield(luaState, -2, "RawReplySendFile");
 
 	lua_setglobal(luaState, "serial");
 

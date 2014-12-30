@@ -1,5 +1,5 @@
 ----------------------------------------------------------------------------
--- Nuccio Raciti for Goat <nuccio.raciti@gmail.com>
+-- Nunzio Raciti for Goat <raciti.nunzio@gmail.com>
 -- This program is PUBLIC DOMAIN
 ----------------------------------------------------------------------------
 

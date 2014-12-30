@@ -1,5 +1,5 @@
 # Make file for Goat on Linux or compatible OS
-# Copyright 2012 by Nuccio Raciti <raciti.nuccio<at>.gmail.com>
+# Copyright 2011-2015 by NunzioRaciti <nunzio.raciti<at>.gmail.com>
 #
 # Many thanks to:http://www.scintilla.org/ScintillaHistory.html
 # The License.txt file describes the conditions under which this software may be distributed.

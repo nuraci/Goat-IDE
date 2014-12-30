@@ -96,24 +96,24 @@ Searcher::Searcher() {
 bool &Searcher::FlagFromCmd(int cmd) {
 	static bool notFound;
 	switch (cmd) {
-		case IDWHOLEWORD:
-		case IDM_WHOLEWORD:
-			return wholeWord;
-		case IDMATCHCASE:
-		case IDM_MATCHCASE:
-			return matchCase;
-		case IDREGEXP:
-		case IDM_REGEXP:
-			return regExp;
-		case IDUNSLASH:
-		case IDM_UNSLASH:
-			return unSlash;
-		case IDWRAP:
-		case IDM_WRAPAROUND:
-			return wrapFind;
-		case IDDIRECTIONUP:
-		case IDM_DIRECTIONUP:
-			return reverseFind;
+	case IDWHOLEWORD:
+	case IDM_WHOLEWORD:
+		return wholeWord;
+	case IDMATCHCASE:
+	case IDM_MATCHCASE:
+		return matchCase;
+	case IDREGEXP:
+	case IDM_REGEXP:
+		return regExp;
+	case IDUNSLASH:
+	case IDM_UNSLASH:
+		return unSlash;
+	case IDWRAP:
+	case IDM_WRAPAROUND:
+		return wrapFind;
+	case IDDIRECTIONUP:
+	case IDM_DIRECTIONUP:
+		return reverseFind;
 	}
 	return notFound;
 }
@@ -241,7 +241,7 @@ void SciTEBase::WorkerCommand(int cmd, Worker *pWorker) {
 		UpdateProgress(pWorker);
 		break;
 	case WORK_FILEPROGRESS:
- 		UpdateProgress(pWorker);
+		UpdateProgress(pWorker);
 		break;
 	}
 }
@@ -272,7 +272,7 @@ void SciTEBase::CallChildren(unsigned int msg, uptr_t wParam, sptr_t lParam) {
 	wConsole.Call(msg, wParam, lParam);
 }
 
-SString SciTEBase::GetTranslationToAbout(const char * const propname, bool retainIfNotFound) {
+SString SciTEBase::GetTranslationToAbout(const char *const propname, bool retainIfNotFound) {
 #if !defined(GTK)
 	return SString(GUI::UTF8FromString(localiser.Text(propname, retainIfNotFound)).c_str());
 #else
@@ -303,8 +303,8 @@ StyleAndWords SciTEBase::GetStyleAndWords(const char *base) {
 
 void SciTEBase::AssignKey(int key, int mods, int cmd) {
 	wEditor.Call(SCI_ASSIGNCMDKEY,
-	        LongFromTwoShorts(static_cast<short>(key),
-	                static_cast<short>(mods)), cmd);
+	             LongFromTwoShorts(static_cast<short>(key),
+	                               static_cast<short>(mods)), cmd);
 }
 
 /**
@@ -599,7 +599,7 @@ void SciTEBase::BraceMatch(bool editor) {
 		char chBrace = 0;
 		if (braceAtCaret >= 0)
 			chBrace = static_cast<char>(win.Send(
-			            SCI_GETCHARAT, braceAtCaret, 0));
+			                                SCI_GETCHARAT, braceAtCaret, 0));
 		win.Send(SCI_BRACEHIGHLIGHT, braceAtCaret, braceOpposite);
 		int columnAtCaret = win.Call(SCI_GETCOLUMN, braceAtCaret, 0);
 		int columnOpposite = win.Call(SCI_GETCOLUMN, braceOpposite, 0);
@@ -767,7 +767,7 @@ void SciTEBase::HighlightCurrentWord(bool highlight) {
 	int selEnd = wCurrent.Call(SCI_GETSELECTIONEND);
 	bool noUserSelection = selStart == selEnd;
 	SString wordToFind = RangeExtendAndGrab(wCurrent, selStart, selEnd,
-	        &SciTEBase::islexerwordcharforsel);
+	                                        &SciTEBase::islexerwordcharforsel);
 	if (wordToFind.length() == 0 || wordToFind.contains('\n') || wordToFind.contains('\r'))
 		return; // No highlight when no selection or multi-lines selection.
 	if (noUserSelection && currentWordHighlight.statesOfDelay == currentWordHighlight.noDelay) {
@@ -789,7 +789,7 @@ void SciTEBase::HighlightCurrentWord(bool highlight) {
 	wCurrent.Call(SCI_SETTARGETEND, lenDoc);
 	// Find the first occurrence of word.
 	int indexOf = wCurrent.CallString(SCI_SEARCHINTARGET,
-	        wordToFind.length(), wordToFind.c_str());
+	                                  wordToFind.length(), wordToFind.c_str());
 	while (indexOf != -1 && indexOf < lenDoc) {
 		if (!currentWordHighlight.isOnlyWithSameStyle || selectedStyle ==
 		        wCurrent.Call(SCI_GETSTYLEAT, indexOf)) {
@@ -799,7 +799,7 @@ void SciTEBase::HighlightCurrentWord(bool highlight) {
 		wCurrent.Call(SCI_SETTARGETSTART, indexOf + wordToFind.length() + 1);
 		wCurrent.Call(SCI_SETTARGETEND, lenDoc);
 		indexOf = wCurrent.CallString(SCI_SEARCHINTARGET, wordToFind.length(),
-		        wordToFind.c_str());
+		                              wordToFind.c_str());
 	}
 }
 
@@ -1078,9 +1078,9 @@ int SciTEBase::FindNext(bool reverseDirection, bool showWarnings, bool allowRegE
 	}
 
 	int flags = (wholeWord ? SCFIND_WHOLEWORD : 0) |
-	        (matchCase ? SCFIND_MATCHCASE : 0) |
-	        ((allowRegExp && regExp) ? SCFIND_REGEXP : 0) |
-	        (props.GetInt("find.replace.regexp.posix") ? SCFIND_POSIX : 0);
+	            (matchCase ? SCFIND_MATCHCASE : 0) |
+	            ((allowRegExp && regExp) ? SCFIND_REGEXP : 0) |
+	            (props.GetInt("find.replace.regexp.posix") ? SCFIND_POSIX : 0);
 
 	wEditor.Call(SCI_SETSEARCHFLAGS, flags);
 	int posFind = FindInTarget(findTarget.c_str(), lenFind, startPosition, endPosition);
@@ -1103,7 +1103,7 @@ int SciTEBase::FindNext(bool reverseDirection, bool showWarnings, bool allowRegE
 		if (showWarnings) {
 			WarnUser(warnNotFound);
 			FindMessageBox("Can not find the string '^0'.",
-			        &findWhat);
+			               &findWhat);
 		}
 	} else {
 		havefound = true;
@@ -1186,9 +1186,9 @@ int SciTEBase::DoReplaceAll(bool inSelection) {
 	SString replaceTarget = EncodeString(replaceWhat);
 	int replaceLen = UnSlashAsNeeded(replaceTarget, unSlash, regExp);
 	int flags = (wholeWord ? SCFIND_WHOLEWORD : 0) |
-	        (matchCase ? SCFIND_MATCHCASE : 0) |
-	        (regExp ? SCFIND_REGEXP : 0) |
-	        (props.GetInt("find.replace.regexp.posix") ? SCFIND_POSIX : 0);
+	            (matchCase ? SCFIND_MATCHCASE : 0) |
+	            (regExp ? SCFIND_REGEXP : 0) |
+	            (props.GetInt("find.replace.regexp.posix") ? SCFIND_POSIX : 0);
 	wEditor.Call(SCI_SETSEARCHFLAGS, flags);
 	int posFind = FindInTarget(findTarget.c_str(), findLen, startPosition, endPosition);
 	if ((findLen == 1) && regExp && (findTarget[0] == '^')) {
@@ -1474,7 +1474,7 @@ void SciTEBase::Redraw() {
 }
 
 char *SciTEBase::GetNearestWords(const char *wordStart, size_t searchLen,
-		const char *separators, bool ignoreCase /*=false*/, bool exactLen /*=false*/) {
+                                 const char *separators, bool ignoreCase /*=false*/, bool exactLen /*=false*/) {
 	char *words = 0;
 	while (!words && *separators) {
 		words = apis.GetNearestWords(wordStart, searchLen, ignoreCase, *separators, exactLen);
@@ -1489,7 +1489,7 @@ void SciTEBase::FillFunctionDefinition(int pos /*= -1*/) {
 	}
 	if (apis) {
 		char *words = GetNearestWords(currentCallTipWord.c_str(), currentCallTipWord.length(),
-			calltipParametersStart.c_str(), callTipIgnoreCase, true);
+		                              calltipParametersStart.c_str(), callTipIgnoreCase, true);
 		if (!words)
 			return;
 		// Counts how many call tips
@@ -1503,7 +1503,7 @@ void SciTEBase::FillFunctionDefinition(int pos /*= -1*/) {
 
 		// Should get current api definition
 		const char *word = apis.GetNearestWord(currentCallTipWord.c_str(), currentCallTipWord.length(),
-		        callTipIgnoreCase, calltipWordCharacters, currentCallTip);
+		                                       callTipIgnoreCase, calltipWordCharacters, currentCallTip);
 		if (word) {
 			functionDefinition = word;
 			if (maxCallTips > 1) {
@@ -1681,7 +1681,7 @@ bool SciTEBase::StartAutoComplete() {
 	SString root = line.substr(startword, current - startword);
 	if (apis) {
 		char *words = GetNearestWords(root.c_str(), root.length(),
-			calltipParametersStart.c_str(), autoCompleteIgnoreCase);
+		                              calltipParametersStart.c_str(), autoCompleteIgnoreCase);
 		if (words) {
 			EliminateDuplicateWords(words);
 			wEditor.Call(SCI_AUTOCSETSEPARATOR, ' ');
@@ -1808,7 +1808,7 @@ bool SciTEBase::StartInsertAbbreviation() {
 
 	size_t i;
 	// find last |, can't be strrchr(exbuf, '|') because of ||
-	for (i = expbuflen; i--; ) {
+	for (i = expbuflen; i--;) {
 		if (expbuf[i] == '|' && (i == 0 || expbuf[i-1] != '|')) {
 			last_pipe = i;
 			break;
@@ -2019,7 +2019,7 @@ bool SciTEBase::StartBlockComment() {
 	if (comment == "") { // user friendly error message box
 		GUI::gui_string sBase = GUI::StringFromUTF8(base.c_str());
 		GUI::gui_string error = LocaliseMessage(
-		            "Block comment variable '^0' is not defined in SciTE *.properties!", sBase.c_str());
+		                            "Block comment variable '^0' is not defined in SciTE *.properties!", sBase.c_str());
 		WindowMessageBox(wSciTE, error, MB_OK | MB_ICONWARNING);
 		return true;
 	}
@@ -2089,13 +2089,13 @@ bool SciTEBase::StartBlockComment() {
 
 static const char *LineEndString(int eolMode) {
 	switch (eolMode) {
-		case SC_EOL_CRLF:
-			return "\r\n";
-		case SC_EOL_CR:
-			return "\r";
-		case SC_EOL_LF:
-		default:
-			return "\n";
+	case SC_EOL_CRLF:
+		return "\r\n";
+	case SC_EOL_CR:
+		return "\r";
+	case SC_EOL_LF:
+	default:
+		return "\n";
 	}
 }
 
@@ -2119,8 +2119,8 @@ bool SciTEBase::StartBoxComment() {
 		GUI::gui_string sMiddle = GUI::StringFromUTF8(middle_base.c_str());
 		GUI::gui_string sEnd = GUI::StringFromUTF8(end_base.c_str());
 		GUI::gui_string error = LocaliseMessage(
-		            "Box comment variables '^0', '^1' and '^2' are not defined in SciTE *.properties!",
-		            sStart.c_str(), sMiddle.c_str(), sEnd.c_str());
+		                            "Box comment variables '^0', '^1' and '^2' are not defined in SciTE *.properties!",
+		                            sStart.c_str(), sMiddle.c_str(), sEnd.c_str());
 		WindowMessageBox(wSciTE, error, MB_OK | MB_ICONWARNING);
 		return true;
 	}
@@ -2246,8 +2246,8 @@ bool SciTEBase::StartStreamComment() {
 		GUI::gui_string sStart = GUI::StringFromUTF8(start_base.c_str());
 		GUI::gui_string sEnd = GUI::StringFromUTF8(end_base.c_str());
 		GUI::gui_string error = LocaliseMessage(
-		            "Stream comment variables '^0' and '^1' are not defined in SciTE *.properties!",
-		            sStart.c_str(), sEnd.c_str());
+		                            "Stream comment variables '^0' and '^1' are not defined in SciTE *.properties!",
+		                            sStart.c_str(), sEnd.c_str());
 		WindowMessageBox(wSciTE, error, MB_OK | MB_ICONWARNING);
 		return true;
 	}
@@ -2316,7 +2316,7 @@ int SciTEBase::GetLineLength(int line) {
 
 int SciTEBase::GetCurrentLineNumber() {
 	return wEditor.Call(SCI_LINEFROMPOSITION,
-	        wEditor.Call(SCI_GETCURRENTPOS));
+	                    wEditor.Call(SCI_GETCURRENTPOS));
 }
 
 int SciTEBase::GetCurrentScrollPosition() {
@@ -2366,7 +2366,7 @@ void SciTEBase::SetTextProperties(
 	} else if (selLastLine == selFirstLine) {
 		sprintf(temp, "%d", 1);
 	} else if ((wEditor.Call(SCI_GETCOLUMN, caretPos) == 0 && (selAnchor <= caretPos)) ||
-	        ((wEditor.Call(SCI_GETCOLUMN, selAnchor) == 0) && (selAnchor > caretPos ))) {
+	           ((wEditor.Call(SCI_GETCOLUMN, selAnchor) == 0) && (selAnchor > caretPos))) {
 		sprintf(temp, "%d", selLastLine - selFirstLine);
 	} else {
 		sprintf(temp, "%d", selLastLine - selFirstLine + 1);
@@ -2382,9 +2382,9 @@ void SciTEBase::UpdateStatusBar(bool bUpdateSlowData) {
 		SetTextProperties(propsStatus);
 		int caretPos = wEditor.Call(SCI_GETCURRENTPOS);
 		propsStatus.SetInteger("LineNumber",
-		        wEditor.Call(SCI_LINEFROMPOSITION, caretPos) + 1);
+		                       wEditor.Call(SCI_LINEFROMPOSITION, caretPos) + 1);
 		propsStatus.SetInteger("ColumnNumber",
-		        wEditor.Call(SCI_GETCOLUMN, caretPos) + 1);
+		                       wEditor.Call(SCI_GETCOLUMN, caretPos) + 1);
 		propsStatus.Set("OverType", wEditor.Call(SCI_GETOVERTYPE) ? "OVR" : "INS");
 
 		char sbKey[32];
@@ -2471,7 +2471,7 @@ void SciTEBase::ConvertIndentation(int tabSize, int useTabs) {
 				wEditor.Call(SCI_SETTARGETSTART, lineStart);
 				wEditor.Call(SCI_SETTARGETEND, indentPos);
 				wEditor.CallString(SCI_REPLACETARGET, indentationWanted.length(),
-					indentationWanted.c_str());
+				                   indentationWanted.c_str());
 			}
 		}
 	}
@@ -2552,14 +2552,14 @@ IndentationStatus SciTEBase::GetIndentState(int line) {
 	IndentationStatus indentState = isNone;
 	SString controlWords[20];
 	unsigned int parts = GetLinePartsInStyle(line, statementIndent.styleNumber,
-	        -1, controlWords, ELEMENTS(controlWords));
+	                     -1, controlWords, ELEMENTS(controlWords));
 	unsigned int i;
 	for (i = 0; i < parts; i++) {
 		if (includes(statementIndent, controlWords[i]))
 			indentState = isKeyWordStart;
 	}
 	parts = GetLinePartsInStyle(line, statementEnd.styleNumber,
-	        -1, controlWords, ELEMENTS(controlWords));
+	                            -1, controlWords, ELEMENTS(controlWords));
 	for (i = 0; i < parts; i++) {
 		if (includes(statementEnd, controlWords[i]))
 			indentState = isNone;
@@ -2567,7 +2567,7 @@ IndentationStatus SciTEBase::GetIndentState(int line) {
 	// Braces override keywords
 	SString controlStrings[20];
 	parts = GetLinePartsInStyle(line, blockEnd.styleNumber,
-	        -1, controlStrings, ELEMENTS(controlStrings));
+	                            -1, controlStrings, ELEMENTS(controlStrings));
 	for (unsigned int j = 0; j < parts; j++) {
 		if (includes(blockEnd, controlStrings[j]))
 			indentState = isBlockEnd;
@@ -2642,7 +2642,7 @@ void SciTEBase::AutomaticIndentation(char ch) {
 	int indentBlock = IndentOfBlock(curLine - 1);
 
 	if ((wEditor.Call(SCI_GETLEXER) == SCLEX_PYTHON) &&
-			(props.GetInt("indent.python.colon") == 1)) {
+	        (props.GetInt("indent.python.colon") == 1)) {
 		int eolMode = wEditor.Call(SCI_GETEOLMODE);
 		int eolChar = (eolMode == SC_EOL_CR ? '\r' : '\n');
 		int eolChars = (eolMode == SC_EOL_CRLF ? 2 : 1);
@@ -2657,7 +2657,7 @@ void SciTEBase::AutomaticIndentation(char ch) {
 			for (int p = selStart - eolChars - 1; p > prevLineStart; p--) {
 				style = wEditor.Call(SCI_GETSTYLEAT, p);
 				if (style != SCE_P_DEFAULT && style != SCE_P_COMMENTLINE &&
-						style != SCE_P_COMMENTBLOCK) {
+				        style != SCE_P_COMMENTBLOCK) {
 					character = wEditor.Call(SCI_GETCHARAT, p);
 					break;
 				}
@@ -2694,7 +2694,7 @@ void SciTEBase::AutomaticIndentation(char ch) {
 		if (!indentClosing && !blockEnd.IsSingleChar()) {	// Dedent previous line maybe
 			SString controlWords[1];
 			if (GetLinePartsInStyle(curLine - 1, blockEnd.styleNumber,
-			        -1, controlWords, ELEMENTS(controlWords))) {
+			                        -1, controlWords, ELEMENTS(controlWords))) {
 				if (includes(blockEnd, controlWords[0])) {
 					// Check if first keyword on line is an ender
 					SetLineIndentation(curLine - 1, IndentOfBlock(curLine - 2) - indentSize);
@@ -2809,8 +2809,20 @@ void SciTEBase::CharAddedConsole(int ch) {
 	wConsole.Send(SCI_SETTARGETSTART, pos-1);
 	wConsole.Send(SCI_SETTARGETEND, pos);
 	wConsole.Send(SCI_REPLACETARGET, 0, reinterpret_cast<sptr_t>(""));
-	serial->Send((const char*)&ch,1);
- }
+
+	if (ch == '\n' || ch == '\r') {
+		if (serial->GetEOL() == UART_EOL_CRLF) {
+			serial->OutByte(UART_EOL_CR);
+			serial->OutByte(UART_EOL_LF);
+		} else if (serial->GetEOL() == UART_EOL_CR) {
+			serial->OutByte(UART_EOL_CR);
+		} else {
+			serial->Send((const char *)&ch,1);
+		}
+	} else {
+		serial->Send((const char *)&ch,1);
+	}
+}
 
 /**
  * This routine will auto complete XML or HTML tags that are still open by closing them
@@ -2917,19 +2929,19 @@ void SciTEBase::GoMatchingBrace(bool select) {
 	int braceAtCaret = -1;
 	int braceOpposite = -1;
 	GUI::ScintillaWindow *wCurrent = &wEditor;
-    bool OutputHasFocus;
+	bool OutputHasFocus;
 	bool isInside;
 
-    if (wOutput.HasFocus()) {
+	if (wOutput.HasFocus()) {
 		wCurrent = &wOutput;
 		OutputHasFocus = true;
-    } else if (wConsole.HasFocus()) {
+	} else if (wConsole.HasFocus()) {
 		wCurrent = &wConsole;
 		OutputHasFocus = true;
 	} else {
 		wCurrent = &wEditor;
 		OutputHasFocus = false;
-    }
+	}
 	isInside = FindMatchingBracePosition(!OutputHasFocus, braceAtCaret, braceOpposite, true);
 	// Convert the character positions into caret positions based on whether
 	// the caret position was inside or outside the braces.
@@ -3071,7 +3083,7 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		// may decide to open multiple files so do not know yet
 		// how much room needed.
 		OpenDialog(FilePath(GUI::StringFromUTF8(props.Get(EXAMPLES_DIR_P).c_str()).c_str()),
-				GUI::StringFromUTF8(props.GetExpanded("open.filter").c_str()).c_str());
+		           GUI::StringFromUTF8(props.GetExpanded("open.filter").c_str()).c_str());
 		WindowSetFocus(wEditor);
 		break;
 	case IDM_OPENSELECTED:
@@ -3398,15 +3410,14 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		}
 		break;
 
-	case IDM_SPLITVERTICAL:
-		{
+	case IDM_SPLITVERTICAL: {
 			GUI::Rectangle rcClient = GetClientRectangle();
 			heightOutput = splitVertical ?
-				int((double)heightOutput * rcClient.Height() / rcClient.Width() + 0.5) : 
-				int((double)heightOutput * rcClient.Width() / rcClient.Height() + 0.5);
+			               int((double)heightOutput * rcClient.Height() / rcClient.Width() + 0.5) :
+			               int((double)heightOutput * rcClient.Width() / rcClient.Height() + 0.5);
 			previousHeightOutput = splitVertical ?
-				int((double)previousHeightOutput * rcClient.Height() / rcClient.Width() + 0.5) : 
-				int((double)previousHeightOutput * rcClient.Width() / rcClient.Height() + 0.5);
+			                       int((double)previousHeightOutput * rcClient.Height() / rcClient.Width() + 0.5) :
+			                       int((double)previousHeightOutput * rcClient.Width() / rcClient.Height() + 0.5);
 		}
 		splitVertical = !splitVertical;
 		heightOutput = NormaliseSplit(heightOutput);
@@ -3490,14 +3501,14 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 	case IDM_CLEAROUTPUT:
 		wOutput.Send(SCI_CLEARALL);
 		break;
-		
+
 	case IDM_CLEARCONSOLE:
 		term.Clear();
-		break;		
+		break;
 
 	case IDM_SWITCHPANE: {
-		int wGroupTabCurrentPage = 0;
-			if ( wGroupTab.GetID())
+			int wGroupTabCurrentPage = 0;
+			if (wGroupTab.GetID())
 				wGroupTabCurrentPage = GroupGetCurrentTab();
 			if (wEditor.HasFocus()) {
 				if (wGroupTabCurrentPage == GOA_CON_TARGET)
@@ -3558,7 +3569,7 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 			if (SaveIfUnsureForBuilt() != IDCANCEL) {
 				SelectionIntoProperties();
 				AddCommand(props.GetWild("command.configure.", FileNameExt().AsUTF8().c_str()), "",
-				        SubsystemType("command.configure.subsystem."));
+				           SubsystemType("command.configure.subsystem."));
 				if (jobQueue.HasCommandToRun())
 					Execute();
 			}
@@ -3568,7 +3579,7 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 			if (SaveIfUnsureForBuilt() != IDCANCEL) {
 				SelectionIntoProperties();
 				AddCommand(props.GetWild("command.clean.", FileNameExt().AsUTF8().c_str()), "",
-				        SubsystemType("command.clean.subsystem."));
+				           SubsystemType("command.clean.subsystem."));
 				if (jobQueue.HasCommandToRun())
 					Execute();
 			}
@@ -3578,7 +3589,7 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 			if (SaveIfUnsureForBuilt() != IDCANCEL) {
 				SelectionIntoProperties();
 				AddCommand(props.GetWild("command.compile.", FileNameExt().AsUTF8().c_str()), "",
-				        SubsystemType("command.compile.subsystem."));
+				           SubsystemType("command.compile.subsystem."));
 				if (jobQueue.HasCommandToRun())
 					Execute();
 			}
@@ -3600,7 +3611,7 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		}
 		break;
 	case IDM_MODE_TERMINAL: {
-			if(term.isTermActive())
+			if (term.isTermActive())
 				term.setTermActiveOff();
 			else
 				term.setTermActiveOn();
@@ -3618,14 +3629,14 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 				if (!jobQueue.isBuilt) {
 					SString buildcmd = props.GetNewExpand("command.go.needs.", FileNameExt().AsUTF8().c_str());
 					AddCommand(buildcmd, "",
-					        SubsystemType("command.go.needs.subsystem."));
+					           SubsystemType("command.go.needs.subsystem."));
 					if (buildcmd.length() > 0) {
 						jobQueue.isBuilding = true;
 						flags |= jobForceQueue;
 					}
 				}
 				AddCommand(props.GetWild("command.go.", FileNameExt().AsUTF8().c_str()), "",
-				        SubsystemType("command.go.subsystem."), "", flags);
+				           SubsystemType("command.go.subsystem."), "", flags);
 				if (jobQueue.HasCommandToRun())
 					Execute();
 			}
@@ -3638,22 +3649,27 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 	case IDM_OPEN_UART:
 		if (serial->Start()) {
 			char *mesg;
-			if((mesg=serial->GetMessage()) != 0)
+			if ((mesg=serial->GetMessage()) != 0)
 				props.Set("SerialMsg",mesg);
 			CheckMenus();
 			term.Clear();
-			if ((props.Get("serial.tx1cr").size() != 0) && props.GetInt ("serial.tx1cr") == 1) {
-				serial->OutByte('\r'); /* Send the first \r in order to get Target prompt */
+			if ((props.Get("serial.tx1eol").size() != 0) && props.GetInt("serial.tx1eol") == 1) {
+				/* Send the first EOL in order to get Target prompt */
+				if (serial->GetEOL() == UART_EOL_CRLF) {
+					serial->SendCrlf();
+				} else {
+					serial->OutByte(serial->GetEOL());
+				}
 			}
 			GroupSetCurrentTab(GOA_CON_TARGET);
 		}
-	    break;
+		break;
 	case IDM_CLOSE_UART:
 		term.setTermActiveOff();
 		serial->Stop();
 		{
 			char *mesg;
-			if((mesg=serial->GetMessage()) != 0)
+			if ((mesg=serial->GetMessage()) != 0)
 				props.Set("SerialMsg",mesg);
 		}
 		CheckMenus();
@@ -3752,7 +3768,7 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 	case IDM_HELP: {
 			SelectionIntoProperties();
 			AddCommand(props.GetWild("command.help.", FileNameExt().AsUTF8().c_str()), "",
-			        SubsystemType("command.help.subsystem."));
+			           SubsystemType("command.help.subsystem."));
 			if (jobQueue.HasCommandToRun()) {
 				jobQueue.isBuilding = true;
 				Execute();
@@ -3763,7 +3779,7 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 	case IDM_HELP_GOAT: {
 			SelectionIntoProperties();
 			AddCommand(props.Get("command.goat.help"), "",
-			        SubsystemType(props.Get("command.goat.help.subsystem")[0]));
+			           SubsystemType(props.Get("command.goat.help.subsystem")[0]));
 			if (jobQueue.HasCommandToRun()) {
 				jobQueue.isBuilding = true;
 				Execute();
@@ -3777,10 +3793,10 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 			SetDocumentAt(cmdID - bufferCmdID);
 			CheckReload();
 		} else if ((cmdID >= fileStackCmdID) &&
-		        (cmdID < fileStackCmdID + fileStackMax)) {
+		           (cmdID < fileStackCmdID + fileStackMax)) {
 			StackMenu(cmdID - fileStackCmdID);
 		} else if (cmdID >= importCmdID &&
-		        (cmdID < importCmdID + importMax)) {
+		           (cmdID < importCmdID + importMax)) {
 			ImportMenu(cmdID - importCmdID);
 		} else if (cmdID >= IDM_TOOLS && cmdID < IDM_TOOLS + toolMax) {
 			GroupSetCurrentTab(GOA_CON_HOST);
@@ -3945,7 +3961,7 @@ void SciTEBase::NewLineInOutput() {
 	if (jobQueue.IsExecuting())
 		return;
 	int line = wOutput.Call(SCI_LINEFROMPOSITION,
-	        wOutput.Call(SCI_GETCURRENTPOS)) - 1;
+	                        wOutput.Call(SCI_GETCURRENTPOS)) - 1;
 	SString cmd = GetLine(wOutput, line);
 	if (cmd == ">") {
 		// Search output buffer for previous command
@@ -4000,7 +4016,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 						styleStart = styler.StyleAt(endStyled - 1);
 					styler.SetCodePage(codePage);
 					extender->OnStyle(endStyled, notification->position - endStyled,
-					        styleStart, &styler);
+					                  styleStart, &styler);
 					styler.Flush();
 				}
 			}
@@ -4100,7 +4116,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 
 		if (0 != (notification->modificationType & SC_MOD_CHANGEFOLD)) {
 			FoldChanged(notification->line,
-			        notification->foldLevelNow, notification->foldLevelPrev);
+			            notification->foldLevelNow, notification->foldLevelPrev);
 		}
 		break;
 
@@ -4151,8 +4167,8 @@ void SciTEBase::Notify(SCNotification *notification) {
 		if (extender && (INVALID_POSITION != notification->position)) {
 			int endWord = notification->position;
 			SString message =
-				RangeExtendAndGrab(wEditor,
-					notification->position, endWord, &SciTEBase::iswordcharforsel);
+			    RangeExtendAndGrab(wEditor,
+			                       notification->position, endWord, &SciTEBase::iswordcharforsel);
 			if (message.length()) {
 				extender->OnDwellStart(notification->position,message.c_str());
 			}
@@ -4210,45 +4226,45 @@ void SciTEBase::CheckMenus() {
 	CheckAMenuItem(IDM_TOGGLEPARAMETERS, ParametersOpen());
 	CheckAMenuItem(IDM_MONOFONT, CurrentBuffer()->useMonoFont);
 
-	if(props.GetWild("command.configure.", FileNameExt().AsUTF8().c_str()).size() != 0) {
+	if (props.GetWild("command.configure.", FileNameExt().AsUTF8().c_str()).size() != 0) {
 		SetMenuItemLocalised(menuTools, TOOLS_START, IDM_CONFIGURE, "Configure", NULL);
 		EnableAMenuItem(IDM_CONFIGURE, !jobQueue.IsExecuting());
 	} else {
 		DestroyMenuItem(menuTools, IDM_CONFIGURE);
 
 	}
-	if(props.GetWild("command.clean.", FileNameExt().AsUTF8().c_str()).size() != 0) {
+	if (props.GetWild("command.clean.", FileNameExt().AsUTF8().c_str()).size() != 0) {
 		SetMenuItemLocalised(menuTools, TOOLS_START, IDM_CLEAN, "Clean", NULL);
-		EnableAMenuItem(IDM_CLEAN, !jobQueue.IsExecuting() );
+		EnableAMenuItem(IDM_CLEAN, !jobQueue.IsExecuting());
 	} else {
 		DestroyMenuItem(menuTools, IDM_CLEAN);
 	}
-	if(props.GetWild("command.compile.", FileNameExt().AsUTF8().c_str()).size() != 0) {
+	if (props.GetWild("command.compile.", FileNameExt().AsUTF8().c_str()).size() != 0) {
 		SetMenuItemLocalised(menuTools, TOOLS_START, IDM_COMPILE, "Compile", NULL);
-		EnableAMenuItem(IDM_COMPILE, !jobQueue.IsExecuting() );
+		EnableAMenuItem(IDM_COMPILE, !jobQueue.IsExecuting());
 	} else {
 		DestroyMenuItem(menuTools, IDM_COMPILE);
 	}
-	if(props.GetWild("command.build.", FileNameExt().AsUTF8().c_str()).size() != 0) {
+	if (props.GetWild("command.build.", FileNameExt().AsUTF8().c_str()).size() != 0) {
 		SetMenuItemLocalised(menuTools, TOOLS_START, IDM_BUILD, "Build", NULL);
-		EnableAMenuItem(IDM_BUILD, !jobQueue.IsExecuting() );
+		EnableAMenuItem(IDM_BUILD, !jobQueue.IsExecuting());
 	} else {
 		DestroyMenuItem(menuTools, IDM_BUILD);
 	}
-	if(props.GetWild("command.go.", FileNameExt().AsUTF8().c_str()).size() != 0) {
+	if (props.GetWild("command.go.", FileNameExt().AsUTF8().c_str()).size() != 0) {
 		SetMenuItemLocalised(menuTools, TOOLS_START, IDM_GO, "Run", NULL);
-		EnableAMenuItem(IDM_GO, !jobQueue.IsExecuting() );
+		EnableAMenuItem(IDM_GO, !jobQueue.IsExecuting());
 	} else {
 		DestroyMenuItem(menuTools, IDM_GO);
 	}
 
 #if 0
 	EnableAMenuItem(IDM_COMPILE, !jobQueue.IsExecuting() &&
-	        props.GetWild("command.compile.", FileNameExt().AsUTF8().c_str()).size() != 0);
+	                props.GetWild("command.compile.", FileNameExt().AsUTF8().c_str()).size() != 0);
 	EnableAMenuItem(IDM_BUILD, !jobQueue.IsExecuting() &&
-	        props.GetWild("command.build.", FileNameExt().AsUTF8().c_str()).size() != 0);
+	                props.GetWild("command.build.", FileNameExt().AsUTF8().c_str()).size() != 0);
 	EnableAMenuItem(IDM_GO, !jobQueue.IsExecuting() &&
-	        props.GetWild("command.go.", FileNameExt().AsUTF8().c_str()).size() != 0);
+	                props.GetWild("command.go.", FileNameExt().AsUTF8().c_str()).size() != 0);
 #endif
 	EnableAMenuItem(IDM_OPEN_UART, !serial->IsConnected());
 	EnableAMenuItem(IDM_CLOSE_UART, serial->IsConnected());
@@ -4289,7 +4305,7 @@ void SciTEBase::ContextMenu(GUI::ScintillaWindow &wSource, GUI::Point pt, GUI::W
 		AddToPopUp("Hide", IDM_TOGGLEOUTPUT, true);
 		AddToPopUp("Clear", IDM_CLEAROUTPUT, true);
 		AddToPopUp("Switch Console",IDM_OUT_CONSOLE, true);
-	} else if ( wSource.GetID() == wConsole.GetID()) {
+	} else if (wSource.GetID() == wConsole.GetID()) {
 		AddToPopUp("Hide", IDM_TOGGLEOUTPUT, true);
 		AddToPopUp("Clear", IDM_CLEARCONSOLE, true);
 		AddToPopUp("Switch Console", IDM_OUT_SYSTEM, true);
@@ -4387,8 +4403,8 @@ void SciTEBase::UIAvailable() {
  */
 static GUI::gui_char AfterName(const GUI::gui_char *s) {
 	while (*s && ((*s == '.') ||
-	        (*s >= 'a' && *s <= 'z') ||
-	        (*s >= 'A' && *s <= 'Z')))
+	              (*s >= 'a' && *s <= 'z') ||
+	              (*s >= 'A' && *s <= 'Z')))
 		s++;
 	return *s;
 }
@@ -4877,6 +4893,7 @@ sptr_t SciTEBase::Send(Pane p, unsigned int msg, uptr_t wParam, sptr_t lParam) {
 		return wConsole.Call(msg, wParam, lParam);
 		break;
 	}
+	return 0;
 }
 
 char *SciTEBase::Range(Pane p, int start, int end) {
@@ -4981,18 +4998,18 @@ void SciTEBase::DoMenuCommand(int cmdID) {
 	MenuCommand(cmdID, 0);
 }
 
-int SciTEBase::SerialXmodemTxFile(const char *name) {
+int SciTEBase::SerialSendFile(const char *name, int type) {
 
-	if(serial->IsConnected())
-		return serial->XmodemTransmitFile(name);
-
+	if (serial->IsConnected()) {
+		return serial->SerialTrasmitFile(name, type);
+	}
 	return -1;
 }
+
 int SciTEBase::SerialSend(const char *string, int length) {
-
-	if(serial->IsConnected())
+	if (serial->IsConnected()) {
 		return serial->Send(string, length);
-
+	}
 	return -1;
 }
 void SciTEBase::SelectConsoleTab(int tab) {

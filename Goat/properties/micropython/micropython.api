@@ -1,0 +1,238 @@
+UART(baud, bits, parity, stop)[module pyb, class UART]\nEg. baud=9600, bits=8, parity=None, stop=1
+any()[module pyb, class UART]\nReturn "True" if any characters waiting, else "False".
+init(baud, bits, parity, stop)[module pyb, class UART]\nEg. baud=9600, bits=8, parity=None, stop=1
+deinit()[module pyb, class UART]\nTurn off the UART bus
+read([nbytes])[module pyb, class UART]\nRead characters. If "nbytes" is specified then read at most that many bytes.\n\tReturn value: a bytes object containing the bytes read in.\n\tReturns "b''" on timeout
+readall()[module pyb, class UART]\nRead as much data as possible. Return value: a bytes object.
+readchar()[module pyb, class UART]\nReceive a single character on the bus.\n\tReturn value: The character read, as an integer.\n\tReturns -1 on timeout.
+readinto(buf[, nbytes]) Read bytes into the "buf". If "nbytes4 is specified then read at most that many bytes. Otherwise, read at most "len(buf)" bytes.\n\tReturn value: number of bytes read and stored into "buf".
+readline()[module pyb, class UART]\nRead a line, ending in a newline character.\n\tReturn value: the line read.
+readinto(buf)[module pyb, class UART]\n"buf" read and store into the given buffer
+write(buf)[module pyb, class UART]\nWrite the buffer of bytes to the bus.\n\tReturn value: number of bytes written.
+writechar(char)[module pyb, class UART]\nWrite a single character on the bus.\n\t"char" is an integer to write.\n\tReturn value: "None".
+Accel()[module pyb, class Accel]\nCreate and return an accelerometer object.
+filtered_xyz()[module pyb, class Accel]\nGet a 3-tuple of filtered x, y and z values.
+tilt()[module pyb, class Accel]\nGet the tilt register.
+x()[module pyb, class Accel]\nGet the x-axis value.
+y()[module pyb, class Accel]\nGet the y-axis value.
+z()[module pyb, class Accel]\nGet the z-axis value.
+ADC(pin)[module pyb, class ADC]\ncreate an analog object from a "pin"
+read()[module pyb, class ADC]\nread an analog value
+ADCAll(resolution)[module pyb, class ADC]\nCreate an ADCAll object
+read_channel(channel)[module pyb, class ADC]\nRead the given "channel"
+read_core_temp()[module pyb, class ADC]\nRead MCU temperature
+read_core_vbat()[module pyb, class ADC]\nRead MCU VBAT
+read_timed(buf, freq)[module pyb, class ADC]\nRead analog values into the given buffer at the given frequency.
+CAN(1, CAN.LOOPBACK)[module pyb, class CAN]\nConstruct a CAN object on the given bus. bus can be 1-2.\nCostants:\n\tCAN.NORMAL\n\tCAN.LOOPBACK\n\tCAN.SILENT\n\tCAN.SILENT_LOOPBACK
+deinit()[module pyb, class CAN]\nTurn off the CAN bus.
+any(fifo)[module pyb, class CAN]\nReturn "True" if any message waiting on the FIFO, else "False".
+recv(fifo, timeout=5000)[module pyb, class CAN]\nReceive data on the bus: "fifo" is an integer, which is the FIFO to receive on\n\t"timeout" is the timeout in milliseconds to wait for the receive. Return value: buffer of data bytes.
+send(send, addr, timeout=5000) Send a message on the bus:\n\t"send" is the data to send (an integer to send, or a buffer object)\n\t"addr" is the address to send to\n\t"timeout" is the timeout in milliseconds to wait for the send.\n\tReturn value: None.
+DAC(port)[module pyb, class DAC]\nConstruct a new DAC object. "port" can be a pin object, or an integer [1 or 2].\nCostants:\n\tDAC.NORMAL\n\tDAC.CIRCULAR
+ExtInt(pin, mode, pull, callback)[module pyb, class ExtInt]\nCreate an ExtInt object, see documentation.\nCostants:\n\tExtInt.IRQ_RISING Trigger on a rising edge;\n\tExtInt.IRQ_FALLING Trigger on a falling edge;\n\tExtInt.IRQ_RISING_FALLING Trigger on a rising or falling edge;\n\tPin.PULL_NONE No pull up or down resistors;\n\tPin.PULL_UP Enable the pull-up resistor;\n\tPin.PULL_DOWN Enable the pull-down resistor;\n\t
+noise(freq)[module pyb, class DAC]\nGenerate a pseudo-random noise signal.\nA new random sample is written to the DAC output at the given frequency.
+write(value)[module pyb, class DAC]\nDirect access to the DAC output (8 bit only at the moment).
+write_timed(data, freq, mode=DAC.NORMAL) Initiates a burst of RAM to DAC using a DMA transfer.\nThe input data is treated as an array of bytes (8 bit data)
+triangle(freq)[module pyb, class DAC]\nGenerate a triangle wave. The value on the DAC output changes at the given frequency,\nand the frequence of the repeating triangle wave itself is 256 (or 1024, need to check) times smaller.
+regs()[module pyb, class ExtInt]\nDump the values of the EXTI registers.
+disable()[module pyb, class ExtInt]\n.Disable the interrupt associated with the ExtInt object.\nThis could be useful for debouncing
+enable()[module pyb, class ExtInt]\nEnable a disabled interrupt.
+line()[module pyb, class ExtInt]\nReturn the line number that the pin is mapped to.
+swint()[module pyb, class ExtInt]\nTrigger the callback from software.
+I2C(bus, ...)[module pyb, class I2C]\nConstruct an I2C object on the given bus. "bus" can be 1 or 2. With no additional parameters, the I2C object is created but not initialised
+deinit()[module pyb, class I2C]\nTurn off the I2C bus.
+init(mode, addr=0x12, baudrate=400000, gencall=False)[module pyb, class I2C]\nInitialise the I2C bus with the given parameters:\n\t"mode" must be either "I2C.MASTER" or "I2C.SLAVE"\n\t"addr" is the 7-bit address (only sensible for a slave)\n\t"baudrate" is the SCL clock rate (only sensible for a master)\n\t"gencall" is whether to support general call mode.
+is_ready(addr)[module pyb, class I2C]\nCheck if an I2C device responds to the given address.\n\tOnly valid when in master mode.
+mem_read(data, addr, memaddr, timeout=5000, addr_size=8)[module pyb, class I2C]\nRead from the memory of an I2C device:\n\t"data" can be an integer or a buffer to read into\n\t"addr" is the I2C device address\n\t"memaddr" is the memory location within the I2C device\n\t"timeout" is the timeout in milliseconds to wait for the read\n\t"addr_size" selects width of memaddr: 8 or 16 bits Returns.
+em_write(data, addr, memaddr, timeout=5000, addr_size=8)[module pyb, class I2C]\nWrite to the memory of an I2C device:\n\t"data" can be an integer or a buffer to write from\n\t"addr" is the I2C device address\n\t"memaddr" is the memory location within the I2C device\n\t"timeout" is the timeout in milliseconds to wait for the write\n\t"addr_size" selects width of memaddr: 8 or 16 bits\n\nReturns "None".
+recv(recv, addr=0x00, timeout=5000)[module pyb, class I2C]\nReceive data on the bus:\n\t"recv" can be an integer, which is the number of bytes to receive, or a mutable buffer, which will be filled with received bytes\n\t"addr" is the address to receive from (only required in master mode)\n\t"timeout" is the timeout in milliseconds to wait for the receive\n\tReturn value: if "recv" is an integer then a new buffer of the bytes received, otherwise the same buffer that was passed in to "recv".
+scan()[module pyb, class I2C]\nScan all I2C addresses from 0x01 to 0x7f and return a list of those that respond.\nOnly valid when in master mode.
+send(send, addr=0x00, timeout=5000)[module pyb, class I2C]\nSend data on the bus:\n\t"send" is the data to send (an integer to send,\nor a buffer object)\n\t"addr" is the address to send to (only required in master mode)\n\t"timeout" is the timeout in milliseconds to wait for the send\n\tReturn value: "None".\nCostants:\n\tI2C.MASTER Initialising the bus to master mode\n\tI2C.SLAVE Initialising the bus to slave mode.
+LCD(skin_position)[LCD] Construct an LCD object in the given skin position.\n"skin_position" can be 'X' or 'Y', and should match the position where the LCD pyskin is plugged in.
+command(instr_data, buf)[class LCD]\nSend an arbitrary command to the LCD. Pass 0 for "instr_data" to send an instruction,\notherwise pass 1 to send data. "buf" is a buffer with the instructions/data to send.
+contrast(value)[class LCD]\nSet the contrast of the LCD. Valid values are between 0 and 47.
+fill(colour)[class LCD]\nFill the screen with the given colour (0 or 1 for white or black).\nThis method writes to the hidden buffer. Use "show()" to show the buffer.
+get(x, y)[class LCD]\nGet the pixel at the position x, y.\n\tReturns 0 or 1.\n\tThis method reads from the visible buffer.
+light(value)[class LCD]\nTurn the backlight on/off. True or 1 turns it on, False or 0 turns it off.
+pixel(x, y, colour)[class LCD]\nSet the pixel at x, y to the given colour (0 or 1).\nThis method writes to the hidden buffer.\nUse "show()" to show the buffer.
+show()[class LCD]\nShow the hidden buffer on the screen.
+text(str, x, y, colour)[class LCD]\nDraw the given text to the position x, y using the given colour 0 or 1.\nThis method writes to the hidden buffer.\nUse show to show the buffer.
+write(str)[class LCD]\nWrite the string "str" to the screen. It will appear immediately.
+LED(id)[module pyb, class LED]\nCreate an LED object associated with the given LED: "id" is the LED number, 1-4
+intensity([value])[module pyb, class LED]\nGet or set the LED intensity.\nIntensity ranges between 0 [off] and 255 [full on].\nIf no argument is given, return the LED intensity.\nIf an argument is given, set the LED intensity and return "None".
+off()[module pyb, class LED]\nTurn the LED off.
+on()[module pyb, class LED]\nTurn the LED on.
+toggle()[module pyb, class LED]\nToggle the LED between on and off.
+Pin(id, ...)[module pyb, class Pin]\nCreate a new Pin object associated with the id.\nIf additional arguments are given, they are used to initialise the pin.
+af_list()[module pyb, class Pin]\n\tReturns an array of alternate functions available for this pin.
+debug([state])[module pyb, class Pin]\nGet or set the debugging state "True" or "False" for on or off.
+dict([dict])[module pyb, class Pin]\nGet or set the pin mapper dictionary.
+mapper([fun])[module pyb, class Pin]\nGet or set the pin mapper function.
+init(mode, pull=Pin.PULL_NONE, af=-1)[module pyb, class Pin]\nInitialise the pin, when mode is Pin.AF_PP or Pin.AF_OD, then af can be\nthe index or name of one of the alternate functions associated with a pin.\n\tReturns: "None".\nCostants:\n\tPin.IN Configure the pin for input.\n\tPin.OUT_PP Configure the pin for output, with push-pull control.\n\tPin.OUT_OD Configure the pin for output, with open-drain control.\n\tPin.AF_PP Configure the pin for alternate function, pull-pull.\n\tPin.AF_OD Configure the pin for alternate function, open-drain.\n\tPin.ANALOG Configure the pin for analog.\n\tPin.PULL_NONE No pull up or down resistors;\n\tPin.PULL_UP Enable the pull-up resistor;\n\tPin.PULL_DOWN Enable the pull-down resistor.
+high()[module pyb, class Pin]\nSet the pin to a high logic level.
+low()[module pyb, class Pin]\nSet the pin to a low logic level.
+value([value])[module pyb, class Pin]\nGet or set the digital logic level of the pin:\nWith no argument, return 0 or 1 depending on the logic level of the pin.\nWith "value" given, set the logic level of the pin.\n\t"value" can be anything that converts to a boolean.\nIf it converts to "True", the pin is set high, otherwise it is set low.
+__str__()[module pyb, class Pin]\nReturn a string describing the pin object.
+af()[module pyb, class Pin]\nReturns the currently configured alternate-function of the pin.\nThe integer returned will match one of the allowed constants for the af argument to the init function.
+gpio()[module pyb, class Pin]\nReturns the base address of the GPIO block associated with this pin.
+mode()[module pyb, class Pin]\nReturns the currently configured mode of the pin.\nThe integer returned will match one of the allowed constants for the mode argument to the init function.
+name()[module pyb, class Pin]\nGet the pin name.
+names()[module pyb, class Pin]\nReturns the cpu and board names for this pin.
+pin()[module pyb, class Pin]\nGet the pin number.
+port()[module pyb, class Pin]\nGet the pin port.
+pull()[module pyb, class Pin]\nReturns the currently configured pull of the pin.\nThe integer returned will match one of the allowed constants for the pull argument to the init function.
+__str__()[module pyb, class PinAF]\nReturn a string describing the alternate function.
+index()[module pyb, class PinAF]\nReturn the alternate function index.
+name()[module pyb, class PinAF]\nReturn the name of the alternate function.
+reg()[module pyb, class PinAF]\nReturn the base register associated with the peripheral assigned to this alternate function.
+delay(ms)[module pyb]\nDelay for the given number of milliseconds.
+udelay(us)[module pyb]\nDelay for the given number of microseconds.
+millis()[module pyb]\nReturns the number of milliseconds since the board was last reset.
+micros()[module pyb]\nReturns the number of microseconds since the board was last reset.
+elapsed_millis(start)[module pyb]\nReturns the number of milliseconds which have elapsed since "start".
+elapsed_micros(start)[module pyb]\nReturns the number of microseconds which have elapsed since "start".
+hard_reset()[module pyb]\nResets the pyboard in a manner similar to pushing the external RESET button.
+bootloader()[module pyb]\nActivate the bootloader without BOOT pins.
+disable_irq()[module pyb]\nDisable interrupt requests.\n\tReturns the previous IRQ state: "False"/"True" for isabled/enabled IRQs respectively.
+enable_irq(state=True)[module pyb]\nEnable interrupt requests.\nIf "state" is "True" [the default value] then IRQs are enabled. If "state" is "False" then IRQs are disabled.
+freq([sys_freq])[module pyb]\nIf given no arguments, returns a tuple of clock frequencies:\n[SYSCLK, HCLK, PCLK1, PCLK2].If given an argument, sets the system frequency to that value in Hz.
+wfi()[module pyb]\nWait for an interrupt.\nThis executies a "wfi" instruction which reduces power consumption of the MCU\nuntil an interrupt occurs, at which point execution continues.
+standby()[module pyb]\n
+stop() [module pyp]\n
+have_cdc()[module pyb]\nReturn True if USB is connected as a serial device, False otherwise.
+hid((buttons, x, y, z))[module pyb]\nTakes a 4-tuple or list and sends it to the USB host to signal a HID mouse-motion event.
+info([dump_alloc_table])[module pyb]\nPrint out lots of information about the board.
+repl_uart(uart)[module pyb]\nGet or set the UART object that the REPL is repeated on.
+rng()[module pyb]\nReturn a 30-bit hardware generated random number.
+sync()[module pyb]\nSync all file systems.
+unique_id()[module pyb]\nReturns a string of 12 bytes [96 bits], which is the unique ID for the MCU.
+info()[module pyb, class RTC]\nGet information about the startup time and reset source.
+RTC()[module pyb, class RTC]\nCreate an RTC object.
+datetime([datetimetuple])[module pyb, class RTC]\nGet or set the date and time of the RTC.\nWith no arguments, this method returns an 8-tuple with the current date and time
+info()[module pyb, class RTC]\nGet information about the startup time and reset source.
+Servo(id)[module pyb, class Servo]\nCreate a servo object. "id" is 1-4.
+angle([angle, time=0])[module pyb, class Servo]\nGet or set the angle of the servo.\n\t"angle" is the angle to move to in degrees\n\t"time" is the number of milliseconds to take to get to the specified angle.
+calibration([pulse_min, pulse_max, pulse_centre, [pulse_angle_90, pulse_speed_100]])[module pyb, class Servo]\nGet or set the calibration of the servo timing.
+pulse_width([value])[module pyb, class Servo]\nGet or set the pulse width in milliseconds.
+speed([speed, time=0])[module pyb, class Servo]\nGet or set the speed of a continuous rotation servo.\n\t"speed" is the speed to move to change to, between -100 and 100.\n\t"time" is the number of milliseconds to take to get to the specified speed.
+SPI(bus, ...)[module pyb, class SPI]\nConstruct an SPI object on the given bus. "bus" can be 1 or 2.\nWith no additional parameters, the SPI object is created but not initialised.
+deinit()[module pyb, class SPI]\nTurn off the SPI bus.
+init(mode, baudrate=328125, polarity=1, phase=0, bits=8, firstbit=SPI.MSB, ti=False, crc=None)[module pyb, class SPI]\nInitialise the SPI bus with the given parameters:\n\t"mode" must be either "SPI.MASTER" or "SPI.SLAVE".\n\t "baudrate" is the SCK clock rate (only sensible for a master).\nCostants:\n\tSPI.MASTER for initialising the SPI bus to master mode\n\tSPI.SLAVE for initialising the SPI bus to slave mode.\n\tSPI.LSB set the first bit to be the least significant bit.\n\tSPI.MSB set the first bit to be the most significant bit.
+recv(recv, timeout=5000)[module pyb, class SPI]\nReceive data on the bus: "recv" can be an integer, which is the number of bytes to receive,\nor a mutable buffer, which will be filled with received bytes.\n\t"timeout" is the timeout in milliseconds to wait for the receive.\n\tReturn value: if "recv" is an integer then a new buffer of the bytes received, otherwise the same buffer that was passed in to "recv".
+send(send, timeout=5000)[module pyb, class SPI]\nSend data on the bus: "send" is the data to send (an integer to send, or a buffer object).\n\t"timeout" is the timeout in milliseconds to wait for the send.\n\tReturn value: "None".
+send_recv(send, recv=None, timeout=5000)[module pyb, class SPI]\nSend and receive data on the bus at the same time: "send" is the data to send [an integer to send, or a buffer object].\n\t"recv" is a mutable buffer which will be filled with received bytes.\nIt can be the same as "send", or omitted. If omitted, a new buffer will be created.\n\t"timeout" is the timeout in milliseconds to wait for the receive.\n\tReturn value: the buffer with the received bytes.
+Switch()[module pyb, class Switch]\nCreate and return a switch object.
+switch()[module pyb, class Switch]\nReturn the switch state: "True" if pressed down, "False" otherwise.
+callback(fun)[module pyb, class Switch]\nRegister the given function to be called when the switch is pressed down.\nIf "fun" is "None", then it disables the callback.
+Timer(id, ...)[module pyb, class Timer]\nConstruct a new timer object of the given id.\nIf additional arguments are given, then the timer is initialised by "init(...)". "id" can be 1 to 14, excluding 3.
+timer.callback(fun)[module pyb, class Timer]\nSet the function to be called when the timer triggers. "fun" is passed 1 argument, the timer object. If "fun" is "None" then the callback will be disabled.
+channel(channel, mode, ...)[module pyb, class Timer]\nIf only a channel number is passed, then a previously initialized channel object is returned [or "None" if there is no previous channel].\nOthwerwise, a TimerChannel object is initialized and returned.\nEach channel can be configured to perform pwm, output compare, or input capture.\nAll channels share the same underlying timer, which means that they share the same timer clock.\n\t"mode" can be one of Timer.<constant>. "callback"\nas per TimerChannel.callback. "pin" None [the default] or a Pin object.\nIf specified [and not None] this will cause the alternate function\nof the the indicated pin to be configured for this timer channel.\nAn error will be raised if the pin doesn't support\nany alternate functions for this timer channel.\n\tCostants\n\t"pulse_width" Determines the initial pulse width value to use.\n\t"pulse_width_percent" Determines the initial pulse width percentage to use.\n\tPWM Configure the timer in PWM mode (active high).\n\tPWM_INVERTED Configure the timer in PWM mode (active low).\n\tOC_TIMING Indicates that no pin is driven.\n\tOC_ACTIVE The pin will be made active when a compare match occurs\n\t(active is determined by polarity)\n\tOC_INACTIVE The pin will be made inactive when a compare match occurs.\n\tOC_TOGGLE The pin will be toggled when an compare match occurs.\n\tOC_FORCED_ACTIVE The pin is forced active ([compare match is ignored).\n\tOC_FORCED_INACTIVE The pin is forced inactive (compare match is ignored).\n\tIC Configure the timer in Input Capture mode.
+counter([value])[module pyb, class Timer]\nGet or set the timer counter.
+deinit()[module pyb, class Timer]\nDeinitialises the timer. Disables the callback [and the associated irq].
+freq([value])[module pyb, class Timer]\nGet or set the frequency for the timer [changes prescaler and period if set].
+init(freq, prescaler, period)[module pyb, class Timer]\nInitialise the timer.\nInitialisation must be either by frequency [in Hz] or by prescaler and period.
+period([value])[module pyb, class Timer]\nGet or set the period of the timer.
+prescaler([value])[module pyb, class Timer]\nGet or set the prescaler for the timer.
+source_freq()[module pyb, class Timer]\nGet the frequency of the source of the timer.
+TimerChannel()[module pyb, class TimerChannel]\nTimer channels are used to generate/capture a signal using a timer, are created using the Timer.channel[] method.
+callback(fun)[module pyb, class TimerChannel]\nSet the function to be called when the timer channel triggers.\n\t"fun" is passed 1 argument, the timer object. If "fun" is "None" then the callback will be disabled.
+capture([value])[module pyb, class TimerChannel]\nGet or set the capture value associated with a channel.\nCapture, compare, and pulse_width are all aliases for the same function.\nCapture is the logical name to use when the channel is in input capture mode.
+compare([value])[module pyb, class TimerChannel]\nGet or set the compare value associated with a channel.\nCapture, compare, and pulse_width are all aliases for the same function.\nCompare is the logical name to use when the channel is in output compare mode.
+pulse_width([value])[module pyb, class TimerChannel]\nGet or set the pulse width value associated with a channel.\nCapture, compare, and pulse_width are all aliases for the same function.
+pulse_width_percent([value])[module pyb, class TimerChannel]\nGet or set the pulse width percentage associated with a channel.\nThe value is a number between 0 and 100 and sets the percentage of the timer period\n for which the pulse is active.
+USB_VCP()[module pyb, class USB_VCP]\nCreate a new USB_VCP [Virtual COM Port] object.
+any()[module pyb, class USB_VCP]\nReturn "True" if any characters waiting, else "False".
+close()[module pyb, class USB_VCP]\nClose the Virtual COM Port.
+read([nbytes])[module pyb, class USB_VCP]\nRead characters.\nIf "nbytes" is specified then read at most that many bytes.\n\tReturn value: a bytes object containing the bytes read in.\n\tReturns "b''" on timeout
+readall()[module pyb, class USB_VCP]\nRead as much data as possible. Return value: a bytes object.
+usb_vcp.readline() [USB_VCB]
+recv(data, timeout=5000)[module pyb, class USB_VCP]\nReceive data on the bus: "data" can be an integer, which is the number of bytes to receive,\nor a mutable buffer, which will be filled with received bytes.\n\t"timeout" is the timeout in milliseconds to wait for the receive.\n\tReturn value: if "data" is an integer then a new buffer of the bytes received,\n\totherwise the number of bytes read into "data4 is returned.
+send(data, timeout=5000)[module pyb, class USB_VCP]\nSend data over the USB VCP: "data" is the data to send (an integer to send, or a buffer object).\n\t"timeout" is the timeout in milliseconds to wait for the send.\n\tReturn value: number of bytes sent.
+write(buf)[module pyb, class USB_VCP]\nWrite the buffer of bytes to the bus. Return value: number of bytes written.
+Poll()[module select, class Poll]\nCreate an instance of the Poll class.
+select(rlist, wlist, xlist[, timeout])[module select, class Poll]\nWait for activity on a set of objects.
+register(obj[, eventmask])[module select, class Poll]\nRegister "obj" for polling. "eventmask" is 1 for read, 2 for write, 3 for read-write
+unregister(obj)[module select, class Poll]\nUnregister "obj" from polling.
+modify(obj, eventmask)[module select, class Poll]\nModify the "eventmask" for "obj".
+poll([timeout])[module select, class Poll]\nWait for one of the registered objects to become ready.
+calcsize(fmt)[class struct]\nReturn the number of bytes needed to store the given "fmt".
+pack(fmt, v1, v2, ...)[class struct]\nPack the values "v1", "v2", ... according to the format string "fmt".\nThe return value is a bytes object encoding the values.
+unpack(fmt, data)[class struct]\nUnpack from the "data" according to the format string "fmt".\nThe return value is a tuple of the unpacked values.
+exit([retval])[module sys]\nRaise a "SystemExit" exception.\nIf an argument is given, it is the value given to "SystemExit".\nCostants:\n\t"argv" A mutable list of arguments this program started with\n\t"byteorder" The byte order of the system ("little" or "big")\n\t"path" A mutable list of directories to search for imported modules\n\t"platform" The platform that Micro Python is running on\n\t"stderr" Standard error (connected to USB VCP, and optional UART object)\n\t"stdin" Standard input (connected to USB VCP, and optional UART object)\n\t"stdout" Standard output (connected to USB VCP, and optional UART object)\n\t"version" Python language version that this implementation conforms to, as a string\n\t"version_info" Python language version that this implementation conforms to, as a tuple of ints
+localtime([secs])[module time]\nConvert a time expressed in seconds since Jan 1, 2000 into an 8-tuple which contains: [year, month, mday, hour, minute, second, weekday, yearday]
+mktime()[module time]\nThis is inverse function of localtime.\nIt's argument is a full 8-tuple which expresses a time as per localtime.\nIt returns an integer which is the number of seconds since Jan 1, 2000.
+sleep(seconds)[module time]\nSleep for the given number of seconds. Seconds can be a floating-point number to sleep for a fractional number of seconds.
+time()[module time]\nReturns the number of seconds, as an integer, since 1/1/2000.
+heappush(heap, item)[module uheapq]\nPush the "item" onto the "heap".
+heappop(heap)[module uheapq]\nPop the first item froh the "heap", and return it. Raises IndexError if heap is empty.
+heapify(x)[module uheapq]\nConvert the list "x" into a heap. This is an in-place operation.
+dumps(obj)[module ujson]\nReturn "obj" represented as a JSON string.
+loads(str)[module ujson]\nParse the JSON "str" and return an object.\nRaises ValueError if the string is not correctly formed.
+getaddrinfo(host, port)[module usocket]\n
+socket(family=AF_INET, type=SOCK_STREAM, fileno=-1)[module usocket]\nCreate a socket.
+chdir(path)[module os]\nChange current directory.
+getcwd()[module os]\nGet the current directory.
+listdir([dir])[module os]\nWith no argument, list the current directory. Otherwise list the given directory.
+mkdir(path)[module os]\nCreate a new directory.
+remove(path)[module os]\nRemove a file.
+rmdir(path)[module os]\nRemove a directory.
+stat(path)[module os]\nGet the status of a file or directory.
+sync()[module os]\nSync all filesystems.
+urandom(n)[module os]\nReturn a bytes object with n random bytes, generated by the hardware random number generator.
+CC3k(spi, pin_cs, pin_en, pin_irq)[module network, class CC3k]\nInitialise the CC3000 using the given SPI bus and pins and return a CC3k object.
+connect(ssid, key=None, security=WPA2, bssid=None)[module network, classCC3k] 
+WIZnet5k(spi, pin_cs, pin_rst)[module network, class WIZnet5k]\nCreate and return a WIZnet5k object.
+ipaddr([(ip, subnet, gateway, dns)])[module network, class WIZnet5k]\nGet/set IP address, subnet mask, gateway and DNS.
+regs()[module network, class WIZnet5k]\nDump WIZnet5k registers.
+cos(z)[module cmath]\nReturn the cosine of "z".
+exp(z)[module cmath]\nReturn the exponential of z".
+log(z)[module cmath]\nReturn the natural logarithm of "z".\nThe branch cut is along the negative real axis.
+log10(z)[module cmath]\nReturn the base-10 logarithm of "z".\nThe branch cut is along the negative real axis.
+phase(z)[module cmath]\nReturns the phase of the number "z", in the range (-pi, +pi].
+polar(z)[module cmath]\nReturns, as a tuple, the polar form of "z".
+rect(r, phi)[module cmath]\nReturns the complex number with modulus "r" and phase "phi".
+sin(z)[module cmath]\nReturn the sine of "z".
+sqrt(z)[module cmath]\nReturn the square-root of "z".
+enable()[module gc]\nEnable automatic garbage collection.
+disable()[module gc]\nDisable automatic garbage collection. Heap memory can still be allocated, and garbage collection can still be initiated manually using :meth:"gc.collect".
+collect()[module gc]\nRun a garbage collection.
+mem_alloc()[module gc]\nReturn the number of bytes of heap RAM that are allocated.
+mem_free()[module gc]\nReturn the number of bytes of available heap RAM.
+acos(x)[module math]\nReturn the inverse cosine of "x".
+acosh(x)[module math]\nReturn the inverse hyperbolic cosine of "x".
+asin(x)[module math]\nReturn the inverse sine of "x".
+asinh(x)[module math]\nReturn the inverse hyperbolic sine of "x".
+atan(x)[module math]\nReturn the inverse tangent of "x".
+atan2(y, x)[module math]\nReturn the principal value of the inverse tangent of "y/x".
+atanh(x)[module math]\nReturn the inverse hyperbolic tangent of "x".
+ceil(x)[module math]\nReturn an integer, being "x" rounded towards positive infinity.
+copysign(x, y)[module math]\nReturn "x" with the sign of "y".
+cos(x)[module math]\nReturn the cosine of "x".
+cosh(x)[module math]\nReturn the hyperbolic cosine of "x".
+degrees(x)[module math]\nReturn radians "x" converted to degrees.
+erf(x)[module math]\nReturn the error function of "x".
+erfc(x)[module math]\nReturn the complementary error function of "x".
+exp(x)[module math]\nReturn the exponential of "x".
+expm1(x)[module math]\nReturn "exp(x) - 1".
+fabs(x)[module math]\nReturn the absolute value of "x".
+floor(x)[module math]\nReturn an integer, being "x" rounded towards negative infinity.
+fmod(x, y)[module math]\nReturn the remainder of "x/y".
+frexp(x)[module math]\nConverts a floating-point number to fractional and integral components.
+gamma(x)[module math]\nReturn the gamma function of "x".
+isfinite(x)[module math]\nReturn "True" if "x" is finite.
+isinf(x)[module math]\nReturn "True" if "x" is infinite.
+isnan(x)[module math]\nReturn "True" if "x" is not-a-number
+ldexp(x, exp)[module math]\nReturn "x * (2**exp)".
+lgamma(x)[module math]\nReturn the natural logarithm of the gamma function of "x".
+log(x)[module math]\nReturn the natural logarithm of "x".
+log10(x)[module math]\nReturn the base-10 logarithm of "x".
+log2(x)[module math]\nReturn the base-2 logarithm of "x".
+modf(x)[module math]\nReturn a tuple of two floats, being the fractional and integral parts of "x".\nBoth return values have the same sign as "x".
+pow(x, y)[module math]\nReturns "x" to the power of "y".
+radians(x)[module math]\nReturn degrees "x" converted to radians.
+sin(x)[module math]\nReturn the sine of "x".
+sinh(x)[module math]\nReturn the hyperbolic sine of "x".
+sqrt(x)[module math]\nReturn the square root of "x".
+tan(x)[module math]\nReturn the tangent of "x".
+tanh(x)[module math]\nReturn the hyperbolic tangent of "x".
+trunc(x)[module math]\nReturn an integer, being "x" rounded towards 0.

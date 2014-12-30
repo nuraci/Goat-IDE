@@ -31,6 +31,7 @@ passionate as me about microcontrollers and embedded systems, do not want (or ca
 "The Go @ IDE" wants to be the junction point between hardware and software, combining features of software specific hardware tools,<br />
 (terminal emulator, dfu-programmer,...) with a powerful and highly customizable <a href="http://it.wikipedia.org/wiki/Integrated_development_environment" target="body"></a>IDE<br />
 Goat currently includes the support for:</br>
+<a href="http://micropython.org/" target="body">MicroPython</a><br />
 <a href="http://www.eluaproject.net/" target="body">eLua</a><br />
 <a href="http://www.arduino.cc" target="body">Arduino</a> (the installation of the "Arduino IDE 1.0" is required)<br />
 </br> 
@@ -45,9 +46,11 @@ Some features:<br />
 <br />
 <li> Includes the capability to connect with the real hardware (through the serial or the USB port) obtaining the prompt of the target(*) inside it.</li>
 <br />
-<li> It's able to send files on the Hardware (using the <a href="http://en.wikipedia.org/wiki/XMODEM" target="body">xmodem</a> protocol).</li>
+<li> It's able to run the .py file on the Hardware (using the raw REPL interface).</li>
 <br />
-<li> Supports some terminal commands (standard ansi/vt100), so it's able to play eLua games like "hanoi" or "hungman" (using the target(*) ansi/vt100 capabilities).</li>
+<li> It's able to send the .lua/.lc file on the Hardware (using the eLua xmodem protocol).</li>
+<br />
+<li> Supports some terminal commands (standard ansi/vt100), so it's able to play games like "hanoi" or "hungman" (using the TERM capability).</li>
 <br />
 <li> Supports the FLASH (on the target(*)) programming through the DFU/Arduino boot loader.</li>
 <br />
@@ -63,7 +66,8 @@ target(*) is a small hardware with a <a href="http://en.wikipedia.org/wiki/Micro
  managed by an <a href="http://en.wikipedia.org/wiki/Real-time_operating_system" target="body"> RTOS </a><br />
 and able to run a monolithic but very fast application.<br />
 Some examples are: <br /><br />
-<a href="http://wiki.eluaproject.net/Mizar32" target="body" name="The Mizar32">The Mizar32 ( low-cost Stackable Multi-Board Computer)</a><br />
+<a href="http://docs.micropython.org/en/latest/quickref.html" target="body">MicroPython (the pyboard)</a><br />
+<a href="http://wiki.eluaproject.net/Mizar32" target="body" name="The Mizar32">The Mizar32 (low-cost Stackable Multi-Board Computer)</a><br />
 <a href="http://wiki.eluaproject.net/STM32F4DISCOVERY" target="body" name="STM32F4Dicscover">STM32F4Dicscover board</a><br />
 <a href="http://www.arduino.cc" target="body"  name="Arduino">Arduino</a>
 </cite>

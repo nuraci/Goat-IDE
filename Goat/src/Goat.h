@@ -12,10 +12,10 @@
 #define APP_NAME "Goat"
 #define APP_NAME_TITLE "The Go @ IDE"
 #define APP_NAME_STATIC_BUILD "GoatIDE"
-#define VERSION_GOAT "0.6.2"
-#define VERSION_GOAT_WORDS 0, 6, 0, 1
-#define COPYRIGHT_GOAT_DATES "March 2012"
-#define COPYRIGHT_GOAT_YEARS "2012"
+#define VERSION_GOAT "1.0.0"
+#define VERSION_GOAT_WORDS 1, 0, 0, 0
+#define COPYRIGHT_GOAT_DATES "January 2015"
+#define COPYRIGHT_GOAT_YEARS "2015"
 // Version numbers and dates
 #define VERSION_SCITE "3.0.4"
 #define VERSION_WORDS 3, 0, 4, 0
@@ -65,12 +65,12 @@ void __cdecl myDbgPrint(const char *s, ...);
 #define IDM_TOOLS			1100
 #define IDM_BUFFER			1200
 #define IDM_IMPORT			1300
-#define IDM_LANGUAGE			1400
+#define IDM_LANGUAGE		1400
 
 // File
-#define IDM_NEW			101
+#define IDM_NEW				101
 #define IDM_OPEN			102
-#define IDM_OPENSELECTED		103
+#define IDM_OPENSELECTED	103
 #define IDM_REVERT			104
 #define IDM_CLOSE			105
 #define IDM_SAVE			106
@@ -82,7 +82,7 @@ void __cdecl myDbgPrint(const char *s, ...);
 #define IDM_SAVEASTEX		115
 #define IDM_SAVEACOPY		116
 #define IDM_SAVEASXML		117
-#define IDM_COPYPATH			118
+#define IDM_COPYPATH		118
 #define IDM_ALLOWACCESS		119
 #define IDM_MRU_SEP			120
 #define IDM_MRU_SUB			121
@@ -318,6 +318,22 @@ void __cdecl myDbgPrint(const char *s, ...);
 #define IDD_BUFFERS			402
 #define IDD_FIND_ADV		403
 #define IDD_REPLACE_ADV		404
+
+// Keys
+#define IDK_FIRST			600
+#define IDK_BS				600
+#define IDK_UP				601
+#define IDK_DOWN			602
+#define IDK_LEFT			603
+#define IDK_RIGHT			604
+#define IDK_HOME			605
+#define IDK_END				606
+#define IDK_CTRL_A			607
+#define IDK_CTRL_B			608
+#define IDK_CTRL_C			609
+#define IDK_CTRL_D			610
+#define IDK_CTRL_E			611
+#define IDK_LAST			611
 
 // Resource IDs
 #define IDR_CLOSEFILE 100

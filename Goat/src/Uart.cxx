@@ -1,13 +1,9 @@
-/***********************************************************************/
-/* Uart.cxx                                                             */
-/* -------                                                             */
-/*           GTKTerm Software                                          */
-/*                      (c) Julien Schmitt                             */
-/*                      julien@jls-info.com                            */
-/*                                                                     */
-/* ------------------------------------------------------------------- */
-/*                                                                     */
-/***********************************************************************/
+// Goat - Scintilla based Text Editor
+/** @file Uart.cxx
+ ** Interface to UART facilities.
+ **/
+// Copyright 2011-2015 by Nunzio Raciti <nunzio.raciti@gmail.com>
+// The License.txt file describes the conditions under which this software may be distributed.
 
 #ifdef WIN32
 #include <windows.h>
@@ -35,9 +31,11 @@
 #include "crc16.h"
 #include "Mutex.h"
 #include "Uart.h"
+#include "Term.h"
 
 
 static void *XmodemTransmitThread(void *ptr);
+static void *RawReplTransmitThread(void *ptr);
 
 /*
  * Target: SciTEGTK::ExecuteOnConsole -> SciTEGTK::PostCallbackConsole -> SciTEBase::ConsoleInsertChars()
@@ -139,7 +137,7 @@ int UART::check(int crc, const unsigned char *buf, int sz) {
 	return 0;
 }
 
-int UART::XmodemTransmitFile(const char *name) {
+int UART::SerialTrasmitFile(const char *name, int type) {
 	FILE *pFile;
 	size_t result;
 
@@ -151,22 +149,22 @@ int UART::XmodemTransmitFile(const char *name) {
 
 	// obtain file size:
 	fseek(pFile , 0 , SEEK_END);
-	xmodemBufSize = ftell(pFile);
+	sendFileBufSize = ftell(pFile);
 	rewind(pFile);
 
 	// allocate memory to contain the whole file:
-	xmodemBuf = (unsigned char *) malloc(sizeof(char)*xmodemBufSize);
-	if (xmodemBuf == NULL) {
+	sendFileBuf = (unsigned char *) malloc(sizeof(char)*sendFileBufSize);
+	if (sendFileBuf == NULL) {
 		printf("Memory error\n");
 		return (-2);
 	}
 
 	// copy the file into the buffer:
-	result = fread(xmodemBuf,1,xmodemBufSize,pFile);
-	if (result != xmodemBufSize) {
+	result = fread(sendFileBuf,1,sendFileBufSize,pFile);
+	if (result != sendFileBufSize) {
 		printf("Reading error\n");
-		free(xmodemBuf);
-		xmodemBuf= NULL;
+		free(sendFileBuf);
+		sendFileBuf = NULL;
 		return (-3);
 	}
 
@@ -177,16 +175,33 @@ int UART::XmodemTransmitFile(const char *name) {
 	/* Unfortunately Windows doesn't help! */
 #ifdef GTK
 	{
-		pthread_t tid;
-		pthread_create(&tid, NULL, XmodemTransmitThread, (void *)(this));
+		pthread_t tid = 0;
+		switch (type) {
+		case UART_SEND_XMODEM:
+			pthread_create(&tid, NULL, XmodemTransmitThread, (void *)(this));
+			break;
+		case UART_SEND_RAW_REPL:
+			pthread_create(&tid, NULL, RawReplTransmitThread, (void *)(this));
+			break;
+		}
 		return tid != 0;
 	}
 #endif
 
 #ifdef WIN32
 	{
-		uintptr_t result = _beginthread((void (*)(void*))XmodemTransmitThread, 1024 * 1024, reinterpret_cast<void *>(this));
-		return result != static_cast<uintptr_t>(-1);
+		uintptr_t result;
+
+		switch (type) {
+		case UART_SEND_XMODEM:
+			result = _beginthread((void ( *)(void *))XmodemTransmitThread, 1024 * 1024, reinterpret_cast<void *>(this));
+			return result != static_cast<uintptr_t>(-1);
+			break;
+		case UART_SEND_RAW_REPL:
+			result = _beginthread((void ( *)(void *))RawReplTransmitThread, 1024 * 1024, reinterpret_cast<void *>(this));
+			return result != static_cast<uintptr_t>(-1);
+			break;
+		}
 	}
 #endif
 }
@@ -195,6 +210,156 @@ static void *XmodemTransmitThread(void *ptr) {
 	UART *uart_class = static_cast<UART *>(ptr);
 	uart_class->XmodemTransmit();
 	return NULL;
+}
+
+static void *RawReplTransmitThread(void *ptr) {
+	UART *uart_class = static_cast<UART *>(ptr);
+	uart_class->RawReplTransmit();
+	return NULL;
+}
+
+#define STATE_INITIAL		0
+#define STATE_RX_TIMEOUT	1
+#define STATE_RX_HEAD_0		2
+#define STATE_RX_HEAD_1		3
+#define STATE_RX_FIRST_EOF	4
+#define STATE_RX_SECOND_EOF 5
+#define STR_TO_EXIT 		"raw REPL; CTRL-B to exit\r\n>"
+#define RX_TIMEOUT			1000
+
+int UART::RawReplTransmit() {
+	unsigned char 	xBuff[1024];
+	size_t 			numchar;
+	int 			state, byte, ret;
+	unsigned char 	ch;
+	int 			timeout;
+
+	ClearRingBuffer2();
+	SetSendFileStatus(UART_SEND_RAW_REPL);
+	// Ctrl-C twice: interrupt any running program
+	OutByte('\r');
+	OutByte(3);
+	OutByte(3);
+	// ctrl-A: enter raw REPL
+	OutByte('\r');
+	OutByte(1);
+	// data = self.read_until(1, b'to exit\r\n>')
+	msSleep(100);
+	memset(xBuff,0,sizeof(xBuff));
+	for (numchar = 0; numchar < sizeof(xBuff); numchar++) {
+		byte = InByte(100);
+		if (byte < 0) break;
+		xBuff[numchar] = byte;
+	}
+
+	if (numchar < sizeof(STR_TO_EXIT)) {
+		goto enter_raw_repl2;
+	}
+
+	if (strstr((char *)xBuff, STR_TO_EXIT) != 0) {
+		goto enter_raw_repl_exit_fine;
+	}
+
+enter_raw_repl2:
+	// self.serial.write(b'\x04') # ctrl-D: soft reset
+	OutByte(4); // ctrl-D: soft reset
+	msSleep(100);
+	memset(xBuff,0,sizeof(xBuff));
+	for (numchar = 0; numchar < sizeof(xBuff); numchar++) {
+		byte = InByte(100);
+		if (byte < 0) break;
+		xBuff[numchar] = byte;
+	}
+
+	if (numchar < sizeof(STR_TO_EXIT)) goto enter_raw_repl2;
+
+	if (strstr((char *)xBuff, STR_TO_EXIT) != 0) {
+		goto enter_raw_repl_exit_fine;
+	}
+	return -2;
+
+enter_raw_repl_exit_fine:
+
+	for (numchar = 0; numchar < sendFileBufSize; numchar++)  {
+		OutByte(sendFileBuf[numchar]);
+	}
+
+	msSleep(100);
+	// Ctrl-D: input finished
+	OutByte(4);
+	msSleep(100);
+
+	memset(xBuff,0,sizeof(xBuff));
+	state = STATE_INITIAL;
+
+	/* follow */
+	while (state != STATE_RX_SECOND_EOF) {
+		timeout = RX_TIMEOUT;
+		while (RingBufferIsEmpty()) {
+			if (timeout) {
+				msSleep(1);
+				if (--timeout == 0) {
+					if (state == STATE_RX_FIRST_EOF || state == STATE_RX_SECOND_EOF) {
+						ret = 1;
+						goto RawReplTransmit_end;
+					}
+					if (state == STATE_INITIAL || state == STATE_RX_HEAD_0 || state == STATE_RX_HEAD_1) {
+						ret = 0;
+						goto RawReplTransmit_end;
+					}
+				}
+			}
+		}
+		byte = GetCharFromBuffer();
+		if (byte < 1) {
+			continue;
+		}
+
+		ch = (0x00ff & byte);
+
+		if (state == STATE_INITIAL && ch == 'O') {
+			state = STATE_RX_HEAD_0;
+			continue;
+		}
+
+		if (state == STATE_RX_HEAD_0 && ch == 'K') {
+			state = STATE_RX_HEAD_1;
+			continue;
+		}
+
+		if (state == STATE_RX_HEAD_1 && ch == 0x04 /* EOF */) {
+			state = STATE_RX_FIRST_EOF;
+			continue;
+		}
+
+		if (state == STATE_RX_FIRST_EOF && ch == 0x04 /* EOF_error_string_EOF **/) {
+			state = STATE_RX_SECOND_EOF;
+			continue;
+		}
+
+		if (state >= STATE_RX_HEAD_1) {
+			/* Unfortunately this thread can't write on GUI window  directly */
+			PutCharToBuffer2(ch);
+		}
+	}
+
+RawReplTransmit_end:
+
+	msSleep(100);
+	// Ctrl-B: enter friendly REPL
+	OutByte('\r');
+	OutByte(2);
+
+	// remove two lines
+	for (char numLF = 0; numLF <= 2;) {
+		byte = InByte(100);
+		if (byte < 0) break;
+		if (char(0x00ff & byte) == UART_EOL_LF) numLF++;
+	}
+
+	SetSendFileStatus(UART_SEND_NO_FILE);
+	ClearRingBuffer2();
+	return ret;
 }
 
 int UART::XmodemTransmit() {
@@ -206,12 +371,12 @@ int UART::XmodemTransmit() {
 	int retry, ret;
 
 	/* Waiting for character 'C' */
-	while ((c = PeekCharFromBuffer()) != 'C' && timeout ) {
+	while ((c = PeekCharFromBuffer()) != 'C' && timeout) {
 		msSleep(1);
 		timeout--;
 	}
 
-	XmodemOn(true);
+	SetSendFileStatus(UART_SEND_XMODEM);
 
 	for (;;) {
 		for (retry = 0; retry < 16; ++retry) {
@@ -247,14 +412,14 @@ start_trans:
 			bufsz = 128;
 			xbuff[1] = packetno;
 			xbuff[2] = ~packetno;
-			c = xmodemBufSize - len;
+			c = sendFileBufSize - len;
 			if (c > bufsz) c = bufsz;
 			if (c >= 0) {
 				memset(&xbuff[3], CTRLZ, bufsz);
 				if (c == 0) {
 					xbuff[3] = CTRLZ;
 				} else {
-					memcpy(&xbuff[3], &xmodemBuf[len], c);
+					memcpy(&xbuff[3], &sendFileBuf[len], c);
 					//if (c < bufsz) xbuff[3+c] = CTRLZ; // now useless, see the memset() before.
 				}
 				if (crc) {
@@ -309,9 +474,9 @@ start_trans:
 
 exit_trans:
 
-	XmodemOn(false);
-	free(xmodemBuf);
-	xmodemBuf= NULL;
+	SetSendFileStatus(UART_SEND_NO_FILE);
+	free(sendFileBuf);
+	sendFileBuf= NULL;
 	return ret;
 }
 
@@ -323,10 +488,7 @@ int UART::ListenPort() {
 	if (!IsStarted())
 		return 0;
 
-	if (!Status() ) {
-		//myDbgPrint("not connected...");
-		//msSleep(1000);
-		//Start();
+	if (!Status()) {
 		return 0;
 	}
 
@@ -334,7 +496,6 @@ int UART::ListenPort() {
 		return 0;
 
 	if (!ReadFile(portHandle, Buffer, BUFFER_RX, &bytes, NULL)) {
-		//myDbgPrint("!ReadFile");
 		return 0;
 	}
 
@@ -358,7 +519,7 @@ int UART::ListenPort() {
 	if (!IsStarted())
 		return 0;
 
-	if (!Status() ) {
+	if (!Status()) {
 		msSleep(1000);
 		Start();
 		return 0;
@@ -370,14 +531,14 @@ int UART::ListenPort() {
 	FD_SET(portFd, &fds);
 
 	if (select(portFd+1, &fds, NULL, NULL, &tv) > 0)
-	    n = 1 * (FD_ISSET(portFd, &fds) > 0) + 2 * (FD_ISSET(0, &fds) > 0);
+		n = 1 * (FD_ISSET(portFd, &fds) > 0) + 2 * (FD_ISSET(0, &fds) > 0);
 
 	bytes = 0;
 	if ((n & 1) == 1) {
 		bytes = read((int) portFd , Buffer, BUFFER_RX);
 	}
 
-	if(bytes > 0) {
+	if (bytes > 0) {
 		for (int cc=0; cc < bytes; cc++) {
 			PutCharToBuffer((char) Buffer[cc]);
 		}
@@ -389,17 +550,16 @@ int UART::ListenPort() {
 }
 #endif
 
-bool UART::RingBufferIsEmpty()
-{
+bool UART::RingBufferIsEmpty() {
 	Lock lock(mutex);
-    return (indexRead == indexWrite);
+	return (indexRead == indexWrite);
 }
 
 void inline UART::PutCharToBuffer(char byte) {
 	Lock lock(mutex);
 
 	buffer[indexWrite++] = byte;
-	if(indexWrite == BUFFER_RX)
+	if (indexWrite == BUFFER_RX)
 		indexWrite = 0;
 }
 
@@ -408,7 +568,7 @@ int UART::GetCharFromBuffer() {
 	char byte;
 	Lock lock(mutex);
 
-	if(indexWrite == indexRead)
+	if (indexWrite == indexRead)
 		return (0xff00); /* Buffer empty */
 
 	byte = buffer[indexRead++];
@@ -416,14 +576,48 @@ int UART::GetCharFromBuffer() {
 	if (indexRead == BUFFER_RX)
 		indexRead = 0;
 
-	return byte;
+	return (int)byte;
+}
+
+void UART::ClearRingBuffer2() {
+	indexWrite2= 0;
+	indexRead2 = 0;
+}
+
+bool UART::RingBuffer2IsEmpty() {
+	Lock lock(mutex2);
+	return (indexRead2 == indexWrite2);
+}
+
+void inline UART::PutCharToBuffer2(char byte) {
+	Lock lock(mutex2);
+
+	buffer2[indexWrite2++] = byte;
+	if (indexWrite2 == BUFFER2_RX)
+		indexWrite2 = 0;
+}
+
+
+int UART::GetCharFromBuffer2() {
+	char byte;
+	Lock lock(mutex2);
+
+	if (indexWrite2 == indexRead2)
+		return (0xff00); /* Buffer2 empty */
+
+	byte = buffer2[indexRead2++];
+
+	if (indexRead2 == BUFFER2_RX)
+		indexRead2 = 0;
+
+	return (int)byte;
 }
 
 int UART::PeekCharFromBuffer() {
 	char byte;
 	Lock lock(mutex);
 
-	if(indexWrite == indexRead)
+	if (indexWrite == indexRead)
 		return (0xff00); /* Buffer empty */
 
 	byte = buffer[indexRead];
@@ -440,7 +634,7 @@ int UART::GetCopyOfBuffer(char *s, int len) {
 		if (value > 0xFF) {
 			break;
 		}
-		s[bytes] = (char) (0xFF & value);
+		s[bytes] = (char)(0xFF & value);
 	}
 
 	return bytes;
@@ -456,7 +650,7 @@ int UART::InByte(unsigned short timeout /* ms */) {
 		}
 	}
 	byte = GetCharFromBuffer();
-	return  (0x00ff & byte);
+	return (0x00ff & byte);
 }
 
 void  UART::OutByte(int byte) {
@@ -466,7 +660,9 @@ void  UART::OutByte(int byte) {
 UART *UART::instance = NULL;
 
 UART::UART() {
+	pConWin = 0;
 	mutex = Mutex::Create();
+	mutex2 = Mutex::Create();
 #ifdef WIN32
 	portHandle = INVALID_HANDLE_VALUE;
 #else
@@ -477,17 +673,20 @@ UART::UART() {
 	crReceived = 0;
 	portOpened = 0;
 	portFlow = 0;
-	clrfAuto=0;
 	portParity=0;
 	portSpeed = 115200;
+	serialEOL = UART_EOL_LF;
 	numBits = 8;
 	numStopBits = 1;
-	xmodemOn = false;
+	sendFileStatus = UART_SEND_NO_FILE;
 	indexWrite= 0;
 	indexRead = 0;
+	indexWrite2= 0;
+	indexRead2 = 0;
 	sprintf(message, NO_OPEN_PORT);
+	sendFileBufSize = 0;
 
-	xmodemBuf= NULL;
+	sendFileBuf = NULL;
 	isAlive = true;
 	isStarted = false;
 	instance = this;
@@ -499,13 +698,18 @@ UART::~UART() {
 	instance = NULL;
 	isAlive = false;
 	isStarted = false;
-	xmodemOn = false;
+	sendFileStatus = UART_SEND_NO_FILE;
 	delete mutex;
+	delete mutex2;
 	mutex = 0;
-	if (xmodemBuf != NULL) {
-		free(xmodemBuf);
-		xmodemBuf= NULL;
+	mutex2 = 0;
+	if (sendFileBuf != NULL) {
+		free(sendFileBuf);
+		sendFileBuf= NULL;
 	}
+}
+void UART::SetTargetConsoleWin(GUI::ScintillaWindow *w) {
+	pConWin = w;
 }
 
 void UART::SetSpeed(unsigned int s) {
@@ -522,6 +726,12 @@ void UART::SetParity(unsigned char v) {
 }
 void UART::SetPort(const char *s) {
 	strncpy(portName, s, MAX_PORT_STR_SIZE-1);
+}
+void UART::SetEOL(const char eol) {
+	serialEOL = eol;
+}
+char UART::GetEOL(void) {
+	return serialEOL;
 }
 
 int UART::Tx(const char *buf, int lenght) {
@@ -565,14 +775,14 @@ bool UART::OpenPort(const char *portName) {
 	wchar_t wPortWinName[MAX_PORT_STR_SIZE+1];
 
 	sprintf(portWinName,"\\\\.\\%s",portName);
-	mbstowcs(wPortWinName,(const char*)portWinName, MAX_PORT_STR_SIZE);
+	mbstowcs(wPortWinName,(const char *)portWinName, MAX_PORT_STR_SIZE);
 	// Open the serial port.
 	portHandle = CreateFile(wPortWinName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
 
 	if (portHandle != INVALID_HANDLE_VALUE)
 		portOpened = true;
 #else
-	portFd = open(portName, O_RDWR | O_NOCTTY );
+	portFd = open(portName, O_RDWR | O_NOCTTY);
 
 	if (portFd > 0)
 		portOpened = true;
@@ -580,10 +790,10 @@ bool UART::OpenPort(const char *portName) {
 	return portOpened;
 }
 
-char *UART::GetMessage (void) {
+char *UART::GetMessage(void) {
 	static char message_copy[MAX_MESSAGE_SIZE+1]="";
 
-	if (strncmp(message,message_copy,MAX_MESSAGE_SIZE) == 0 ) {
+	if (strncmp(message,message_copy,MAX_MESSAGE_SIZE) == 0) {
 		return 0;
 	} else {
 		strncpy(message_copy,message,MAX_MESSAGE_SIZE);
@@ -607,7 +817,7 @@ bool UART::Status(void) {
 	myDCB.DCBlength = sizeof(myDCB);
 
 	if (!GetCommState(portHandle,&myDCB))
-	    return false;
+		return false;
 	else
 		return true;
 #endif
@@ -616,8 +826,8 @@ bool UART::Status(void) {
 
 #else
 	/* It is so easy, using a serious O.S. */
-	 struct termios t;
-	 return !tcgetattr(portFd, &t);
+	struct termios t;
+	return !tcgetattr(portFd, &t);
 #endif
 }
 
@@ -753,71 +963,71 @@ bool UART::Start(void) {
 		return false;
 
 	switch (portParity) {
-		case 1:
-			sprintf(message,"%s,O", message);
-			break;
-		case 2:
-			sprintf(message,"%s,E", message);
-			break;
-		default:
-			sprintf(message,"%s,N", message);
-			break;
+	case 1:
+		sprintf(message,"%s,O", message);
+		break;
+	case 2:
+		sprintf(message,"%s,E", message);
+		break;
+	default:
+		sprintf(message,"%s,N", message);
+		break;
 	}
 
 	switch (numStopBits) {
-		case 0:
-			StopBits = ONESTOPBIT;
-			sprintf(message,"%s,1", message);
-			break;
-		case 1:
-			/* Later maybe .... */
-			//StopBits = ONE5STOPBITS;
-			//sprintf(message,"%s,1.5", message);
-			StopBits = ONESTOPBIT;
-			sprintf(message,"%s,1", message);
-			break;
-		case 2:
-			StopBits = TWOSTOPBITS;
-			sprintf(message,"%s,2", message);
-			break;
+	case 0:
+		StopBits = ONESTOPBIT;
+		sprintf(message,"%s,1", message);
+		break;
+	case 1:
+		/* Later maybe .... */
+		//StopBits = ONE5STOPBITS;
+		//sprintf(message,"%s,1.5", message);
+		StopBits = ONESTOPBIT;
+		sprintf(message,"%s,1", message);
+		break;
+	case 2:
+		StopBits = TWOSTOPBITS;
+		sprintf(message,"%s,2", message);
+		break;
 	}
 
 	switch (portSpeed) {
-		case 110:
-			DCB_Baud_Rate = 110;
-			break;
-		case 300:
-			DCB_Baud_Rate = CBR_300;
-			break;
-		case 600:
-			DCB_Baud_Rate = CBR_600;
-			break;
-		case 1200:
-			DCB_Baud_Rate = CBR_1200;
-			break;
-		case 2400:
-			DCB_Baud_Rate = CBR_2400;
-			break;
-		case 4800:
-			DCB_Baud_Rate = CBR_4800;
-			break;
-		case 9600:
-			DCB_Baud_Rate = CBR_9600;
-			break;
-		case 19200:
-			DCB_Baud_Rate = CBR_19200;
-			break;
-		case 38400:
-			DCB_Baud_Rate = CBR_38400;
-			break;
-		case 57600:
-			DCB_Baud_Rate = CBR_57600;
-			break;
-		case 115200:
-			DCB_Baud_Rate = CBR_115200;
-			break;
-		default:
-			return INVALID_HANDLE_VALUE;
+	case 110:
+		DCB_Baud_Rate = 110;
+		break;
+	case 300:
+		DCB_Baud_Rate = CBR_300;
+		break;
+	case 600:
+		DCB_Baud_Rate = CBR_600;
+		break;
+	case 1200:
+		DCB_Baud_Rate = CBR_1200;
+		break;
+	case 2400:
+		DCB_Baud_Rate = CBR_2400;
+		break;
+	case 4800:
+		DCB_Baud_Rate = CBR_4800;
+		break;
+	case 9600:
+		DCB_Baud_Rate = CBR_9600;
+		break;
+	case 19200:
+		DCB_Baud_Rate = CBR_19200;
+		break;
+	case 38400:
+		DCB_Baud_Rate = CBR_38400;
+		break;
+	case 57600:
+		DCB_Baud_Rate = CBR_57600;
+		break;
+	case 115200:
+		DCB_Baud_Rate = CBR_115200;
+		break;
+	default:
+		return INVALID_HANDLE_VALUE;
 	}
 
 	FillMemory(&PortDCB, sizeof(PortDCB), 0);
@@ -870,16 +1080,10 @@ bool UART::Start(void) {
 #endif
 }
 
-void UART::ConfigureclrfAuto(bool v) {
-	clrfAuto = v;
-}
-
 void UART::ClosePort(void) {
 
 	if (!portOpened)
 		return;
-
-	portOpened = false;
 
 #ifdef WIN32
 	if (portHandle != INVALID_HANDLE_VALUE) CloseHandle(portHandle);
@@ -892,6 +1096,7 @@ void UART::ClosePort(void) {
 		close(portFd);
 	portFd = -1;
 #endif
+	portOpened = false;
 }
 /*
  * Find out name to use for lockfile when locking tty.
@@ -1012,6 +1217,6 @@ void *UART::GetSerialPortFD() {
 #ifdef WIN32
 	return portHandle;
 #else
-	return (void *)portFd;
+	return (void *)(portFd);
 #endif
 }

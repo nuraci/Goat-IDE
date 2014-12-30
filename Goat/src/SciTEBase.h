@@ -58,7 +58,7 @@ enum {
 struct SelectedRange {
 	int position;
 	int anchor;
-	SelectedRange(int position_= INVALID_POSITION, int anchor_= INVALID_POSITION) : 
+	SelectedRange(int position_= INVALID_POSITION, int anchor_= INVALID_POSITION) :
 		position(position_), anchor(anchor_) {
 	}
 };
@@ -111,9 +111,9 @@ public:
 	PropSetFile props;
 	enum FutureDo { fdNone=0, fdFinishSave=1 } futureDo;
 	Buffer() :
-			RecentFile(), doc(0), isDirty(false), isReadOnly(false), useMonoFont(false), lifeState(empty),
-			unicodeMode(uni8Bit), fileModTime(0), fileModLastAsk(0), documentModTime(0),
-			findMarks(fmNone), pFileWorker(0), futureDo(fdNone) {}
+		RecentFile(), doc(0), isDirty(false), isReadOnly(false), useMonoFont(false), lifeState(empty),
+		unicodeMode(uni8Bit), fileModTime(0), fileModLastAsk(0), documentModTime(0),
+		findMarks(fmNone), pFileWorker(0), futureDo(fdNone) {}
 
 	void Init() {
 		RecentFile::Init();
@@ -257,8 +257,9 @@ public:
 	bool visible;
 	bool changeable;
 	enum flags { sdNone = 0, sdFont = 0x1, sdSize = 0x2, sdFore = 0x4, sdBack = 0x8,
-	        sdWeight = 0x10, sdItalics = 0x20, sdEOLFilled = 0x40, sdUnderlined = 0x80,
-	        sdCaseForce = 0x100, sdVisible = 0x200, sdChangeable = 0x400} specified;
+	             sdWeight = 0x10, sdItalics = 0x20, sdEOLFilled = 0x40, sdUnderlined = 0x80,
+	             sdCaseForce = 0x100, sdVisible = 0x200, sdChangeable = 0x400
+	           } specified;
 	StyleDefinition(const char *definition);
 	bool ParseStyleDefinition(const char *definition);
 	long ForeAsLong() const;
@@ -278,10 +279,10 @@ struct StyleAndWords {
 
 struct CurrentWordHighlight {
 	enum {
-		noDelay,            // No delay, and no word at the caret.
-		delay,              // Delay before to highlight the word at the caret.
-		delayJustEnded,     // Delay has just ended. This state allows to ignore next HighlightCurrentWord (SCN_UPDATEUI and SC_UPDATE_CONTENT for setting indicators).
-		delayAlreadyElapsed // Delay has already elapsed, word at the caret and occurrences are (or have to be) highlighted.
+	    noDelay,            // No delay, and no word at the caret.
+	    delay,              // Delay before to highlight the word at the caret.
+	    delayJustEnded,     // Delay has just ended. This state allows to ignore next HighlightCurrentWord (SCN_UPDATEUI and SC_UPDATE_CONTENT for setting indicators).
+	    delayAlreadyElapsed // Delay has already elapsed, word at the caret and occurrences are (or have to be) highlighted.
 	} statesOfDelay;
 	bool isEnabled;
 	GUI::ElapsedTime elapsedTimes;
@@ -456,7 +457,7 @@ protected:
 	bool fullScreen;
 	enum { toolMax = 50 };
 	Extension *extender;
-    Term term;
+	Term term;
 	bool needReadProperties;
 	bool quitting;
 
@@ -578,7 +579,7 @@ protected:
 	int CallFocused(unsigned int msg, uptr_t wParam = 0, sptr_t lParam = 0);
 	sptr_t CallPane(int destination, unsigned int msg, uptr_t wParam = 0, sptr_t lParam = 0);
 	void CallChildren(unsigned int msg, uptr_t wParam = 0, sptr_t lParam = 0);
-	SString GetTranslationToAbout(const char * const propname, bool retainIfNotFound = true);
+	SString GetTranslationToAbout(const char *const propname, bool retainIfNotFound = true);
 	int LengthDocument();
 	int GetCaretInLine();
 	void GetLine(char *text, int sizeText, int line = -1);
@@ -696,7 +697,7 @@ protected:
 	virtual SString GetRangeInUIEncoding(GUI::ScintillaWindow &win, int selStart, int selEnd);
 	SString GetLine(GUI::ScintillaWindow &win, int line);
 	SString RangeExtendAndGrab(GUI::ScintillaWindow &wCurrent, int &selStart, int &selEnd,
-	        bool (SciTEBase::*ischarforsel)(char ch), bool stripEol = true);
+	                           bool (SciTEBase::*ischarforsel)(char ch), bool stripEol = true);
 	SString SelectionExtend(bool (SciTEBase::*ischarforsel)(char ch), bool stripEol = true);
 	void FindWordAtCaret(int &start, int &end);
 	bool SelectWordAtCaret();
@@ -750,7 +751,7 @@ protected:
 	void GoMessage(int dir);
 	virtual bool StartCallTip();
 	char *GetNearestWords(const char *wordStart, size_t searchLen,
-		const char *separators, bool ignoreCase=false, bool exactLen=false);
+	                      const char *separators, bool ignoreCase=false, bool exactLen=false);
 	virtual void FillFunctionDefinition(int pos = -1);
 	void ContinueCallTip();
 	virtual void EliminateDuplicateWords(char *words);
@@ -781,8 +782,8 @@ protected:
 	int GetCurrentLineNumber();
 	int GetCurrentScrollPosition();
 	virtual void AddCommand(const SString &cmd, const SString &dir,
-	        JobSubsystem jobType, const SString &input = "",
-	        int flags = 0);
+	                        JobSubsystem jobType, const SString &input = "",
+	                        int flags = 0);
 	virtual void AboutDialog() = 0;
 	virtual void QuitProgram() = 0;
 	void CloseTab(int tab);
@@ -796,7 +797,7 @@ protected:
 	void FoldChanged(int line, int levelNow, int levelPrev);
 	void FoldChanged(int position);
 	void Expand(int &line, bool doExpand, bool force = false,
-	        int visLevels = 0, int level = -1);
+	            int visLevels = 0, int level = -1);
 	void FoldAll();
 	void ToggleFoldRecursive(int line, int level);
 	void EnsureAllChildrenVisible(int line, int level);
@@ -823,7 +824,7 @@ protected:
 	virtual void SizeSubWindows() = 0;
 
 	virtual void SetMenuItem(int menuNumber, int position, int itemID,
-		const GUI::gui_char *text, const GUI::gui_char *mnemonic = 0) = 0;
+	                         const GUI::gui_char *text, const GUI::gui_char *mnemonic = 0) = 0;
 	virtual void RedrawMenu() {}
 	virtual void DestroyMenuItem(int menuNumber, int itemID) = 0;
 	virtual void CheckAMenuItem(int wIDCheckItem, bool val) = 0;
@@ -831,7 +832,7 @@ protected:
 	virtual void CheckMenusClipboard();
 	virtual void CheckMenus();
 	virtual void AddToPopUp(const char *label, int cmd = 0, bool enabled = true) = 0;
-	virtual void GroupSetCurrentTab(int tab = GOA_CON_HOST ) = 0;
+	virtual void GroupSetCurrentTab(int tab = GOA_CON_HOST) = 0;
 	virtual int  GroupGetCurrentTab() = 0;
 
 	void ContextMenu(GUI::ScintillaWindow &wSource, GUI::Point pt, GUI::Window wCmd);
@@ -850,7 +851,7 @@ protected:
 
 	void RemoveToolsMenu();
 	void SetMenuItemLocalised(int menuNumber, int position, int itemID,
-	        const char *text, const char *mnemonic);
+	                          const char *text, const char *mnemonic);
 	void SetToolsMenu();
 	JobSubsystem SubsystemType(char c);
 	JobSubsystem SubsystemType(const char *cmd, int item = -1);
@@ -864,7 +865,7 @@ protected:
 	void SetLanguageMenu();
 	void SetPropertiesInitial();
 	GUI::gui_string LocaliseMessage(const char *s,
-		const GUI::gui_char *param0 = 0, const GUI::gui_char *param1 = 0, const GUI::gui_char *param2 = 0);
+	                                const GUI::gui_char *param0 = 0, const GUI::gui_char *param1 = 0, const GUI::gui_char *param2 = 0);
 	virtual void ReadLocalization();
 	SString GetFileNameProperty(const char *name);
 	virtual void ReadPropertiesInitial();
@@ -936,7 +937,7 @@ protected:
 	void SelectConsoleTab(int tab);
 	void AskQuestion(const char *str);
 	void AskForFile(const char *dirName, const char *filter);
-	int SerialXmodemTxFile(const char *name);
+	int SerialSendFile(const char *name, int type);
 	int SerialSend(const char *string, int length);
 
 	// Valid CurrentWord characters
@@ -963,8 +964,8 @@ public:
 
 private:
 	// un-implemented copy-constructor and assignment operator
-	SciTEBase(const SciTEBase&);
-	void operator=(const SciTEBase&);
+	SciTEBase(const SciTEBase &);
+	void operator=(const SciTEBase &);
 };
 
 #if defined(__unix__)
@@ -987,5 +988,5 @@ long ColourOfProperty(PropSetFile &props, const char *key, Colour colourDefault)
 void WindowSetFocus(GUI::ScintillaWindow &w);
 
 inline bool isspacechar(unsigned char ch) {
-    return (ch == ' ') || ((ch >= 0x09) && (ch <= 0x0d));
+	return (ch == ' ') || ((ch >= 0x09) && (ch <= 0x0d));
 }

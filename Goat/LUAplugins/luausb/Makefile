@@ -1,27 +1,44 @@
 #
 ####
 #
-CC=gcc
-LD=gcc
+
 PREFIX?=../..
 INSTALL_BIN= $(PREFIX)/bin
 LIBRARY=luausb
 LUALIB= -L $(PREFIX)/bin -lgoatlua 
+DEBUG?=1
 
 ifeq ($(OS),Windows_NT)
 DLLEXT=dll
 LDLIBS=-L lib/ -lusb-1.0
-CFLAGS=-fvisibility=hidden -I$(PREFIX)/lua/include -Dluaopen_module=luaopen_luausb
+CFLAGS=-fvisibility=hidden -I$(PREFIX)/lua/include -I./include -Dluaopen_module=luaopen_luausb $(DBG)
+ifdef MSYSTEM
+DEL = rm
+COPY = cp
+CC = mingw32-gcc
+CPP = mingw32-g++
+LD = mingw32-gcc
+WINDRES = windres
+SCINTILLA_PATH = ../../scintilla
+endif
 else
+CC=gcc
+LD=gcc
 LDLIBS=-lusb-1.0
 DLLEXT=so
-CFLAGS=-fvisibility=hidden -fPIC -I$(PREFIX)/lua/include -Dluaopen_module=luaopen_luausb
+CFLAGS=-fvisibility=hidden -fPIC -I$(PREFIX)/lua/include -Dluaopen_module=luaopen_luausb $(DBG)
+endif
+
+ifeq ($(DEBUG),1)
+DBG = -g3 -O0
+else
+DBG = -g0 -Os
 endif
 
 build:$(LIBRARY).$(DLLEXT)
 
 clean:
-	rm -f usb.$(DLLEXT) *.o *.so
+	rm -f $(LIBRARY).$(DLLEXT) *.o
 
 cleandist:clean
 	rm -f enums.c enums.h structs.c structs.h
@@ -34,7 +51,7 @@ install:build
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(LIBRARY).$(DLLEXT): enums.o structs.o compat.o usb.o 
-	$(LD) $(CFLAGS) -shared  $^ $(LOADLIBES) -Wl,--rpath .  $(LDLIBS) $(LUALIB) -o $@
+	$(LD) $(CFLAGS) -shared  $^ $(LOADLIBES) -Wl,--rpath . $(LDLIBS) $(LUALIB) -o $@
 
 
 usb.c:enums.h structs.h

@@ -1,9 +1,9 @@
-/*
- * Term.cxx
- *
- *  Created on: 09/dic/2011
- *      Author: nuccio
- */
+// Goat - Scintilla based Text Editor
+/** @file Term.cxx
+ ** Interface to TERM facilities.
+ **/
+// Copyright 2011-2015 by Nunzio Raciti <nunzio.raciti@gmail.com>
+// The License.txt file describes the conditions under which this software may be distributed.
 
 #include <stdlib.h>
 #include <string.h>
@@ -61,33 +61,28 @@ Term::Term() {
 	fontSize = 10;
 	currentStyle = 0;
 	state = STATE_NORMAL;
-	buffer1 = (char *) malloc(TERM_BUF_SIZE+1);
-	buffer2 = (char *) malloc(TERM_BUF_SIZE+1);
+	buffer = (char *) malloc(TERM_BUF_SIZE+1);
 	term = this;
 }
 
 Term::~Term() {
 	pWin = 0;
 	position = 0;
-	if (buffer1 != 0) {
-		free(buffer1);
-		buffer1 = 0;
-	}
-	if (buffer2 != 0) {
-		free(buffer2);
-		buffer1 = 0;
+	if (buffer != 0) {
+		free(buffer);
+		buffer = 0;
 	}
 }
 
 void Term::SetTermWin(GUI::ScintillaWindow *w, int columns, int lines) {
 	pWin = w;
 
-	if (columns > TERM_MAX_COL || columns < TERM_MIN_COL  )
+	if (columns > TERM_MAX_COL || columns < TERM_MIN_COL)
 		col = TERM_COL;
 	else
 		col = columns;
 
-	if (lines > TERM_MAX_ROW || columns < TERM_MIN_ROW  )
+	if (lines > TERM_MAX_ROW || columns < TERM_MIN_ROW)
 		row = TERM_ROW;
 	else
 		row = lines;
@@ -236,7 +231,7 @@ void Term::ProcessAnsi(char byte) {
 		TDEBUG("\n clear Line, %d,%d\n",position,end_line_pos);
 		CleanChars(position , end_line_pos);
 	} else if ((state == STATE_CSI || state == STATE_EXT1 || state == STATE_EXT2)
-	        && byte >= '0' && byte <= '9') {
+	           && byte >= '0' && byte <= '9') {
 		number = (10 * number) + byte -'0';
 	} else if (state == STATE_CSI && number == 2 && byte == 'J') {
 		TDEBUG("Clear Screen\n");
@@ -291,19 +286,30 @@ void Term::ProcessAnsi(char byte) {
 		number = 0;
 		SetAnsiColor(num[0],num[1],0);
 	} else if (state == STATE_NORMAL && byte == TERM_CR) { /* \r */
-		int current_line = pWin->Send(SCI_LINEFROMPOSITION, position);
-		number = 0;
-		position 		 = pWin->Send(SCI_POSITIONFROMLINE, current_line);
+		if (term->isTermActive()) {
+			int current_line = pWin->Send(SCI_LINEFROMPOSITION, position);
+			number = 0;
+			position = pWin->Send(SCI_POSITIONFROMLINE, current_line);
+		}
+		TDEBUG("Carriage return\n");
 	} else if (state == STATE_NORMAL && byte == TERM_LF) { /* \n */
-		int current_line 		= pWin->Send(SCI_LINEFROMPOSITION, position);
-		int pos_on_next_line 	= PositionFromLine(1);
-		number = 0;
 		TDEBUG("Line feed\n");
-		if (current_line >= (row -1)) {
-			current_line=0;
-			Clear();
+		number = 0;
+
+		if (term->isTermActive()) {
+			int current_line;
+			int pos_on_next_line;
+			current_line = pWin->Send(SCI_LINEFROMPOSITION, position);
+			pos_on_next_line = PositionFromLine(1);
+			if (current_line >= (row -1)) {
+				current_line=0;
+				Clear();
+			} else {
+				position = pos_on_next_line;
+			}
 		} else {
-			position = pos_on_next_line;
+			pWin->Send(SCI_ADDTEXT, 1, reinterpret_cast<sptr_t>("\n"));
+			position++;
 		}
 		pWin->Send(SCI_GOTOPOS, position);
 	} else if (state == STATE_NORMAL && byte == TERM_TAB) {
@@ -314,15 +320,18 @@ void Term::ProcessAnsi(char byte) {
 		else
 			position += TAB_SIZE;
 		pWin->Send(SCI_GOTOPOS, position);
+	} else if (state == STATE_NORMAL && byte == TERM_BS) {
+		DelChars(position - 1, position);
 	} else  {
 		int pos_on_next_line = PositionFromLine(1);
 		char buf[2];
 		number = 0;
-
-		if (position >= (pos_on_next_line - 1))
-			position = pos_on_next_line;
-
-		DelChars(position, position + 1);
+		if (term->isTermActive()) {
+			if (position >= (pos_on_next_line - 1)) {
+				position = pos_on_next_line;
+			}
+			DelChars(position, position + 1);
+		}
 		buf[0] = byte;
 		buf[1] = static_cast<char>(currentStyle);
 		pWin->Send(SCI_GOTOPOS, position);
@@ -334,40 +343,23 @@ void Term::ProcessAnsi(char byte) {
 }
 
 int Term::ProcessChars(void *data) {
-	int in,out,num_bytes;
-	int line, lineStart;
-	char byte;
+	int byte;
 
 #ifdef GTK
 	/* This msSleep() here, keeps the cpu usage low :-o */
 	msSleep(1);
 #endif
 
-	if (serial->IsXmodemOn()) return true;
-
-	if (term->isTermActive()) {
-		while (term->isTermActive() && !serial->RingBufferIsEmpty()) {
-			if ((byte = serial->GetCharFromBuffer()) <= 0xff)
-				term->ProcessAnsi(byte);
+	while (serial->GetSendFileStatus() == UART_SEND_RAW_REPL && !serial->RingBuffer2IsEmpty()) {
+		if ((byte = serial->GetCharFromBuffer2()) <= 0xff) {
+			term->ProcessAnsi(char(0x00ff & byte));
 		}
 	}
 
-	if (!term->isTermActive()) {
-		num_bytes = serial->GetCopyOfBuffer(term->buffer1, TERM_BUF_SIZE);
-
-		if (pWin == 0 || num_bytes  == 0) return true;
-
-		for (in=0,out=0; in < num_bytes; in++) {
-			term->buffer2[out] = term->buffer1[in];
-			if (term->buffer1[in] != TERM_CR  /* \r */)
-				out++;
+	while (serial->GetSendFileStatus() == UART_SEND_NO_FILE && !serial->RingBufferIsEmpty()) {
+		if ((byte = serial->GetCharFromBuffer()) <= 0xff) {
+			term->ProcessAnsi(char(0x00ff & byte));
 		}
-
-		pWin->Call(SCI_HOME,0,0);
-		pWin->Call(SCI_APPENDTEXT, out, reinterpret_cast<sptr_t>(term->buffer2));
-		line = pWin->Call(SCI_GETLINECOUNT);
-		lineStart = pWin->Call(SCI_POSITIONFROMLINE, line);
-		pWin->Call(SCI_GOTOPOS, lineStart);
 	}
 
 	return true;

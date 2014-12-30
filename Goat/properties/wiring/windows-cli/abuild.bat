@@ -430,7 +430,7 @@ exit /b !abuild_retcode!
 
 REM ---------------------------------------------------------------------------
 REM     $Log: abuild.bat,v $
-REM     Revision 1.16  2012/04/20  Nuccio Raciti
+REM     Revision 1.16  2012/04/20  Nunzio Raciti
 REM     Revised in order to support the Goat IDE
 REM
 REM     Revision 1.16  2008/09/10 20:05:20  Don.Cross

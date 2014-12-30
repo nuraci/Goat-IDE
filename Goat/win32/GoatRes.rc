@@ -1,5 +1,5 @@
 // Resource file for 
-// Copyright 2011-2013 by Nuccio Raciti <raciti.nuccio@gmail.com> 
+// Copyright 2011-2015 by Nunzio Raciti <nunzio.raciti@gmail.com> 
 // The License.txt file describes the conditions under which this software may be distributed.
 
 #include <windows.h>
@@ -131,7 +131,8 @@ BEGIN
 	MENUITEM SEPARATOR
 	MENUITEM "&Next Message\tF4",		IDM_NEXTMSG
 	MENUITEM "&Previous Message\tShift+F4",IDM_PREVMSG
-	MENUITEM "Clear &Output\tShift+F5",	IDM_CLEAROUTPUT
+	MENUITEM "Clear &Host Console\tShift+F5",	IDM_CLEAROUTPUT
+	MENUITEM "Clear &Target Console\tShift+F5",	IDM_CLEARCONSOLE
 	MENUITEM "&Switch Pane\tCtrl+F6",	IDM_SWITCHPANE
 END
 
@@ -600,7 +601,7 @@ BEGIN
 			VALUE	"FileDescription",	"Goat a Scintilla based IDE\0"
 			VALUE	"FileVersion",	VERSION_GOAT "\0"
 			VALUE	"InternalName",	"Goat IDE\0"
-			VALUE	"LegalCopyright",	"Copyright " COPYRIGHT_GOAT_YEARS " by Nuccio Raciti\0"
+			VALUE	"LegalCopyright",	"Copyright " COPYRIGHT_GOAT_YEARS " by Nunzio Raciti\0"
 			VALUE	"OriginalFilename",	"Goat.EXE\0"
 			VALUE	"ProductName",	"Goat IDE\0"
 			VALUE	"ProductVersion", VERSION_GOAT "\0"

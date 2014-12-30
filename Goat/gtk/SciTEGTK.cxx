@@ -86,6 +86,13 @@ char *ExeName;
 #define GKEY_ISO_Left_Tab GDK_KEY_ISO_Left_Tab
 #define GKEY_KP_Enter GDK_KEY_KP_Enter
 #define GKEY_KP_Multiply GDK_KEY_KP_Multiply
+#define GKEY_BS GDK_KEY_BackSpace
+#define GKEY_Left GDK_KEY_Left
+#define GKEY_Up GDK_KEY_KP_Up
+#define GKEY_Right GDK_KEY_Right
+#define GKEY_Down GDK_KEY_Down
+#define GKEY_Home GDK_KEY_Home
+#define GKEY_End GDK_KEY_End
 #define GKEY_Control_L GDK_KEY_Control_L
 #define GKEY_Control_R GDK_KEY_Control_R
 #define GKEY_F1 GDK_KEY_F1
@@ -98,6 +105,13 @@ char *ExeName;
 #define GKEY_ISO_Left_Tab GDK_ISO_Left_Tab
 #define GKEY_KP_Enter GDK_KP_Enter
 #define GKEY_KP_Multiply GDK_KP_Multiply
+#define GKEY_BS GDK_BackSpace
+#define GKEY_Left GDK_Left
+#define GKEY_Up GDK_Up
+#define GKEY_Right GDK_Right
+#define GKEY_Down GDK_Down
+#define GKEY_Home GDK_Home
+#define GKEY_End GDK_End
 #define GKEY_Control_L GDK_Control_L
 #define GKEY_Control_R GDK_Control_R
 #define GKEY_F1 GDK_F1
@@ -440,7 +454,7 @@ public:
 	SciTEGTK *pSciTEGTK;
 	WTable tableUser;
 
-	UserStrip() : psd(0), extender(0), pSciTEGTK(0), tableUser(1, 1){
+	UserStrip() : psd(0), extender(0), pSciTEGTK(0), tableUser(1, 1) {
 	}
 	virtual void Creation(GtkWidget *boxMain);
 	virtual void Destruction();
@@ -505,9 +519,9 @@ protected:
 	// For single instance
 	char uniqueInstance[MAX_PATH];
 	guint32 startupTimestamp;
-	
+
 	guint timerID;
-	
+
 	BackgroundStrip backgroundStrip;
 	UserStrip userStrip;
 
@@ -540,7 +554,7 @@ protected:
 
 	gint	fileSelectorWidth;
 	gint	fileSelectorHeight;
-	
+
 #if GTK_CHECK_VERSION(2,10,0)
 	GtkPrintSettings *printSettings;
 	GtkPageSetup *pageSetup;
@@ -639,7 +653,7 @@ protected:
 	virtual bool ParametersDialog(bool modal);
 
 	virtual FilePath GetExeDirectory(char *name);
-	virtual const char * GetGoatDefaultDirectory();
+	virtual const char *GetGoatDefaultDirectory();
 	virtual FilePath GetDefaultDirectory();
 	virtual FilePath GetSciteDefaultHome();
 	virtual FilePath GetSciteUserHome();
@@ -671,8 +685,8 @@ protected:
 	virtual void ShowBackgroundProgress(const GUI::gui_string &explanation, int size, int progress);
 
 	// Single instance
-	void SendFileName(int sendPipe, const char* filename);
-	bool CheckForRunningInstance(int argc, char* argv[]);
+	void SendFileName(int sendPipe, const char *filename);
+	bool CheckForRunningInstance(int argc, char *argv[]);
 
 	// GTK+ Signal Handlers
 
@@ -722,8 +736,10 @@ protected:
 	static void CommandSignal(GtkWidget *w, gint wParam, gpointer lParam, SciTEGTK *scitew);
 	static void NotifySignal(GtkWidget *w, gint wParam, gpointer lParam, SciTEGTK *scitew);
 	static gint KeyPress(GtkWidget *widget, GdkEventKey *event, SciTEGTK *scitew);
+	static gint KeyConsolePress(GtkWidget *widget, GdkEventKey *event, SciTEGTK *scitew);
 	static gint KeyRelease(GtkWidget *widget, GdkEventKey *event, SciTEGTK *scitew);
 	gint Key(GdkEventKey *event);
+	gint KeyConsole(GdkEventKey *event);
 	static gint MousePress(GtkWidget *widget, GdkEventButton *event, SciTEGTK *scitew);
 	gint Mouse(GdkEventButton *event);
 
@@ -804,7 +820,7 @@ SciTEGTK::SciTEGTK(Extension *ext) : SciTEBase(ext) {
 
 	uniqueInstance[0] = '\0';
 	startupTimestamp = 0;
-	
+
 	timerID = 0;
 
 	PropSetFile::SetCaseSensitiveFilenames(true);
@@ -877,7 +893,7 @@ static void messageBoxOK(GtkWidget *, gpointer p) {
 }
 
 GtkWidget *SciTEGTK::AddMBButton(GtkWidget *dialog, const char *label,
-	int val, GtkAccelGroup *accel_group, bool isDefault) {
+                                 int val, GtkAccelGroup *accel_group, bool isDefault) {
 	GUI::gui_string translated = localiser.Text(label);
 	GtkWidget *button = gtk_button_new_with_mnemonic(translated.c_str());
 #if GTK_CHECK_VERSION(2,20,0)
@@ -890,16 +906,16 @@ GtkWidget *SciTEGTK::AddMBButton(GtkWidget *dialog, const char *label,
 		// With a "Yes" button want to respond to pressing "y" as well as standard "Alt+y"
 		guint key = tolower(translated[posMnemonic + 1]);
 		gtk_widget_add_accelerator(button, "clicked", accel_group,
-	                           key, GdkModifierType(0), (GtkAccelFlags)0);
+		                           key, GdkModifierType(0), (GtkAccelFlags)0);
 	}
 	g_signal_connect(G_OBJECT(button), "clicked",
-		G_CALLBACK(messageBoxOK), reinterpret_cast<gpointer>(val));
+	                 G_CALLBACK(messageBoxOK), reinterpret_cast<gpointer>(val));
 #if GTK_CHECK_VERSION(3,0,0)
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_action_area(GTK_DIALOG(dialog))),
- 	                   button, TRUE, TRUE, 0);
+	                   button, TRUE, TRUE, 0);
 #else
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area),
- 	                   button, TRUE, TRUE, 0);
+	                   button, TRUE, TRUE, 0);
 #endif
 	if (isDefault) {
 		gtk_widget_grab_default(GTK_WIDGET(button));
@@ -911,7 +927,7 @@ GtkWidget *SciTEGTK::AddMBButton(GtkWidget *dialog, const char *label,
 FilePath SciTEGTK::GetExeDirectory(char *name) {
 	static FilePath Executable = "";
 
-	if (Executable == "" ) {
+	if (Executable == "") {
 		// Find the AppNane executable, first trying to use argv[0] and converting
 		// to an absolute path and if that fails, searching the path.
 		Executable = FilePath(name).AbsolutePath();
@@ -924,7 +940,7 @@ FilePath SciTEGTK::GetExeDirectory(char *name) {
 
 	return Executable;
 }
-const char * SciTEGTK::GetGoatDefaultDirectory() {
+const char *SciTEGTK::GetGoatDefaultDirectory() {
 	static string root;
 
 	if (root.empty()) {
@@ -1120,7 +1136,7 @@ void SciTEGTK::ActivateWindow(const char *timestamp) {
 
 void SciTEGTK::CopyPath() {
 	gtk_clipboard_set_text(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD),
-		filePath.AsInternal(), -1);
+	                       filePath.AsInternal(), -1);
 }
 
 // The find and replace dialogs and strips often manipulate boolean
@@ -1128,24 +1144,24 @@ void SciTEGTK::CopyPath() {
 bool &SciTEGTK::FlagFromCmd(int cmd) {
 	static bool notFound;
 	switch (cmd) {
-		case IDWHOLEWORD:
-		case IDM_WHOLEWORD:
-			return wholeWord;
-		case IDMATCHCASE:
-		case IDM_MATCHCASE:
-			return matchCase;
-		case IDREGEXP:
-		case IDM_REGEXP:
-			return regExp;
-		case IDUNSLASH:
-		case IDM_UNSLASH:
-			return unSlash;
-		case IDWRAP:
-		case IDM_WRAPAROUND:
-			return wrapFind;
-		case IDDIRECTIONUP:
-		case IDM_DIRECTIONUP:
-			return reverseFind;
+	case IDWHOLEWORD:
+	case IDM_WHOLEWORD:
+		return wholeWord;
+	case IDMATCHCASE:
+	case IDM_MATCHCASE:
+		return matchCase;
+	case IDREGEXP:
+	case IDM_REGEXP:
+		return regExp;
+	case IDUNSLASH:
+	case IDM_UNSLASH:
+		return unSlash;
+	case IDWRAP:
+	case IDM_WRAPAROUND:
+		return wrapFind;
+	case IDDIRECTIONUP:
+	case IDM_DIRECTIONUP:
+		return reverseFind;
 	}
 	return notFound;
 }
@@ -1185,7 +1201,7 @@ void SciTEGTK::Command(unsigned long wParam, long) {
 		CheckMenus();
 		break;
 
-	// override base class
+		// override base class
 	case IDM_SPLITVERTICAL:
 		splitVertical = !splitVertical;
 		heightBar = 0;
@@ -1243,7 +1259,7 @@ void SciTEGTK::ReadProperties() {
 	SciTEBase::ReadProperties();
 
 	CallChildren(SCI_SETRECTANGULARSELECTIONMODIFIER,
-		props.GetInt("rectangular.selection.modifier", SCMOD_CTRL));
+	             props.GetInt("rectangular.selection.modifier", SCMOD_CTRL));
 
 	CheckMenus();
 
@@ -1302,13 +1318,13 @@ void SciTEGTK::SizeContentWindows() {
 	// Make sure the focus is somewhere
 	if (!userStrip.VisibleHasFocus()) {
 		int wGroupTabCurrentPage = 0;
-		if ( wGroupTab.GetID())
-				wGroupTabCurrentPage = GroupGetCurrentTab();
+		if (wGroupTab.GetID())
+			wGroupTabCurrentPage = GroupGetCurrentTab();
 		if (heightOutput == max) {
 			if (wGroupTabCurrentPage == GOA_CON_TARGET)
-					WindowSetFocus(wConsole);
-				else
-					WindowSetFocus(wOutput);
+				WindowSetFocus(wConsole);
+			else
+				WindowSetFocus(wOutput);
 		} else if (heightOutput == 0 || (!wEditor.HasFocus() && !wOutput.HasFocus())) {
 			WindowSetFocus(wEditor);
 		}
@@ -1453,14 +1469,14 @@ void SciTEGTK::CheckMenus() {
 	CheckAMenuItem(IDM_VIEWTABBAR, tabVisible);
 
 	if (btnBuild) {
-        gtk_widget_set_sensitive(btnBuild, !jobQueue.IsExecuting() &&
-		        props.GetWild("command.build.", FileNameExt().AsUTF8().c_str()).size() != 0);
+		gtk_widget_set_sensitive(btnBuild, !jobQueue.IsExecuting() &&
+		                         props.GetWild("command.build.", FileNameExt().AsUTF8().c_str()).size() != 0);
 
 		gtk_widget_set_sensitive(btnCompile, !jobQueue.IsExecuting() &&
-				props.GetWild("command.compile.", FileNameExt().AsUTF8().c_str()).size() != 0);
+		                         props.GetWild("command.compile.", FileNameExt().AsUTF8().c_str()).size() != 0);
 
 		gtk_widget_set_sensitive(btnStop, jobQueue.IsExecuting() &&
-		        props.GetWild("command.go.", FileNameExt().AsUTF8().c_str()).size() != 0);
+		                         props.GetWild("command.go.", FileNameExt().AsUTF8().c_str()).size() != 0);
 
 	}
 }
@@ -1524,18 +1540,18 @@ bool SciTEGTK::OpenDialog(FilePath directory, const char *filter) {
 	bool canceled = true;
 	if (!dlgFileSelector.Created()) {
 		GtkWidget *dlg = gtk_file_chooser_dialog_new(
-					localiser.Text("Open File").c_str(),
-				      GTK_WINDOW(wSciTE.GetID()),
-				      GTK_FILE_CHOOSER_ACTION_OPEN,
-				      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-				      GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
-				      NULL);
+		                     localiser.Text("Open File").c_str(),
+		                     GTK_WINDOW(wSciTE.GetID()),
+		                     GTK_FILE_CHOOSER_ACTION_OPEN,
+		                     GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+		                     GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+		                     NULL);
 		gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(dlg), TRUE);
 		gtk_dialog_set_default_response(GTK_DIALOG(dlg), GTK_RESPONSE_ACCEPT);
 		if (props.GetInt("open.dialog.in.file.directory")) {
 			gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(dlg),
-				// NUCCIO maybe a bug here: filePath.Directory().AsInternal());
-				directory.AsInternal());
+			                                    // NUCCIO maybe a bug here: filePath.Directory().AsInternal());
+			                                    directory.AsInternal());
 		}
 
 		SString openFilter = filter;
@@ -1622,12 +1638,12 @@ bool SciTEGTK::SaveAsXXX(FileFormat fmt, const char *title, const char *ext) {
 	saveFormat = fmt;
 	if (!dlgFileSelector.Created()) {
 		GtkWidget *dlg = gtk_file_chooser_dialog_new(
-					localiser.Text(title).c_str(),
-				      GTK_WINDOW(wSciTE.GetID()),
-				      GTK_FILE_CHOOSER_ACTION_SAVE,
-				      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-				      GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
-				      NULL);
+		                     localiser.Text(title).c_str(),
+		                     GTK_WINDOW(wSciTE.GetID()),
+		                     GTK_FILE_CHOOSER_ACTION_SAVE,
+		                     GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+		                     GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+		                     NULL);
 		gtk_dialog_set_default_response(GTK_DIALOG(dlg), GTK_RESPONSE_ACCEPT);
 		FilePath savePath = SaveName(ext);
 		if (ext) {
@@ -1683,12 +1699,12 @@ void SciTEGTK::LoadSessionDialog() {
 	filePath.SetWorkingDirectory();
 	if (!dlgFileSelector.Created()) {
 		GtkWidget *dlg = gtk_file_chooser_dialog_new(
-					localiser.Text("Load Session").c_str(),
-				      GTK_WINDOW(wSciTE.GetID()),
-				      GTK_FILE_CHOOSER_ACTION_OPEN,
-				      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-				      GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
-				      NULL);
+		                     localiser.Text("Load Session").c_str(),
+		                     GTK_WINDOW(wSciTE.GetID()),
+		                     GTK_FILE_CHOOSER_ACTION_OPEN,
+		                     GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+		                     GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+		                     NULL);
 
 		gtk_window_set_default_size(GTK_WINDOW(dlg), fileSelectorWidth, fileSelectorHeight);
 		if (gtk_dialog_run(GTK_DIALOG(dlg)) == GTK_RESPONSE_ACCEPT) {
@@ -1706,12 +1722,12 @@ void SciTEGTK::SaveSessionDialog() {
 	filePath.SetWorkingDirectory();
 	if (!dlgFileSelector.Created()) {
 		GtkWidget *dlg = gtk_file_chooser_dialog_new(
-					localiser.Text("Save Session").c_str(),
-				      GTK_WINDOW(wSciTE.GetID()),
-				      GTK_FILE_CHOOSER_ACTION_SAVE,
-				      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-				      GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
-				      NULL);
+		                     localiser.Text("Save Session").c_str(),
+		                     GTK_WINDOW(wSciTE.GetID()),
+		                     GTK_FILE_CHOOSER_ACTION_SAVE,
+		                     GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+		                     GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+		                     NULL);
 
 		if (gtk_dialog_run(GTK_DIALOG(dlg)) == GTK_RESPONSE_ACCEPT) {
 			char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dlg));
@@ -1739,7 +1755,7 @@ static PangoLayout *PangoLayoutFromStyleDefinition(GtkPrintContext *context, con
 				fontName++;
 			pango_font_description_set_family(pfd, fontName);
 			pango_font_description_set_size(pfd, PANGO_SCALE * (
-				(sd.specified & StyleDefinition::sdSize) ? sd.sizeFractional : 9.0));
+			                                    (sd.specified & StyleDefinition::sdSize) ? sd.sizeFractional : 9.0));
 			pango_font_description_set_weight(pfd, static_cast<PangoWeight>(sd.weight));
 			pango_font_description_set_style(pfd, sd.italics ? PANGO_STYLE_ITALIC : PANGO_STYLE_NORMAL);
 			pango_layout_set_font_description(layout, pfd);
@@ -1770,7 +1786,7 @@ void SciTEGTK::SetupFormat(Sci_RangeToFormat &frPrint, GtkPrintContext *context)
 	gdouble marginRight = 0;
 	gdouble marginBottom = 0;
 	if (gtk_print_context_get_hard_margins(context,
-		&marginTop, &marginBottom, &marginLeft, &marginRight)) {
+	                                       &marginTop, &marginBottom, &marginLeft, &marginRight)) {
 		frPrint.rc.left += marginLeft;
 		frPrint.rc.top += marginTop;
 		frPrint.rc.right -= marginRight;
@@ -1821,7 +1837,7 @@ void SciTEGTK::BeginPrintThis(GtkPrintOperation *operation, GtkPrintContext *con
 	}
 	pageStarts.push_back(lengthPrinted);
 
-	gtk_print_operation_set_n_pages(operation, pageStarts.size()-1);				
+	gtk_print_operation_set_n_pages(operation, pageStarts.size()-1);
 }
 
 void SciTEGTK::BeginPrint(GtkPrintOperation *operation, GtkPrintContext *context, SciTEGTK *scitew) {
@@ -1830,9 +1846,9 @@ void SciTEGTK::BeginPrint(GtkPrintOperation *operation, GtkPrintContext *context
 
 static void SetCairoColour(cairo_t *cr, long co) {
 	cairo_set_source_rgb(cr,
-		(co & 0xff) / 255.0,
-		((co >> 8) & 0xff) / 255.0,
-		((co >> 16) & 0xff) / 255.0);
+	                     (co & 0xff) / 255.0,
+	                     ((co >> 8) & 0xff) / 255.0,
+	                     ((co >> 16) & 0xff) / 255.0);
 }
 
 void SciTEGTK::DrawPageThis(GtkPrintOperation * /* operation */, GtkPrintContext *context, gint page_nr) {
@@ -1916,14 +1932,14 @@ void SciTEGTK::Print(bool) {
 	if (printSettings != NULL)
 		gtk_print_operation_set_print_settings(printOp, printSettings);
 	if (pageSetup != NULL)
-		gtk_print_operation_set_default_page_setup(printOp, pageSetup); 
+		gtk_print_operation_set_default_page_setup(printOp, pageSetup);
 
 	g_signal_connect(printOp, "begin_print", G_CALLBACK(BeginPrint), this);
 	g_signal_connect(printOp, "draw_page", G_CALLBACK(DrawPage), this);
 
 	GtkPrintOperationResult res = gtk_print_operation_run(
-		printOp, GTK_PRINT_OPERATION_ACTION_PRINT_DIALOG,
-		GTK_WINDOW(PWidget(wSciTE)), NULL);
+	                                  printOp, GTK_PRINT_OPERATION_ACTION_PRINT_DIALOG,
+	                                  GTK_WINDOW(PWidget(wSciTE)), NULL);
 
 	if (res == GTK_PRINT_OPERATION_RESULT_APPLY) {
 		if (printSettings != NULL)
@@ -1952,7 +1968,7 @@ void SciTEGTK::PrintSetup() {
 		printSettings = gtk_print_settings_new();
 
 	GtkPageSetup *newPageSetup = gtk_print_run_page_setup_dialog(
-		GTK_WINDOW(PWidget(wSciTE)), pageSetup, printSettings);
+	                                 GTK_WINDOW(PWidget(wSciTE)), pageSetup, printSettings);
 
 	if (pageSetup)
 		g_object_unref(pageSetup);
@@ -2041,10 +2057,10 @@ static void FillComboFromMemory(WComboBoxEntry *combo, const ComboMemory &mem, b
 SString SciTEGTK::EncodeString(const SString &s) {
 	wEditor.Call(SCI_SETLENGTHFORENCODE, s.length());
 	int len = wEditor.Call(SCI_ENCODEDFROMUTF8,
-		reinterpret_cast<uptr_t>(s.c_str()), 0);
+	                       reinterpret_cast<uptr_t>(s.c_str()), 0);
 	SBuffer ret(len);
 	wEditor.CallString(SCI_ENCODEDFROMUTF8,
-		reinterpret_cast<uptr_t>(s.c_str()), ret.ptr());
+	                   reinterpret_cast<uptr_t>(s.c_str()), ret.ptr());
 	ret.ptr()[len] = '\0';
 	return SString(ret);
 }
@@ -2055,11 +2071,11 @@ void BackgroundStrip::Creation(GtkWidget *container) {
 	Strip::Creation(container);
 	gtk_container_set_border_width(GTK_CONTAINER(GetID()), 1);
 	gtk_box_pack_start(GTK_BOX(container), GTK_WIDGET(GetID()), FALSE, FALSE, 0);
-	
+
 	wProgress.Create();
 	table.Add(wProgress, 1, false, 0, 0);
 	gtk_widget_show(wProgress);
-	
+
 	wExplanation.Create("");
 	table.Label(wExplanation);
 
@@ -2072,8 +2088,8 @@ void BackgroundStrip::Creation(GtkWidget *container) {
 void BackgroundStrip::SetProgress(const GUI::gui_string &explanation, int size, int progress) {
 	gtk_label_set_text(GTK_LABEL(wExplanation.GetID()), explanation.c_str());
 	if (size > 0) {
-		gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(wProgress.GetID()), 
-			static_cast<double>(progress) / static_cast<double>(size));
+		gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(wProgress.GetID()),
+		                              static_cast<double>(progress) / static_cast<double>(size));
 	}
 }
 
@@ -2223,12 +2239,12 @@ void SciTEGTK::FindInFilesDotDot() {
 void SciTEGTK::FindInFilesBrowse() {
 	FilePath findInDir(dlgFindInFiles.comboDir.Text());
 	GtkWidget *dialog = gtk_file_chooser_dialog_new(
-							localiser.Text("Select a folder to search from").c_str(),
-							GTK_WINDOW(dlgFindInFiles.GetID()), // parent_window,
-							GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,
-							GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-							GTK_STOCK_OK, GTK_RESPONSE_ACCEPT,
-							NULL);
+	                        localiser.Text("Select a folder to search from").c_str(),
+	                        GTK_WINDOW(dlgFindInFiles.GetID()), // parent_window,
+	                        GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,
+	                        GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+	                        GTK_STOCK_OK, GTK_RESPONSE_ACCEPT,
+	                        NULL);
 	gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(dialog), findInDir.AsInternal());
 
 	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
@@ -2253,187 +2269,193 @@ static const char *textReplaceInBuffers = "Replace In _Buffers";
 static const char *textClose = "_Close";
 
 /* XPM */
-static const char * word1_x_xpm[] = {
-"16 16 15 1",
-" 	c #FFFFFF",
-".	c #000000",
-"+	c #E1E1E1",
-"@	c #D9D9D9",
-"#	c #4D4D4D",
-"$	c #7C7C7C",
-"%	c #D0D0D0",
-"&	c #A7A7A7",
-"*	c #8C8C8C",
-"=	c #BDBDBD",
-"-	c #B2B2B2",
-";	c #686868",
-">	c #F0F0F0",
-",	c #9A9A9A",
-"'	c #C7C7C7",
-"                ",
-"                ",
-"                ",
-"                ",
-"                ",
-"                ",
-"               .",
-".+.+.@##@ .$%#&.",
-"*=.-*;++; .>;++.",
-",*.$,.  . . .  .",
-"=#,.=;++; . ;++.",
-"'.=.'@##@ . @#&.",
-"                ",
-".              .",
-".              .",
-"................"};
+static const char *word1_x_xpm[] = {
+	"16 16 15 1",
+	" 	c #FFFFFF",
+	".	c #000000",
+	"+	c #E1E1E1",
+	"@	c #D9D9D9",
+	"#	c #4D4D4D",
+	"$	c #7C7C7C",
+	"%	c #D0D0D0",
+	"&	c #A7A7A7",
+	"*	c #8C8C8C",
+	"=	c #BDBDBD",
+	"-	c #B2B2B2",
+	";	c #686868",
+	">	c #F0F0F0",
+	",	c #9A9A9A",
+	"'	c #C7C7C7",
+	"                ",
+	"                ",
+	"                ",
+	"                ",
+	"                ",
+	"                ",
+	"               .",
+	".+.+.@##@ .$%#&.",
+	"*=.-*;++; .>;++.",
+	",*.$,.  . . .  .",
+	"=#,.=;++; . ;++.",
+	"'.=.'@##@ . @#&.",
+	"                ",
+	".              .",
+	".              .",
+	"................"
+};
 
 /* XPM */
-static const char * case_x_xpm[] = {
-"16 16 12 1",
-" 	c #FFFFFF",
-".	c #BDBDBD",
-"+	c #4D4D4D",
-"@	c #000000",
-"#	c #D0D0D0",
-"$	c #C7C7C7",
-"%	c #7C7C7C",
-"&	c #B2B2B2",
-"*	c #8C8C8C",
-"=	c #E1E1E1",
-"-	c #686868",
-";	c #9A9A9A",
-"                ",
-"                ",
-"                ",
-"                ",
-"   .+@@         ",
-"  #@$           ",
-"  %%      &+@@  ",
-"  @*     &+=    ",
-"  @*     @&     ",
-"  -%     @&     ",
-"  .@#    ;+=    ",
-"   &+@@   ;@@@  ",
-"                ",
-"                ",
-"                ",
-"                "};
+static const char *case_x_xpm[] = {
+	"16 16 12 1",
+	" 	c #FFFFFF",
+	".	c #BDBDBD",
+	"+	c #4D4D4D",
+	"@	c #000000",
+	"#	c #D0D0D0",
+	"$	c #C7C7C7",
+	"%	c #7C7C7C",
+	"&	c #B2B2B2",
+	"*	c #8C8C8C",
+	"=	c #E1E1E1",
+	"-	c #686868",
+	";	c #9A9A9A",
+	"                ",
+	"                ",
+	"                ",
+	"                ",
+	"   .+@@         ",
+	"  #@$           ",
+	"  %%      &+@@  ",
+	"  @*     &+=    ",
+	"  @*     @&     ",
+	"  -%     @&     ",
+	"  .@#    ;+=    ",
+	"   &+@@   ;@@@  ",
+	"                ",
+	"                ",
+	"                ",
+	"                "
+};
 
 /* XPM */
-static const char * regex_x_xpm[] = {
-"16 16 11 1",
-" 	c #FFFFFF",
-".	c #888888",
-"+	c #696969",
-"@	c #000000",
-"#	c #E0E0E0",
-"$	c #484848",
-"%	c #B6B6B6",
-"&	c #C4C4C4",
-"*	c #787878",
-"=	c #383838",
-"-	c #D3D3D3",
-"                ",
-"                ",
-"                ",
-"  .+        @   ",
-" #$$#     % + % ",
-" +&&+    #*=@=*#",
-"-$  $&     +++  ",
-"$&  &$    -$ =- ",
-"                ",
-"                ",
-"      %@%       ",
-"      %@%       ",
-"                ",
-"                ",
-"                ",
-"                "};
+static const char *regex_x_xpm[] = {
+	"16 16 11 1",
+	" 	c #FFFFFF",
+	".	c #888888",
+	"+	c #696969",
+	"@	c #000000",
+	"#	c #E0E0E0",
+	"$	c #484848",
+	"%	c #B6B6B6",
+	"&	c #C4C4C4",
+	"*	c #787878",
+	"=	c #383838",
+	"-	c #D3D3D3",
+	"                ",
+	"                ",
+	"                ",
+	"  .+        @   ",
+	" #$$#     % + % ",
+	" +&&+    #*=@=*#",
+	"-$  $&     +++  ",
+	"$&  &$    -$ =- ",
+	"                ",
+	"                ",
+	"      %@%       ",
+	"      %@%       ",
+	"                ",
+	"                ",
+	"                ",
+	"                "
+};
 
 /* XPM */
-static const char * backslash_x_xpm[] = {
-"16 16 15 1",
-" 	c #FFFFFF",
-".	c #141414",
-"+	c #585858",
-"@	c #A6A6A6",
-"#	c #B6B6B6",
-"$	c #272727",
-"%	c #E0E0E0",
-"&	c #979797",
-"*	c #000000",
-"=	c #696969",
-"-	c #484848",
-";	c #787878",
-">	c #D3D3D3",
-",	c #383838",
-"'	c #888888",
-"                ",
-"                ",
-"                ",
-".       .       ",
-"+@      +@   #  ",
-"#+      #+   $  ",
-" .%  .&* .% =*--",
-" ;&  *&  ;&  *  ",
-" >,  *   >,  *  ",
-"  $> *    $> *  ",
-"  &; *    &; *% ",
-"  %. *    %. '*.",
-"                ",
-"                ",
-"                ",
-"                "};
+static const char *backslash_x_xpm[] = {
+	"16 16 15 1",
+	" 	c #FFFFFF",
+	".	c #141414",
+	"+	c #585858",
+	"@	c #A6A6A6",
+	"#	c #B6B6B6",
+	"$	c #272727",
+	"%	c #E0E0E0",
+	"&	c #979797",
+	"*	c #000000",
+	"=	c #696969",
+	"-	c #484848",
+	";	c #787878",
+	">	c #D3D3D3",
+	",	c #383838",
+	"'	c #888888",
+	"                ",
+	"                ",
+	"                ",
+	".       .       ",
+	"+@      +@   #  ",
+	"#+      #+   $  ",
+	" .%  .&* .% =*--",
+	" ;&  *&  ;&  *  ",
+	" >,  *   >,  *  ",
+	"  $> *    $> *  ",
+	"  &; *    &; *% ",
+	"  %. *    %. '*.",
+	"                ",
+	"                ",
+	"                ",
+	"                "
+};
 
 /* XPM */
-static const char * around_x_xpm[] = {
-"16 16 2 1",
-" 	c #FFFFFF",
-".	c #000000",
-"                ",
-"      .....     ",
-"     .......    ",
-"    ...   ...   ",
-"            ..  ",
-"            ..  ",
-"   ..        .. ",
-"  ....       .. ",
-" ......      .. ",
-"   ..       ..  ",
-"   ...      ..  ",
-"    ...   ...   ",
-"     .......    ",
-"      .....     ",
-"                ",
-"                "};
+static const char *around_x_xpm[] = {
+	"16 16 2 1",
+	" 	c #FFFFFF",
+	".	c #000000",
+	"                ",
+	"      .....     ",
+	"     .......    ",
+	"    ...   ...   ",
+	"            ..  ",
+	"            ..  ",
+	"   ..        .. ",
+	"  ....       .. ",
+	" ......      .. ",
+	"   ..       ..  ",
+	"   ...      ..  ",
+	"    ...   ...   ",
+	"     .......    ",
+	"      .....     ",
+	"                ",
+	"                "
+};
 
 /* XPM */
-static const char * up_x_xpm[] = {
-"16 16 8 1",
-" 	c None",
-".	c #FFFFFF",
-"+	c #9C9C9C",
-"@	c #000000",
-"#	c #747474",
-"$	c #484848",
-"%	c #DFDFDF",
-"&	c #BFBFBF",
-"................",
-"................",
-"........+.......",
-".......@@#......",
-"......@@@@#.....",
-".....@@$@$@$....",
-"....@@%#@&+@$...",
-"...@@%.#@&.&@$..",
-"..#@%..#@&..&@&.",
-"..#....#@&...&&.",
-".......#@&......",
-".......#@&......",
-".......#@&......",
-".......#@&......",
-".......#@&......",
-"................"};
+static const char *up_x_xpm[] = {
+	"16 16 8 1",
+	" 	c None",
+	".	c #FFFFFF",
+	"+	c #9C9C9C",
+	"@	c #000000",
+	"#	c #747474",
+	"$	c #484848",
+	"%	c #DFDFDF",
+	"&	c #BFBFBF",
+	"................",
+	"................",
+	"........+.......",
+	".......@@#......",
+	"......@@@@#.....",
+	".....@@$@$@$....",
+	"....@@%#@&+@$...",
+	"...@@%.#@&.&@$..",
+	"..#@%..#@&..&@&.",
+	"..#....#@&...&&.",
+	".......#@&......",
+	".......#@&......",
+	".......#@&......",
+	".......#@&......",
+	".......#@&......",
+	"................"
+};
 
 const static SearchOption toggles[] = {
 	{"Match _whole word only", IDM_WHOLEWORD, IDWHOLEWORD},
@@ -2457,13 +2479,13 @@ static const char **xpmImages[] = {
 
 void SciTEGTK::FindInFilesResponse(int responseID) {
 	switch (responseID) {
-		case GTK_RESPONSE_OK:
-			FindInFilesCmd() ;
-			break;
+	case GTK_RESPONSE_OK:
+		FindInFilesCmd() ;
+		break;
 
-		case GTK_RESPONSE_CANCEL:
-			dlgFindInFiles.Destroy();
-			break;
+	case GTK_RESPONSE_CANCEL:
+		dlgFindInFiles.Destroy();
+		break;
 	}
 }
 
@@ -2607,7 +2629,7 @@ void SciTEGTK::ContinueExecute(int fromPoll) {
 			sExitMessage += SString(commandTime.Duration(), 3);
 		}
 		if ((lastFlags & jobRepSelYes)
-			|| ((lastFlags & jobRepSelAuto) && !exitStatus)) {
+		        || ((lastFlags & jobRepSelAuto) && !exitStatus)) {
 			int cpMin = wEditor.Send(SCI_GETSELECTIONSTART, 0, 0);
 			wEditor.Send(SCI_REPLACESEL,0,(sptr_t)(lastOutput.c_str()));
 			wEditor.Send(SCI_SETSEL, cpMin, cpMin+lastOutput.length());
@@ -2619,7 +2641,7 @@ void SciTEGTK::ContinueExecute(int fromPoll) {
 		if (exitStatus && wGroupTab.GetID()) {
 			gtk_notebook_set_current_page(GTK_NOTEBOOK(wGroupTab.GetID()), GOA_CON_HOST);
 		}
-		
+
 		// Move selection back to beginning of this run so that F4 will go
 		// to first error of this run.
 		if ((scrollOutput == 1) && returnOutputToCommand)
@@ -2695,7 +2717,7 @@ gboolean SciTEGTK::IOSignal(GIOChannel *, GIOCondition, SciTEGTK *scitew) {
 int xsystem(const char *s, int fh) {
 	int pid = 0;
 	if ((pid = fork()) == 0) {
-		for (int i=getdtablesize();i>=0;--i) if (i != fh) close(i);
+		for (int i=getdtablesize(); i>=0; --i) if (i != fh) close(i);
 		if (open("/dev/null", O_RDWR) >= 0) { // stdin
 			if (dup(fh) >= 0) { // stdout
 				if (dup(fh) >= 0) { // stderr
@@ -2739,7 +2761,7 @@ void SciTEGTK::Execute() {
 	if (jobQueue.jobQueue[icmd].jobType == jobShell) {
 		if (fork() == 0)
 			execlp("/bin/sh", "sh", "-c", jobQueue.jobQueue[icmd].command.c_str(),
-				static_cast<char *>(NULL));
+			       static_cast<char *>(NULL));
 		else
 			ExecuteNext();
 	} else if (jobQueue.jobQueue[icmd].jobType == jobExtension) {
@@ -2761,7 +2783,7 @@ void SciTEGTK::Execute() {
 		inputChannel = g_io_channel_unix_new(pipefds[0]);
 		inputHandle = g_io_add_watch(inputChannel, G_IO_IN, (GIOFunc)IOSignal, this);
 		// Also add a background task in case there is no output from the tool
-		pollID = g_timeout_add(20, (gint (*)(void *)) SciTEGTK::PollTool, this);
+		pollID = g_timeout_add(20, (gint( *)(void *)) SciTEGTK::PollTool, this);
 	}
 }
 
@@ -2769,9 +2791,9 @@ void SciTEGTK::ExecuteOnConsole() {
 	char *mesg;
 	while (serial->IsAlive()) {
 		serial->ListenPort();
-		if((mesg=serial->GetMessage()) != 0) {
+		if ((mesg=serial->GetMessage()) != 0) {
 			instance->props.Set("SerialMsg",mesg);
-		    instance->UpdateStatusBar(true);
+			instance->UpdateStatusBar(true);
 		}
 		msSleep(1);
 	}
@@ -2792,13 +2814,13 @@ void SciTEGTK::GotoCmd() {
 
 void SciTEGTK::GotoResponse(int responseID) {
 	switch (responseID) {
-		case GTK_RESPONSE_OK:
-			GotoCmd() ;
-			break;
+	case GTK_RESPONSE_OK:
+		GotoCmd() ;
+		break;
 
-		case GTK_RESPONSE_CANCEL:
-			dlgGoto.Destroy();
-			break;
+	case GTK_RESPONSE_CANCEL:
+		dlgGoto.Destroy();
+		break;
 	}
 }
 
@@ -2836,13 +2858,13 @@ void SciTEGTK::QuestionCmd() {
 
 void SciTEGTK::QuestionResponse(int responseID) {
 	switch (responseID) {
-		case GTK_RESPONSE_OK:
-			QuestionCmd() ;
-			break;
+	case GTK_RESPONSE_OK:
+		QuestionCmd() ;
+		break;
 
-		case GTK_RESPONSE_CANCEL:
-			dlgQuestion.Destroy();
-			break;
+	case GTK_RESPONSE_CANCEL:
+		dlgQuestion.Destroy();
+		break;
 	}
 }
 void SciTEGTK::QuestionDialog(const char *str) {
@@ -2875,18 +2897,18 @@ void SciTEGTK::AskForFileDialog(FilePath directory, const char *f) {
 	directory.SetWorkingDirectory();
 	if (!dlgFileSelector.Created()) {
 		GtkWidget *dlg = gtk_file_chooser_dialog_new(
-					localiser.Text("Open File").c_str(),
-				      GTK_WINDOW(wSciTE.GetID()),
-				      GTK_FILE_CHOOSER_ACTION_OPEN,
-				      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-				      GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
-				      NULL);
+		                     localiser.Text("Open File").c_str(),
+		                     GTK_WINDOW(wSciTE.GetID()),
+		                     GTK_FILE_CHOOSER_ACTION_OPEN,
+		                     GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+		                     GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+		                     NULL);
 		gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(dlg), FALSE);
 		gtk_dialog_set_default_response(GTK_DIALOG(dlg), GTK_RESPONSE_ACCEPT);
 		if (props.GetInt("open.dialog.in.file.directory")) {
 			gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(dlg),
-				// NUCCIO maybe a bug here: filePath.Directory().AsInternal());
-				directory.AsInternal());
+			                                    // NUCCIO maybe a bug here: filePath.Directory().AsInternal());
+			                                    directory.AsInternal());
 		}
 
 		SString openFilter = f;
@@ -2941,14 +2963,14 @@ void SciTEGTK::AbbrevCmd() {
 
 void SciTEGTK::AbbrevResponse(int responseID) {
 	switch (responseID) {
-		case GTK_RESPONSE_OK:
-			AbbrevCmd();
-			break;
+	case GTK_RESPONSE_OK:
+		AbbrevCmd();
+		break;
 
-		case GTK_RESPONSE_CANCEL:
-			abbrevInsert[0] = '\0';
-			dlgAbbrev.Destroy();
-			break;
+	case GTK_RESPONSE_CANCEL:
+		abbrevInsert[0] = '\0';
+		dlgAbbrev.Destroy();
+		break;
 	}
 }
 
@@ -3011,17 +3033,17 @@ void SciTEGTK::TabSizeConvertCmd() {
 
 void SciTEGTK::TabSizeResponse(int responseID) {
 	switch (responseID) {
-		case RESPONSE_CONVERT:
-			TabSizeConvertCmd();
-			break;
+	case RESPONSE_CONVERT:
+		TabSizeConvertCmd();
+		break;
 
-		case GTK_RESPONSE_OK:
-			TabSizeCmd() ;
-			break;
+	case GTK_RESPONSE_OK:
+		TabSizeCmd() ;
+		break;
 
-		case GTK_RESPONSE_CANCEL:
-			dlgTabSize.Destroy();
-			break;
+	case GTK_RESPONSE_CANCEL:
+		dlgTabSize.Destroy();
+		break;
 	}
 }
 
@@ -3097,13 +3119,13 @@ void SciTEGTK::ParamCmd() {
 
 void SciTEGTK::ParamResponse(int responseID) {
 	switch (responseID) {
-		case GTK_RESPONSE_OK:
-			ParamCmd() ;
-			break;
+	case GTK_RESPONSE_OK:
+		ParamCmd() ;
+		break;
 
-		case GTK_RESPONSE_CANCEL:
-			ParamCancelCmd();
-			break;
+	case GTK_RESPONSE_CANCEL:
+		ParamCancelCmd();
+		break;
 	}
 }
 
@@ -3119,7 +3141,7 @@ bool SciTEGTK::ParametersDialog(bool modal) {
 	dlgParameters.Create(localiser.Text("Parameters"));
 
 	g_signal_connect(G_OBJECT(PWidget(dlgParameters)),
-	                   "destroy", G_CALLBACK(destroyDialog), &dlgParameters);
+	                 "destroy", G_CALLBACK(destroyDialog), &dlgParameters);
 
 	WTable table(modal ? 10 : 9, 2);
 	table.PackInto(GTK_BOX(dlgParameters.ContentArea()));
@@ -3168,33 +3190,33 @@ bool SciTEGTK::FindReplaceAdvanced() {
 
 void SciTEGTK::FindReplaceResponse(int responseID) {
 	switch (responseID) {
-		case GTK_RESPONSE_OK:
-			FRFindCmd() ;
-			break;
+	case GTK_RESPONSE_OK:
+		FRFindCmd() ;
+		break;
 
-		case GTK_RESPONSE_CANCEL:
-			dlgFindReplace.Destroy();
-			break;
+	case GTK_RESPONSE_CANCEL:
+		dlgFindReplace.Destroy();
+		break;
 
-		case RESPONSE_MARK_ALL:
-			FRMarkAllCmd();
-			break;
+	case RESPONSE_MARK_ALL:
+		FRMarkAllCmd();
+		break;
 
-		case RESPONSE_REPLACE:
-			FRReplaceCmd();
-			break;
+	case RESPONSE_REPLACE:
+		FRReplaceCmd();
+		break;
 
-		case RESPONSE_REPLACE_ALL:
-			FRReplaceAllCmd();
-			break;
+	case RESPONSE_REPLACE_ALL:
+		FRReplaceAllCmd();
+		break;
 
-		case RESPONSE_REPLACE_IN_SELECTION:
-			FRReplaceInSelectionCmd();
-			break;
+	case RESPONSE_REPLACE_IN_SELECTION:
+		FRReplaceInSelectionCmd();
+		break;
 
-		case RESPONSE_REPLACE_IN_BUFFERS:
-			FRReplaceInBuffersCmd();
-			break;
+	case RESPONSE_REPLACE_IN_BUFFERS:
+		FRReplaceInBuffersCmd();
+		break;
 	}
 }
 
@@ -3205,7 +3227,7 @@ void SciTEGTK::FindReplace(bool replace) {
 	dlgFindReplace.Create(localiser.Text(replace ? "Replace" : "Find"));
 
 	g_signal_connect(G_OBJECT(PWidget(dlgFindReplace)),
-	                   "destroy", G_CALLBACK(destroyDialog), &dlgFindReplace);
+	                 "destroy", G_CALLBACK(destroyDialog), &dlgFindReplace);
 
 	WTable table(replace ? 8 : 7, 2);
 	table.PackInto(GTK_BOX(dlgFindReplace.ContentArea()));
@@ -3308,7 +3330,7 @@ int SciTEGTK::WindowMessageBox(GUI::Window &w, const GUI::gui_string &msg, int s
 		gtk_container_set_border_width(GTK_CONTAINER(messageBoxDialog), 0);
 
 		g_signal_connect(G_OBJECT(messageBoxDialog),
-		                   "destroy", G_CALLBACK(messageBoxDestroy), &messageBoxDialog);
+		                 "destroy", G_CALLBACK(messageBoxDestroy), &messageBoxDialog);
 
 		int escapeResult = IDOK;
 		if ((style & 0xf) == MB_OK) {
@@ -3323,8 +3345,8 @@ int SciTEGTK::WindowMessageBox(GUI::Window &w, const GUI::gui_string &msg, int s
 			}
 		}
 		g_signal_connect(G_OBJECT(messageBoxDialog),
-		                   "key_press_event", G_CALLBACK(messageBoxKey),
-		                   reinterpret_cast<gpointer>(escapeResult));
+		                 "key_press_event", G_CALLBACK(messageBoxKey),
+		                 reinterpret_cast<gpointer>(escapeResult));
 
 		if (style & MB_ABOUTBOX) {
 			GtkWidget *explanation = scintilla_new();
@@ -3338,12 +3360,12 @@ int SciTEGTK::WindowMessageBox(GUI::Window &w, const GUI::gui_string &msg, int s
 			gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(messageBoxDialog))),
 			                   explanation, TRUE, TRUE, 0);
 			gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(messageBoxDialog))),
-								image, TRUE, TRUE, 0);
+			                   image, TRUE, TRUE, 0);
 #else
 			gtk_box_pack_start(GTK_BOX(GTK_DIALOG(messageBoxDialog)->vbox),
 			                   explanation, TRUE, TRUE, 0);
 			gtk_box_pack_start(GTK_BOX(GTK_DIALOG(messageBoxDialog)->vbox),
-				                   image, TRUE, TRUE, 0);
+			                   image, TRUE, TRUE, 0);
 #endif
 			gtk_widget_set_size_request(GTK_WIDGET(explanation), 580, 480);
 			gtk_widget_set_size_request(GTK_WIDGET(image), 128, 180);
@@ -3516,25 +3538,39 @@ enum {
 };
 
 static KeyToCommand kmap[] = {
-                                 {m_C, GKEY_Tab, IDM_NEXTFILESTACK},
-                                 {mSC, GKEY_ISO_Left_Tab, IDM_PREVFILESTACK},
-                                 {m_C, GKEY_KP_Enter, IDM_COMPLETEWORD},
-                                 {GDK_MOD1_MASK, GKEY_F2, IDM_BOOKMARK_NEXT_SELECT},
-                                 {GDK_MOD1_MASK|GDK_SHIFT_MASK, GKEY_F2, IDM_BOOKMARK_PREV_SELECT},
-                                 {m_C, GKEY_F3, IDM_FINDNEXTSEL},
-                                 {mSC, GKEY_F3, IDM_FINDNEXTBACKSEL},
-                                 {m_C, GKEY_F4, IDM_CLOSE},
-                                 {m_C, 'j', IDM_PREVMATCHPPC},
-                                 {mSC, 'J', IDM_SELECTTOPREVMATCHPPC},
-                                 {m_C, 'k', IDM_NEXTMATCHPPC},
-                                 {mSC, 'K', IDM_SELECTTONEXTMATCHPPC},
-                                 {m_C, GKEY_KP_Multiply, IDM_EXPAND},
-                                 {0, 0, 0},
-                             };
+	{m_C, GKEY_Tab, IDM_NEXTFILESTACK},
+	{mSC, GKEY_ISO_Left_Tab, IDM_PREVFILESTACK},
+	{m_C, GKEY_KP_Enter, IDM_COMPLETEWORD},
+
+	{m__, GKEY_BS, IDK_BS},
+	{m__, GKEY_Up, IDK_UP},
+	{m__, GKEY_Down, IDK_DOWN},
+	{m__, GKEY_Left, IDK_LEFT},
+	{m__, GKEY_Right, IDK_RIGHT},
+	{m__, GKEY_Home, IDK_HOME},
+	{m__, GKEY_End, IDK_END},
+	{m_C, 'a', IDK_CTRL_A},
+	{m_C, 'b', IDK_CTRL_B},
+	{m_C, 'c', IDK_CTRL_C},
+	{m_C, 'd', IDK_CTRL_D},
+	{m_C, 'e', IDK_CTRL_E},
+
+	{GDK_MOD1_MASK, GKEY_F2, IDM_BOOKMARK_NEXT_SELECT},
+	{GDK_MOD1_MASK|GDK_SHIFT_MASK, GKEY_F2, IDM_BOOKMARK_PREV_SELECT},
+	{m_C, GKEY_F3, IDM_FINDNEXTSEL},
+	{mSC, GKEY_F3, IDM_FINDNEXTBACKSEL},
+	{m_C, GKEY_F4, IDM_CLOSE},
+	{m_C, 'j', IDM_PREVMATCHPPC},
+	{mSC, 'J', IDM_SELECTTOPREVMATCHPPC},
+	{m_C, 'k', IDM_NEXTMATCHPPC},
+	{mSC, 'K', IDM_SELECTTONEXTMATCHPPC},
+	{m_C, GKEY_KP_Multiply, IDM_EXPAND},
+	{0, 0, 0},
+};
 
 inline bool KeyMatch(const char *menuKey, int keyval, int modifiers) {
 	return SciTEKeys::MatchKeyCode(
-		SciTEKeys::ParseKeyCode(menuKey), keyval, modifiers);
+	           SciTEKeys::ParseKeyCode(menuKey), keyval, modifiers);
 }
 
 gint SciTEGTK::Key(GdkEventKey *event) {
@@ -3553,9 +3589,9 @@ gint SciTEGTK::Key(GdkEventKey *event) {
 	int modifiers = event->state & (GDK_SHIFT_MASK | GDK_CONTROL_MASK | GDK_MOD1_MASK);
 
 	int cmodifiers = // modifier mask for Lua extension
-		(event->state & GDK_SHIFT_MASK   ? SCMOD_SHIFT : 0) |
-		(event->state & GDK_CONTROL_MASK ? SCMOD_CTRL  : 0) |
-		(event->state & GDK_MOD1_MASK    ? SCMOD_ALT   : 0);
+	    (event->state & GDK_SHIFT_MASK   ? SCMOD_SHIFT : 0) |
+	    (event->state & GDK_CONTROL_MASK ? SCMOD_CTRL  : 0) |
+	    (event->state & GDK_MOD1_MASK    ? SCMOD_ALT   : 0);
 	if (extender && extender->OnKey(event->keyval, cmodifiers))
 		return 1;
 
@@ -3573,16 +3609,56 @@ gint SciTEGTK::Key(GdkEventKey *event) {
 			}
 		}
 	}
-	if (commandID) {
+	if (wConsole.HasFocus() && this->serial->IsConnected() && commandID >= IDK_FIRST && commandID <= IDK_LAST) {
+		switch (commandID) {
+		case IDK_BS:
+			this->serial->Send("\x08",1);
+			break;
+		case IDK_UP:
+			this->serial->Send("\e[A",3);
+			break;
+		case IDK_DOWN:
+			this->serial->Send("\e[B",3);
+			break;
+		case IDK_LEFT:
+			this->serial->Send("\e[D",3);
+			break;
+		case IDK_RIGHT:
+			this->serial->Send("\e[C",3);
+			break;
+		case IDK_HOME:
+			this->serial->Send("\e[H",3);
+			break;
+		case IDK_END:
+			this->serial->Send("\e[F",3);
+			break;
+		case IDK_CTRL_A:
+			this->serial->Send("\x01",1);
+			break;
+		case IDK_CTRL_B:
+			this->serial->Send("\x02",1);
+			break;
+		case IDK_CTRL_C:
+			this->serial->Send("\x03",1);
+			break;
+		case IDK_CTRL_D:
+			this->serial->Send("\x04",1);
+			break;
+		case IDK_CTRL_E:
+			this->serial->Send("\x05",1);
+			break;
+		}
+		g_signal_stop_emission_by_name(G_OBJECT(PWidget(wSciTE)), "key_press_event");
+	} else if (commandID) {
 		Command(commandID);
 	}
+
 	if ((commandID == IDM_NEXTFILE) ||
-		(commandID == IDM_PREVFILE) ||
-		(commandID == IDM_NEXTFILESTACK) ||
-		(commandID == IDM_PREVFILESTACK)) {
+	        (commandID == IDM_PREVFILE) ||
+	        (commandID == IDM_NEXTFILESTACK) ||
+	        (commandID == IDM_PREVFILESTACK)) {
 		// Stop the default key processing from moving the focus
-		g_signal_stop_emission_by_name(
-		    G_OBJECT(PWidget(wSciTE)), "key_press_event");
+		g_signal_stop_emission_by_name(G_OBJECT(PWidget(wSciTE)), "key_press_event");
 	}
 
 	// check tools menu command shortcuts
@@ -3653,7 +3729,7 @@ gint SciTEGTK::Mouse(GdkEventButton *event) {
 			if (WindowFromWidget(PWidget(wOutput)) == event->window) {
 				menuSource = IDM_RUNWIN;
 				w = &wOutput;
-			} else if(WindowFromWidget(PWidget(wConsole)) == event->window) {
+			} else if (WindowFromWidget(PWidget(wConsole)) == event->window) {
 				menuSource = IDM_CONSOLEWIN;
 				w = &wConsole;
 			} else {
@@ -3667,7 +3743,7 @@ gint SciTEGTK::Mouse(GdkEventButton *event) {
 		int oy = 0;
 		gdk_window_get_origin(WindowFromWidget(PWidget(*w)), &ox, &oy);
 		ContextMenu(*w, GUI::Point(static_cast<int>(event->x) + ox,
-		                     static_cast<int>(event->y) + oy), wSciTE);
+		                           static_cast<int>(event->y) + oy), wSciTE);
 		//fprintf(stderr, "Menu source %s\n",
 		//	(menuSource == IDM_SRCWIN) ? "IDM_SRCWIN" : "IDM_RUNWIN");
 	} else {
@@ -3693,7 +3769,7 @@ gint SciTEGTK::TabBarRelease(GtkNotebook *notebook, GdkEventButton *event) {
 		SetDocumentAt(gtk_notebook_get_current_page(GTK_NOTEBOOK(wTabBar.GetID())));
 		CheckReload();
 	} else if (event->button == 2) {
-		for (int pageNum=0;pageNum<gtk_notebook_get_n_pages(notebook);pageNum++) {
+		for (int pageNum=0; pageNum<gtk_notebook_get_n_pages(notebook); pageNum++) {
 			GtkWidget *page = gtk_notebook_get_nth_page(notebook, pageNum);
 			if (page) {
 				GtkWidget *label = gtk_notebook_get_tab_label(notebook, page);
@@ -3719,16 +3795,16 @@ gint SciTEGTK::TabGroupRelease(GtkNotebook *notebook, GdkEventButton *event) {
 
 gint SciTEGTK::TabBarScroll(GdkEventScroll *event) {
 	switch (event->direction) {
-		case GDK_SCROLL_RIGHT:
-		case GDK_SCROLL_DOWN:
-			Next();
-			WindowSetFocus(wEditor);
-			break;
-		case GDK_SCROLL_LEFT:
-		case GDK_SCROLL_UP:
-			Prev();
-			WindowSetFocus(wEditor);
-			break;
+	case GDK_SCROLL_RIGHT:
+	case GDK_SCROLL_DOWN:
+		Next();
+		WindowSetFocus(wEditor);
+		break;
+	case GDK_SCROLL_LEFT:
+	case GDK_SCROLL_UP:
+		Prev();
+		WindowSetFocus(wEditor);
+		break;
 	}
 	// Return true because Next() or Prev() already switches the tab
 	return TRUE;
@@ -3736,14 +3812,14 @@ gint SciTEGTK::TabBarScroll(GdkEventScroll *event) {
 
 gint SciTEGTK::TabGroupScroll(GdkEventScroll *event) {
 	switch (event->direction) {
-		case GDK_SCROLL_RIGHT:
-		case GDK_SCROLL_DOWN:
-			//WindowSetFocus(wEditor);
-			break;
-		case GDK_SCROLL_LEFT:
-		case GDK_SCROLL_UP:
-			//WindowSetFocus(wEditor);
-			break;
+	case GDK_SCROLL_RIGHT:
+	case GDK_SCROLL_DOWN:
+		//WindowSetFocus(wEditor);
+		break;
+	case GDK_SCROLL_LEFT:
+	case GDK_SCROLL_UP:
+		//WindowSetFocus(wEditor);
+		break;
 	}
 	// Return true because Next() or Prev() already switches the tab
 	return true;
@@ -3764,8 +3840,8 @@ GtkWidget *SciTEGTK::AddToolButton(const char *text, int cmd, GtkWidget *toolbar
 	gtk_toolbar_insert(GTK_TOOLBAR(PWidget(wToolBar)), button, -1);
 
 	g_signal_connect(G_OBJECT(button), "clicked",
-	                   G_CALLBACK(ButtonSignal),
-	                   (gpointer)cmd);
+	                 G_CALLBACK(ButtonSignal),
+	                 (gpointer)cmd);
 	return GTK_WIDGET(button);
 }
 
@@ -3807,34 +3883,34 @@ void SciTEGTK::AddToolBar() {
 		AddToolButton("Next Buffer", IDM_NEXTFILE, gtk_image_new_from_stock("gtk-go-forward", GTK_ICON_SIZE_LARGE_TOOLBAR));
 		return;
 	}
-	AddToolButton("New", IDM_NEW, pixmap_new((gchar**)filenew_xpm));
-	AddToolButton("Open", IDM_OPEN, pixmap_new((gchar**)fileopen_xpm));
-	AddToolButton("Save", IDM_SAVE, pixmap_new((gchar**)filesave_xpm));
-	AddToolButton("Close", IDM_CLOSE, pixmap_new((gchar**)close_xpm));
+	AddToolButton("New", IDM_NEW, pixmap_new((gchar **)filenew_xpm));
+	AddToolButton("Open", IDM_OPEN, pixmap_new((gchar **)fileopen_xpm));
+	AddToolButton("Save", IDM_SAVE, pixmap_new((gchar **)filesave_xpm));
+	AddToolButton("Close", IDM_CLOSE, pixmap_new((gchar **)close_xpm));
 
 	AddToolSpace(GTK_TOOLBAR(PWidget(wToolBar)));
-	AddToolButton("Undo", IDM_UNDO, pixmap_new((gchar**)undo_xpm));
-	AddToolButton("Redo", IDM_REDO, pixmap_new((gchar**)redo_xpm));
+	AddToolButton("Undo", IDM_UNDO, pixmap_new((gchar **)undo_xpm));
+	AddToolButton("Redo", IDM_REDO, pixmap_new((gchar **)redo_xpm));
 
 	AddToolSpace(GTK_TOOLBAR(PWidget(wToolBar)));
-	AddToolButton("Cut", IDM_CUT, pixmap_new((gchar**)editcut_xpm));
-	AddToolButton("Copy", IDM_COPY, pixmap_new((gchar**)editcopy_xpm));
-	AddToolButton("Paste", IDM_PASTE, pixmap_new((gchar**)editpaste_xpm));
+	AddToolButton("Cut", IDM_CUT, pixmap_new((gchar **)editcut_xpm));
+	AddToolButton("Copy", IDM_COPY, pixmap_new((gchar **)editcopy_xpm));
+	AddToolButton("Paste", IDM_PASTE, pixmap_new((gchar **)editpaste_xpm));
 
 	AddToolSpace(GTK_TOOLBAR(PWidget(wToolBar)));
-	AddToolButton("Find in Files", IDM_FINDINFILES, pixmap_new((gchar**)findinfiles_xpm));
-	AddToolButton("Find", IDM_FIND, pixmap_new((gchar**)search_xpm));
-	AddToolButton("Find Next", IDM_FINDNEXT, pixmap_new((gchar**)findnext_xpm));
-	AddToolButton("Replace", IDM_REPLACE, pixmap_new((gchar**)replace_xpm));
+	AddToolButton("Find in Files", IDM_FINDINFILES, pixmap_new((gchar **)findinfiles_xpm));
+	AddToolButton("Find", IDM_FIND, pixmap_new((gchar **)search_xpm));
+	AddToolButton("Find Next", IDM_FINDNEXT, pixmap_new((gchar **)findnext_xpm));
+	AddToolButton("Replace", IDM_REPLACE, pixmap_new((gchar **)replace_xpm));
 
 	AddToolSpace(GTK_TOOLBAR(PWidget(wToolBar)));
-	btnCompile = AddToolButton("Compile", IDM_COMPILE, pixmap_new((gchar**)compile_xpm));
-	btnBuild = AddToolButton("Build", IDM_BUILD, pixmap_new((gchar**)build_xpm));
-	btnStop = AddToolButton("Stop", IDM_STOPEXECUTE, pixmap_new((gchar**)stop_xpm));
+	btnCompile = AddToolButton("Compile", IDM_COMPILE, pixmap_new((gchar **)compile_xpm));
+	btnBuild = AddToolButton("Build", IDM_BUILD, pixmap_new((gchar **)build_xpm));
+	btnStop = AddToolButton("Stop", IDM_STOPEXECUTE, pixmap_new((gchar **)stop_xpm));
 
 	AddToolSpace(GTK_TOOLBAR(PWidget(wToolBar)));
-	AddToolButton("Previous", IDM_PREVFILE, pixmap_new((gchar**)prev_xpm));
-	AddToolButton("Next Buffer", IDM_NEXTFILE, pixmap_new((gchar**)next_xpm));
+	AddToolButton("Previous", IDM_PREVFILE, pixmap_new((gchar **)prev_xpm));
+	AddToolButton("Next Buffer", IDM_NEXTFILE, pixmap_new((gchar **)next_xpm));
 }
 
 SString SciTEGTK::TranslatePath(const char *path) {
@@ -3904,10 +3980,10 @@ void SciTEGTK::CreateTranslatedMenu(int n, SciTEItemFactoryEntry items[],
 			userDefinedAccels[i] = NULL;
 		}
 
-		translatedItems[i].path = (gchar*) items[i].path;
-		translatedItems[i].accelerator = (gchar*) items[i].accelerator;
+		translatedItems[i].path = (gchar *) items[i].path;
+		translatedItems[i].accelerator = (gchar *) items[i].accelerator;
 		translatedItems[i].callback_action = items[i].callback_action;
-		translatedItems[i].item_type = (gchar*) items[i].item_type;
+		translatedItems[i].item_type = (gchar *) items[i].item_type;
 		translatedText[i] = TranslatePath(translatedItems[i].path);
 		translatedItems[i].path = const_cast<char *>(translatedText[i].c_str());
 		translatedRadios[i] = TranslatePath(translatedItems[i].item_type);
@@ -3974,13 +4050,13 @@ void SciTEGTK::CreateTranslatedMenu(int n, SciTEItemFactoryEntry items[],
 				gtk_accelerator_parse(psife->accelerator, &acceleratorKey, &acceleratorMods);
 				if (acceleratorKey) {
 					gtk_widget_add_accelerator(menuItemCommand, "activate", accelGroup,
-						acceleratorKey, acceleratorMods, GTK_ACCEL_VISIBLE);
+					                           acceleratorKey, acceleratorMods, GTK_ACCEL_VISIBLE);
 				} else {
 					//fprintf(stderr, "Failed to add accelerator '%s' for '%s'\n", psife->accelerator, psife->path);
 				}
 			}
 			g_object_set_data(G_OBJECT(menuItemCommand), "CmdNum",
-				reinterpret_cast<void *>(psife->callback_action));
+			                  reinterpret_cast<void *>(psife->callback_action));
 			g_signal_connect(G_OBJECT(menuItemCommand),"activate", G_CALLBACK(MenuSignal), this);
 			gtk_menu_shell_append(GTK_MENU_SHELL(menuParent), menuItemCommand);
 			mapMenuItemFromId[psife->callback_action] = menuItemCommand;
@@ -4002,244 +4078,244 @@ void SciTEGTK::CreateMenu() {
 
 	GCallback menuSig = G_CALLBACK(MenuSignal);
 	SciTEItemFactoryEntry menuItems[] = {
-	                                      {"/_File", NULL, NULL, 0, "<Branch>"},
-	                                      {"/File/_New", "<control>N", menuSig, IDM_NEW, 0},
-	                                      {"/File/_Open...", "<control>O", menuSig, IDM_OPEN, 0},
-	                                      {"/File/Open _Example", NULL, menuSig, IDM_EXAMPLE_OPEN, 0},
-	                                      {"/File/Open Selected _Filename", "<control><shift>O", menuSig, IDM_OPENSELECTED, 0},
-	                                      {"/File/_Revert", "<control>R", menuSig, IDM_REVERT, 0},
-	                                      {"/File/_Close", "<control>W", menuSig, IDM_CLOSE, 0},
-	                                      {"/File/_Save", "<control>S", menuSig, IDM_SAVE, 0},
-	                                      {"/File/Save _As...", "<control><shift>S", menuSig, IDM_SAVEAS, 0},
-	                                      {"/File/Save a Cop_y...", "<control><shift>P", menuSig, IDM_SAVEACOPY, 0},
-	                                      {"/File/Copy Pat_h", NULL, menuSig, IDM_COPYPATH, 0},
-	                                      {"/File/Encodin_g", NULL, NULL, 0, "<Branch>"},
-	                                      {"/File/Encoding/_Code Page Property", NULL, menuSig, IDM_ENCODING_DEFAULT, "<RadioItem>"},
-	                                      {"/File/Encoding/UTF-16 _Big Endian", NULL, menuSig, IDM_ENCODING_UCS2BE, "/File/Encoding/Code Page Property"},
-	                                      {"/File/Encoding/UTF-16 _Little Endian", NULL, menuSig, IDM_ENCODING_UCS2LE, "/File/Encoding/Code Page Property"},
-	                                      {"/File/Encoding/UTF-8 _with BOM", NULL, menuSig, IDM_ENCODING_UTF8, "/File/Encoding/Code Page Property"},
-	                                      {"/File/Encoding/_UTF-8", NULL, menuSig, IDM_ENCODING_UCOOKIE, "/File/Encoding/Code Page Property"},
-	                                      {"/File/_Export", "", 0, 0, "<Branch>"},
-	                                      {"/File/Export/As _HTML...", NULL, menuSig, IDM_SAVEASHTML, 0},
-	                                      {"/File/Export/As _RTF...", NULL, menuSig, IDM_SAVEASRTF, 0},
-	                                      {"/File/Export/As _PDF...", NULL, menuSig, IDM_SAVEASPDF, 0},
-	                                      {"/File/Export/As _LaTeX...", NULL, menuSig, IDM_SAVEASTEX, 0},
-	                                      {"/File/Export/As _XML...", NULL, menuSig, IDM_SAVEASXML, 0},
+		{"/_File", NULL, NULL, 0, "<Branch>"},
+		{"/File/_New", "<control>N", menuSig, IDM_NEW, 0},
+		{"/File/_Open...", "<control>O", menuSig, IDM_OPEN, 0},
+		{"/File/Open _Example", NULL, menuSig, IDM_EXAMPLE_OPEN, 0},
+		{"/File/Open Selected _Filename", "<control><shift>O", menuSig, IDM_OPENSELECTED, 0},
+		{"/File/_Revert", "<control>R", menuSig, IDM_REVERT, 0},
+		{"/File/_Close", "<control>W", menuSig, IDM_CLOSE, 0},
+		{"/File/_Save", "<control>S", menuSig, IDM_SAVE, 0},
+		{"/File/Save _As...", "<control><shift>S", menuSig, IDM_SAVEAS, 0},
+		{"/File/Save a Cop_y...", "<control><shift>P", menuSig, IDM_SAVEACOPY, 0},
+		{"/File/Copy Pat_h", NULL, menuSig, IDM_COPYPATH, 0},
+		{"/File/Encodin_g", NULL, NULL, 0, "<Branch>"},
+		{"/File/Encoding/_Code Page Property", NULL, menuSig, IDM_ENCODING_DEFAULT, "<RadioItem>"},
+		{"/File/Encoding/UTF-16 _Big Endian", NULL, menuSig, IDM_ENCODING_UCS2BE, "/File/Encoding/Code Page Property"},
+		{"/File/Encoding/UTF-16 _Little Endian", NULL, menuSig, IDM_ENCODING_UCS2LE, "/File/Encoding/Code Page Property"},
+		{"/File/Encoding/UTF-8 _with BOM", NULL, menuSig, IDM_ENCODING_UTF8, "/File/Encoding/Code Page Property"},
+		{"/File/Encoding/_UTF-8", NULL, menuSig, IDM_ENCODING_UCOOKIE, "/File/Encoding/Code Page Property"},
+		{"/File/_Export", "", 0, 0, "<Branch>"},
+		{"/File/Export/As _HTML...", NULL, menuSig, IDM_SAVEASHTML, 0},
+		{"/File/Export/As _RTF...", NULL, menuSig, IDM_SAVEASRTF, 0},
+		{"/File/Export/As _PDF...", NULL, menuSig, IDM_SAVEASPDF, 0},
+		{"/File/Export/As _LaTeX...", NULL, menuSig, IDM_SAVEASTEX, 0},
+		{"/File/Export/As _XML...", NULL, menuSig, IDM_SAVEASXML, 0},
 #if GTK_CHECK_VERSION(2,10,0)
-	                                      {"/File/Page Set_up", NULL, menuSig, IDM_PRINTSETUP, 0},
+		{"/File/Page Set_up", NULL, menuSig, IDM_PRINTSETUP, 0},
 #endif
-	                                      {"/File/_Print", "<control>P", menuSig, IDM_PRINT, 0},
-	                                      {"/File/sep1", NULL, NULL, 0, "<Separator>"},
-	                                      {"/File/_Load Session...", "", menuSig, IDM_LOADSESSION, 0},
-	                                      {"/File/Sa_ve Session...", "", menuSig, IDM_SAVESESSION, 0},
-	                                      {"/File/sep2", NULL, menuSig, IDM_MRU_SEP, "<Separator>"},
-	                                      {"/File/File0", "", menuSig, fileStackCmdID + 0, 0},
-	                                      {"/File/File1", "", menuSig, fileStackCmdID + 1, 0},
-	                                      {"/File/File2", "", menuSig, fileStackCmdID + 2, 0},
-	                                      {"/File/File3", "", menuSig, fileStackCmdID + 3, 0},
-	                                      {"/File/File4", "", menuSig, fileStackCmdID + 4, 0},
-	                                      {"/File/File5", "", menuSig, fileStackCmdID + 5, 0},
-	                                      {"/File/File6", "", menuSig, fileStackCmdID + 6, 0},
-	                                      {"/File/File7", "", menuSig, fileStackCmdID + 7, 0},
-	                                      {"/File/File8", "", menuSig, fileStackCmdID + 8, 0},
-	                                      {"/File/File9", "", menuSig, fileStackCmdID + 9, 0},
-	                                      {"/File/sep3", NULL, NULL, 0, "<Separator>"},
-	                                      {"/File/E_xit", "", menuSig, IDM_QUIT, 0},
+		{"/File/_Print", "<control>P", menuSig, IDM_PRINT, 0},
+		{"/File/sep1", NULL, NULL, 0, "<Separator>"},
+		{"/File/_Load Session...", "", menuSig, IDM_LOADSESSION, 0},
+		{"/File/Sa_ve Session...", "", menuSig, IDM_SAVESESSION, 0},
+		{"/File/sep2", NULL, menuSig, IDM_MRU_SEP, "<Separator>"},
+		{"/File/File0", "", menuSig, fileStackCmdID + 0, 0},
+		{"/File/File1", "", menuSig, fileStackCmdID + 1, 0},
+		{"/File/File2", "", menuSig, fileStackCmdID + 2, 0},
+		{"/File/File3", "", menuSig, fileStackCmdID + 3, 0},
+		{"/File/File4", "", menuSig, fileStackCmdID + 4, 0},
+		{"/File/File5", "", menuSig, fileStackCmdID + 5, 0},
+		{"/File/File6", "", menuSig, fileStackCmdID + 6, 0},
+		{"/File/File7", "", menuSig, fileStackCmdID + 7, 0},
+		{"/File/File8", "", menuSig, fileStackCmdID + 8, 0},
+		{"/File/File9", "", menuSig, fileStackCmdID + 9, 0},
+		{"/File/sep3", NULL, NULL, 0, "<Separator>"},
+		{"/File/E_xit", "", menuSig, IDM_QUIT, 0},
 
-	                                      {"/_Edit", NULL, NULL, 0, "<Branch>"},
-	                                      {"/Edit/_Undo", "<control>Z", menuSig, IDM_UNDO, 0},
+		{"/_Edit", NULL, NULL, 0, "<Branch>"},
+		{"/Edit/_Undo", "<control>Z", menuSig, IDM_UNDO, 0},
 
-	                                      {"/Edit/_Redo", "<control>Y", menuSig, IDM_REDO, 0},
-	                                      {"/Edit/sep1", NULL, NULL, 0, "<Separator>"},
-	                                      {"/Edit/Cu_t", "<control>X", menuSig, IDM_CUT, 0},
-	                                      {"/Edit/_Copy", "<control>C", menuSig, IDM_COPY, 0},
-	                                      {"/Edit/_Paste", "<control>V", menuSig, IDM_PASTE, 0},
-	                                      {"/Edit/Duplicat_e", "<control>D", menuSig, IDM_DUPLICATE, 0},
-	                                      {"/Edit/_Delete", "Delete", menuSig, IDM_CLEAR, 0},
-	                                      {"/Edit/Select _All", "<control>A", menuSig, IDM_SELECTALL, 0},
-	                                      {"/Edit/sep2", NULL, NULL, 0, "<Separator>"},
-	                                      {"/Edit/Match _Brace", "<control>E", menuSig, IDM_MATCHBRACE, 0},
-	                                      {"/Edit/Select t_o Brace", "<control><shift>E", menuSig, IDM_SELECTTOBRACE, 0},
-	                                      {"/Edit/S_how Calltip", "<control><shift>space", menuSig, IDM_SHOWCALLTIP, 0},
-	                                      {"/Edit/Complete S_ymbol", "<control>I", menuSig, IDM_COMPLETE, 0},
-	                                      {"/Edit/Complete _Word", "<control>Return", menuSig, IDM_COMPLETEWORD, 0},
-	                                      {"/Edit/Expand Abbre_viation", "<control>B", menuSig, IDM_ABBREV, 0},
-	                                      {"/Edit/_Insert Abbreviation", "<control><shift>R", menuSig, IDM_INS_ABBREV, 0},
-	                                      {"/Edit/Block Co_mment or Uncomment", "<control>Q", menuSig, IDM_BLOCK_COMMENT, 0},
-	                                      {"/Edit/Bo_x Comment", "<control><shift>B", menuSig, IDM_BOX_COMMENT, 0},
-	                                      {"/Edit/Stream Comme_nt", "<control><shift>Q", menuSig, IDM_STREAM_COMMENT, 0},
-	                                      {"/Edit/Make _Selection Uppercase", "<control><shift>U", menuSig, IDM_UPRCASE, 0},
-	                                      {"/Edit/Make Selection _Lowercase", "<control>U", menuSig, IDM_LWRCASE, 0},
-	                                      {"/Edit/Para_graph", NULL, NULL, 0, "<Branch>"},
-	                                      {"/Edit/Paragraph/_Join", NULL, menuSig, IDM_JOIN, 0},
-	                                      {"/Edit/Paragraph/_Split", NULL, menuSig, IDM_SPLIT, 0},
+		{"/Edit/_Redo", "<control>Y", menuSig, IDM_REDO, 0},
+		{"/Edit/sep1", NULL, NULL, 0, "<Separator>"},
+		{"/Edit/Cu_t", "<control>X", menuSig, IDM_CUT, 0},
+		{"/Edit/_Copy", "<control>C", menuSig, IDM_COPY, 0},
+		{"/Edit/_Paste", "<control>V", menuSig, IDM_PASTE, 0},
+		{"/Edit/Duplicat_e", "<control>D", menuSig, IDM_DUPLICATE, 0},
+		{"/Edit/_Delete", "Delete", menuSig, IDM_CLEAR, 0},
+		{"/Edit/Select _All", "<control>A", menuSig, IDM_SELECTALL, 0},
+		{"/Edit/sep2", NULL, NULL, 0, "<Separator>"},
+		{"/Edit/Match _Brace", "<control>E", menuSig, IDM_MATCHBRACE, 0},
+		{"/Edit/Select t_o Brace", "<control><shift>E", menuSig, IDM_SELECTTOBRACE, 0},
+		{"/Edit/S_how Calltip", "<control><shift>space", menuSig, IDM_SHOWCALLTIP, 0},
+		{"/Edit/Complete S_ymbol", "<control>I", menuSig, IDM_COMPLETE, 0},
+		{"/Edit/Complete _Word", "<control>Return", menuSig, IDM_COMPLETEWORD, 0},
+		{"/Edit/Expand Abbre_viation", "<control>B", menuSig, IDM_ABBREV, 0},
+		{"/Edit/_Insert Abbreviation", "<control><shift>R", menuSig, IDM_INS_ABBREV, 0},
+		{"/Edit/Block Co_mment or Uncomment", "<control>Q", menuSig, IDM_BLOCK_COMMENT, 0},
+		{"/Edit/Bo_x Comment", "<control><shift>B", menuSig, IDM_BOX_COMMENT, 0},
+		{"/Edit/Stream Comme_nt", "<control><shift>Q", menuSig, IDM_STREAM_COMMENT, 0},
+		{"/Edit/Make _Selection Uppercase", "<control><shift>U", menuSig, IDM_UPRCASE, 0},
+		{"/Edit/Make Selection _Lowercase", "<control>U", menuSig, IDM_LWRCASE, 0},
+		{"/Edit/Para_graph", NULL, NULL, 0, "<Branch>"},
+		{"/Edit/Paragraph/_Join", NULL, menuSig, IDM_JOIN, 0},
+		{"/Edit/Paragraph/_Split", NULL, menuSig, IDM_SPLIT, 0},
 
-	                                      {"/_Search", NULL, NULL, 0, "<Branch>"},
-	                                      {"/Search/_Find...", "<control>F", menuSig, IDM_FIND, 0},
-	                                      {"/Search/Find _Next", "F3", menuSig, IDM_FINDNEXT, 0},
-	                                      {"/Search/Find Previou_s", "<shift>F3", menuSig, IDM_FINDNEXTBACK, 0},
-	                                      {"/Search/F_ind in Files...", "<control><shift>F", menuSig, IDM_FINDINFILES, 0},
-	                                      {"/Search/R_eplace...", "<control>H", menuSig, IDM_REPLACE, 0},
-	                                      {"/Search/Incrementa_l Search", "<control><alt>I", menuSig, IDM_INCSEARCH, 0},
-	                                      {"/Search/sep3", NULL, NULL, 0, "<Separator>"},
-	                                      {"/Search/_Go To...", "<control>G", menuSig, IDM_GOTO, 0},
-	                                      {"/Search/Next Book_mark", "F2", menuSig, IDM_BOOKMARK_NEXT, 0},
-	                                      {"/Search/Pre_vious Bookmark", "<shift>F2", menuSig, IDM_BOOKMARK_PREV, 0},
-	                                      {"/Search/Toggle Bookmar_k", "<control>F2", menuSig, IDM_BOOKMARK_TOGGLE, 0},
-	                                      {"/Search/_Clear All Bookmarks", "", menuSig, IDM_BOOKMARK_CLEARALL, 0},
+		{"/_Search", NULL, NULL, 0, "<Branch>"},
+		{"/Search/_Find...", "<control>F", menuSig, IDM_FIND, 0},
+		{"/Search/Find _Next", "F3", menuSig, IDM_FINDNEXT, 0},
+		{"/Search/Find Previou_s", "<shift>F3", menuSig, IDM_FINDNEXTBACK, 0},
+		{"/Search/F_ind in Files...", "<control><shift>F", menuSig, IDM_FINDINFILES, 0},
+		{"/Search/R_eplace...", "<control>H", menuSig, IDM_REPLACE, 0},
+		{"/Search/Incrementa_l Search", "<control><alt>I", menuSig, IDM_INCSEARCH, 0},
+		{"/Search/sep3", NULL, NULL, 0, "<Separator>"},
+		{"/Search/_Go To...", "<control>G", menuSig, IDM_GOTO, 0},
+		{"/Search/Next Book_mark", "F2", menuSig, IDM_BOOKMARK_NEXT, 0},
+		{"/Search/Pre_vious Bookmark", "<shift>F2", menuSig, IDM_BOOKMARK_PREV, 0},
+		{"/Search/Toggle Bookmar_k", "<control>F2", menuSig, IDM_BOOKMARK_TOGGLE, 0},
+		{"/Search/_Clear All Bookmarks", "", menuSig, IDM_BOOKMARK_CLEARALL, 0},
 
-	                                      {"/_View", NULL, NULL, 0, "<Branch>"},
-	                                      {"/View/Toggle _current fold", "", menuSig, IDM_EXPAND, 0},
-	                                      {"/View/Toggle _all folds", "", menuSig, IDM_TOGGLE_FOLDALL, 0},
-	                                      {"/View/sep1", NULL, NULL, 0, "<Separator>"},
-	                                      {"/View/Full Scree_n", "F11", menuSig, IDM_FULLSCREEN, "<CheckItem>"},
-	                                      {"/View/_Tool Bar", "", menuSig, IDM_VIEWTOOLBAR, "<CheckItem>"},
-	                                      {"/View/Tab _Bar", "", menuSig, IDM_VIEWTABBAR, "<CheckItem>"},
-	                                      {"/View/_Status Bar", "", menuSig, IDM_VIEWSTATUSBAR, "<CheckItem>"},
-	                                      {"/View/sep2", NULL, NULL, 0, "<Separator>"},
-	                                      {"/View/_Whitespace", "<control><shift>A", menuSig, IDM_VIEWSPACE, "<CheckItem>"},
-	                                      {"/View/_End of Line", "<control><shift>D", menuSig, IDM_VIEWEOL, "<CheckItem>"},
-	                                      {"/View/_Indentation Guides", NULL, menuSig, IDM_VIEWGUIDES, "<CheckItem>"},
-	                                      {"/View/_Line Numbers", "", menuSig, IDM_LINENUMBERMARGIN, "<CheckItem>"},
-	                                      {"/View/_Margin", NULL, menuSig, IDM_SELMARGIN, "<CheckItem>"},
-	                                      {"/View/_Fold Margin", NULL, menuSig, IDM_FOLDMARGIN, "<CheckItem>"},
-	                                      {"/View/Host & Target Console", "F8", menuSig, IDM_TOGGLEOUTPUT, "<CheckItem>"},
-	                                      {"/View/_Parameters", NULL, menuSig, IDM_TOGGLEPARAMETERS, "<CheckItem>"},
+		{"/_View", NULL, NULL, 0, "<Branch>"},
+		{"/View/Toggle _current fold", "", menuSig, IDM_EXPAND, 0},
+		{"/View/Toggle _all folds", "", menuSig, IDM_TOGGLE_FOLDALL, 0},
+		{"/View/sep1", NULL, NULL, 0, "<Separator>"},
+		{"/View/Full Scree_n", "F11", menuSig, IDM_FULLSCREEN, "<CheckItem>"},
+		{"/View/_Tool Bar", "", menuSig, IDM_VIEWTOOLBAR, "<CheckItem>"},
+		{"/View/Tab _Bar", "", menuSig, IDM_VIEWTABBAR, "<CheckItem>"},
+		{"/View/_Status Bar", "", menuSig, IDM_VIEWSTATUSBAR, "<CheckItem>"},
+		{"/View/sep2", NULL, NULL, 0, "<Separator>"},
+		{"/View/_Whitespace", "<control><shift>A", menuSig, IDM_VIEWSPACE, "<CheckItem>"},
+		{"/View/_End of Line", "<control><shift>D", menuSig, IDM_VIEWEOL, "<CheckItem>"},
+		{"/View/_Indentation Guides", NULL, menuSig, IDM_VIEWGUIDES, "<CheckItem>"},
+		{"/View/_Line Numbers", "", menuSig, IDM_LINENUMBERMARGIN, "<CheckItem>"},
+		{"/View/_Margin", NULL, menuSig, IDM_SELMARGIN, "<CheckItem>"},
+		{"/View/_Fold Margin", NULL, menuSig, IDM_FOLDMARGIN, "<CheckItem>"},
+		{"/View/Host & Target Console", "F8", menuSig, IDM_TOGGLEOUTPUT, "<CheckItem>"},
+		{"/View/_Parameters", NULL, menuSig, IDM_TOGGLEPARAMETERS, "<CheckItem>"},
 
-	                                      {"/_Tools", NULL, NULL, 0, "<Branch>"},
+		{"/_Tools", NULL, NULL, 0, "<Branch>"},
 
-	                                      {"/Tools/Configure", NULL, menuSig, IDM_CONFIGURE, 0},
-	                                      {"/Tools/Clean", "<control>F5", menuSig, IDM_CLEAN, 0},
-	                                      {"/Tools/Compile", "<control>F7", menuSig, IDM_COMPILE, 0},
-	                                      {"/Tools/Build", "F7", menuSig, IDM_BUILD, 0},
-	                                      {"/Tools/Run", "F5", menuSig, IDM_GO, 0},
+		{"/Tools/Configure", NULL, menuSig, IDM_CONFIGURE, 0},
+		{"/Tools/Clean", "<control>F5", menuSig, IDM_CLEAN, 0},
+		{"/Tools/Compile", "<control>F7", menuSig, IDM_COMPILE, 0},
+		{"/Tools/Build", "F7", menuSig, IDM_BUILD, 0},
+		{"/Tools/Run", "F5", menuSig, IDM_GO, 0},
 
-	                                      {"/Tools/Port", NULL, NULL, 0, "<Separator>"},
-	                                      {"/Tools/Open Serial Port", NULL, menuSig, IDM_OPEN_UART, 0},
-	                                      {"/Tools/Close Serial Port", NULL, menuSig, IDM_CLOSE_UART, 0},
-	                                      {"/Tools/Tool", NULL, NULL, 0, "<Separator>"},
-	                                      {"/Tools/Tool0", NULL, menuSig, IDM_TOOLS + 0, 0},
-	                                      {"/Tools/Tool1", NULL, menuSig, IDM_TOOLS + 1, 0},
-	                                      {"/Tools/Tool2", NULL, menuSig, IDM_TOOLS + 2, 0},
-	                                      {"/Tools/Tool3", NULL, menuSig, IDM_TOOLS + 3, 0},
-	                                      {"/Tools/Tool4", NULL, menuSig, IDM_TOOLS + 4, 0},
-	                                      {"/Tools/Tool5", NULL, menuSig, IDM_TOOLS + 5, 0},
-	                                      {"/Tools/Tool6", NULL, menuSig, IDM_TOOLS + 6, 0},
-	                                      {"/Tools/Tool7", NULL, menuSig, IDM_TOOLS + 7, 0},
-	                                      {"/Tools/Tool8", NULL, menuSig, IDM_TOOLS + 8, 0},
-	                                      {"/Tools/Tool9", NULL, menuSig, IDM_TOOLS + 9, 0},
+		{"/Tools/Port", NULL, NULL, 0, "<Separator>"},
+		{"/Tools/Open Serial Port", NULL, menuSig, IDM_OPEN_UART, 0},
+		{"/Tools/Close Serial Port", NULL, menuSig, IDM_CLOSE_UART, 0},
+		{"/Tools/Tool", NULL, NULL, 0, "<Separator>"},
+		{"/Tools/Tool0", NULL, menuSig, IDM_TOOLS + 0, 0},
+		{"/Tools/Tool1", NULL, menuSig, IDM_TOOLS + 1, 0},
+		{"/Tools/Tool2", NULL, menuSig, IDM_TOOLS + 2, 0},
+		{"/Tools/Tool3", NULL, menuSig, IDM_TOOLS + 3, 0},
+		{"/Tools/Tool4", NULL, menuSig, IDM_TOOLS + 4, 0},
+		{"/Tools/Tool5", NULL, menuSig, IDM_TOOLS + 5, 0},
+		{"/Tools/Tool6", NULL, menuSig, IDM_TOOLS + 6, 0},
+		{"/Tools/Tool7", NULL, menuSig, IDM_TOOLS + 7, 0},
+		{"/Tools/Tool8", NULL, menuSig, IDM_TOOLS + 8, 0},
+		{"/Tools/Tool9", NULL, menuSig, IDM_TOOLS + 9, 0},
 
-	                                      {"/Tools/Tool10", NULL, menuSig, IDM_TOOLS + 10, 0},
-	                                      {"/Tools/Tool11", NULL, menuSig, IDM_TOOLS + 11, 0},
-	                                      {"/Tools/Tool12", NULL, menuSig, IDM_TOOLS + 12, 0},
-	                                      {"/Tools/Tool13", NULL, menuSig, IDM_TOOLS + 13, 0},
-	                                      {"/Tools/Tool14", NULL, menuSig, IDM_TOOLS + 14, 0},
-	                                      {"/Tools/Tool15", NULL, menuSig, IDM_TOOLS + 15, 0},
-	                                      {"/Tools/Tool16", NULL, menuSig, IDM_TOOLS + 16, 0},
-	                                      {"/Tools/Tool17", NULL, menuSig, IDM_TOOLS + 17, 0},
-	                                      {"/Tools/Tool18", NULL, menuSig, IDM_TOOLS + 18, 0},
-	                                      {"/Tools/Tool19", NULL, menuSig, IDM_TOOLS + 19, 0},
+		{"/Tools/Tool10", NULL, menuSig, IDM_TOOLS + 10, 0},
+		{"/Tools/Tool11", NULL, menuSig, IDM_TOOLS + 11, 0},
+		{"/Tools/Tool12", NULL, menuSig, IDM_TOOLS + 12, 0},
+		{"/Tools/Tool13", NULL, menuSig, IDM_TOOLS + 13, 0},
+		{"/Tools/Tool14", NULL, menuSig, IDM_TOOLS + 14, 0},
+		{"/Tools/Tool15", NULL, menuSig, IDM_TOOLS + 15, 0},
+		{"/Tools/Tool16", NULL, menuSig, IDM_TOOLS + 16, 0},
+		{"/Tools/Tool17", NULL, menuSig, IDM_TOOLS + 17, 0},
+		{"/Tools/Tool18", NULL, menuSig, IDM_TOOLS + 18, 0},
+		{"/Tools/Tool19", NULL, menuSig, IDM_TOOLS + 19, 0},
 
-	                                      {"/Tools/Tool20", NULL, menuSig, IDM_TOOLS + 20, 0},
-	                                      {"/Tools/Tool21", NULL, menuSig, IDM_TOOLS + 21, 0},
-	                                      {"/Tools/Tool22", NULL, menuSig, IDM_TOOLS + 22, 0},
-	                                      {"/Tools/Tool23", NULL, menuSig, IDM_TOOLS + 23, 0},
-	                                      {"/Tools/Tool24", NULL, menuSig, IDM_TOOLS + 24, 0},
-	                                      {"/Tools/Tool25", NULL, menuSig, IDM_TOOLS + 25, 0},
-	                                      {"/Tools/Tool26", NULL, menuSig, IDM_TOOLS + 26, 0},
-	                                      {"/Tools/Tool27", NULL, menuSig, IDM_TOOLS + 27, 0},
-	                                      {"/Tools/Tool28", NULL, menuSig, IDM_TOOLS + 28, 0},
-	                                      {"/Tools/Tool29", NULL, menuSig, IDM_TOOLS + 29, 0},
+		{"/Tools/Tool20", NULL, menuSig, IDM_TOOLS + 20, 0},
+		{"/Tools/Tool21", NULL, menuSig, IDM_TOOLS + 21, 0},
+		{"/Tools/Tool22", NULL, menuSig, IDM_TOOLS + 22, 0},
+		{"/Tools/Tool23", NULL, menuSig, IDM_TOOLS + 23, 0},
+		{"/Tools/Tool24", NULL, menuSig, IDM_TOOLS + 24, 0},
+		{"/Tools/Tool25", NULL, menuSig, IDM_TOOLS + 25, 0},
+		{"/Tools/Tool26", NULL, menuSig, IDM_TOOLS + 26, 0},
+		{"/Tools/Tool27", NULL, menuSig, IDM_TOOLS + 27, 0},
+		{"/Tools/Tool28", NULL, menuSig, IDM_TOOLS + 28, 0},
+		{"/Tools/Tool29", NULL, menuSig, IDM_TOOLS + 29, 0},
 
-	                                      {"/Tools/Tool30", NULL, menuSig, IDM_TOOLS + 30, 0},
-	                                      {"/Tools/Tool31", NULL, menuSig, IDM_TOOLS + 31, 0},
-	                                      {"/Tools/Tool32", NULL, menuSig, IDM_TOOLS + 32, 0},
-	                                      {"/Tools/Tool33", NULL, menuSig, IDM_TOOLS + 33, 0},
-	                                      {"/Tools/Tool34", NULL, menuSig, IDM_TOOLS + 34, 0},
-	                                      {"/Tools/Tool35", NULL, menuSig, IDM_TOOLS + 35, 0},
-	                                      {"/Tools/Tool36", NULL, menuSig, IDM_TOOLS + 36, 0},
-	                                      {"/Tools/Tool37", NULL, menuSig, IDM_TOOLS + 37, 0},
-	                                      {"/Tools/Tool38", NULL, menuSig, IDM_TOOLS + 38, 0},
-	                                      {"/Tools/Tool39", NULL, menuSig, IDM_TOOLS + 39, 0},
+		{"/Tools/Tool30", NULL, menuSig, IDM_TOOLS + 30, 0},
+		{"/Tools/Tool31", NULL, menuSig, IDM_TOOLS + 31, 0},
+		{"/Tools/Tool32", NULL, menuSig, IDM_TOOLS + 32, 0},
+		{"/Tools/Tool33", NULL, menuSig, IDM_TOOLS + 33, 0},
+		{"/Tools/Tool34", NULL, menuSig, IDM_TOOLS + 34, 0},
+		{"/Tools/Tool35", NULL, menuSig, IDM_TOOLS + 35, 0},
+		{"/Tools/Tool36", NULL, menuSig, IDM_TOOLS + 36, 0},
+		{"/Tools/Tool37", NULL, menuSig, IDM_TOOLS + 37, 0},
+		{"/Tools/Tool38", NULL, menuSig, IDM_TOOLS + 38, 0},
+		{"/Tools/Tool39", NULL, menuSig, IDM_TOOLS + 39, 0},
 
-	                                      {"/Tools/Tool40", NULL, menuSig, IDM_TOOLS + 40, 0},
-	                                      {"/Tools/Tool41", NULL, menuSig, IDM_TOOLS + 41, 0},
-	                                      {"/Tools/Tool42", NULL, menuSig, IDM_TOOLS + 42, 0},
-	                                      {"/Tools/Tool43", NULL, menuSig, IDM_TOOLS + 43, 0},
-	                                      {"/Tools/Tool44", NULL, menuSig, IDM_TOOLS + 44, 0},
-	                                      {"/Tools/Tool45", NULL, menuSig, IDM_TOOLS + 45, 0},
-	                                      {"/Tools/Tool46", NULL, menuSig, IDM_TOOLS + 46, 0},
-	                                      {"/Tools/Tool47", NULL, menuSig, IDM_TOOLS + 47, 0},
-	                                      {"/Tools/Tool48", NULL, menuSig, IDM_TOOLS + 48, 0},
-	                                      {"/Tools/Tool49", NULL, menuSig, IDM_TOOLS + 49, 0},
+		{"/Tools/Tool40", NULL, menuSig, IDM_TOOLS + 40, 0},
+		{"/Tools/Tool41", NULL, menuSig, IDM_TOOLS + 41, 0},
+		{"/Tools/Tool42", NULL, menuSig, IDM_TOOLS + 42, 0},
+		{"/Tools/Tool43", NULL, menuSig, IDM_TOOLS + 43, 0},
+		{"/Tools/Tool44", NULL, menuSig, IDM_TOOLS + 44, 0},
+		{"/Tools/Tool45", NULL, menuSig, IDM_TOOLS + 45, 0},
+		{"/Tools/Tool46", NULL, menuSig, IDM_TOOLS + 46, 0},
+		{"/Tools/Tool47", NULL, menuSig, IDM_TOOLS + 47, 0},
+		{"/Tools/Tool48", NULL, menuSig, IDM_TOOLS + 48, 0},
+		{"/Tools/Tool49", NULL, menuSig, IDM_TOOLS + 49, 0},
 
 
-	                                      {"/Tools/_Stop Executing", "<control>.", menuSig, IDM_STOPEXECUTE, NULL},
-	                                      {"/Tools/sep1", NULL, NULL, 0, "<Separator>"},
-	                                      {"/Tools/_Next Message", "F4", menuSig, IDM_NEXTMSG, 0},
-	                                      {"/Tools/_Previous Message", "<shift>F4", menuSig, IDM_PREVMSG, 0},
-	                                      {"/Tools/Clear Host Console", "", menuSig, IDM_CLEAROUTPUT, 0},
-	                                      {"/Tools/Clear Target Console", "", menuSig, IDM_CLEARCONSOLE, 0},
-	                                      {"/Tools/_Switch Pane", "<control>F6", menuSig, IDM_SWITCHPANE, 0},
-	                                  };
+		{"/Tools/_Stop Executing", "<control>.", menuSig, IDM_STOPEXECUTE, NULL},
+		{"/Tools/sep1", NULL, NULL, 0, "<Separator>"},
+		{"/Tools/_Next Message", "F4", menuSig, IDM_NEXTMSG, 0},
+		{"/Tools/_Previous Message", "<shift>F4", menuSig, IDM_PREVMSG, 0},
+		{"/Tools/Clear Host Console", "", menuSig, IDM_CLEAROUTPUT, 0},
+		{"/Tools/Clear Target Console", "", menuSig, IDM_CLEARCONSOLE, 0},
+		{"/Tools/_Switch Pane", "<control>F6", menuSig, IDM_SWITCHPANE, 0},
+	};
 
 	SciTEItemFactoryEntry menuItemsOptions[] = {
-	            {"/_Options", NULL, NULL, 0, "<Branch>"},
-	            {"/Options/Vertical _Split", "", menuSig, IDM_SPLITVERTICAL, "<CheckItem>"},
-	            {"/Options/_Wrap", "", menuSig, IDM_WRAP, "<CheckItem>"},
-	            {"/Options/Wrap Out_put", "", menuSig, IDM_WRAPOUTPUT, "<CheckItem>"},
-	            {"/Options/_Read-Only", "", menuSig, IDM_READONLY, "<CheckItem>"},
-	            {"/Options/sep1", NULL, NULL, 0, "<Separator>"},
-	            {"/Options/Mode Terminal", NULL, menuSig, IDM_MODE_TERMINAL, "<CheckItem>"},
-	            {"/Options/sep1", NULL, NULL, 0, "<Separator>"},
-	            {"/Options/_Line End Characters", "", 0, 0, "<Branch>"},
-	            {"/Options/Line End Characters/CR _+ LF", "", menuSig, IDM_EOL_CRLF, "<RadioItem>"},
-	            {"/Options/Line End Characters/_CR", "", menuSig, IDM_EOL_CR, "/Options/Line End Characters/CR + LF"},
-	            {"/Options/Line End Characters/_LF", "", menuSig, IDM_EOL_LF, "/Options/Line End Characters/CR + LF"},
-	            {"/Options/_Convert Line End Characters", "", menuSig, IDM_EOL_CONVERT, 0},
-	            {"/Options/sep2", NULL, NULL, 0, "<Separator>"},
-	            {"/Options/Change Inden_tation Settings", "<control><shift>I", menuSig, IDM_TABSIZE, 0},
-	            {"/Options/Use _Monospaced Font", "<control>F11", menuSig, IDM_MONOFONT, "<CheckItem>"},
-	            {"/Options/sep3", NULL, NULL, 0, "<Separator>"},
-	            {"/Options/Open Local _Options File", "", menuSig, IDM_OPENLOCALPROPERTIES, 0},
-	            {"/Options/Open _Directory Options File", "", menuSig, IDM_OPENDIRECTORYPROPERTIES, 0},
-	            {"/Options/Open _User Options File", "", menuSig, IDM_OPENUSERPROPERTIES, 0},
-	            {"/Options/Open _Global Options File", "", menuSig, IDM_OPENGLOBALPROPERTIES, 0},
-	            {"/Options/Open A_bbreviations File", "", menuSig, IDM_OPENABBREVPROPERTIES, 0},
-	            {"/Options/Open Lua Startup Scr_ipt", "", menuSig, IDM_OPENLUAEXTERNALFILE, 0},
-	            {"/Options/sep4", NULL, NULL, 0, "<Separator>"},
-	            {"/Options/_Edit Properties", "", 0, 0, "<Branch>"},
-	        };
+		{"/_Options", NULL, NULL, 0, "<Branch>"},
+		{"/Options/Vertical _Split", "", menuSig, IDM_SPLITVERTICAL, "<CheckItem>"},
+		{"/Options/_Wrap", "", menuSig, IDM_WRAP, "<CheckItem>"},
+		{"/Options/Wrap Out_put", "", menuSig, IDM_WRAPOUTPUT, "<CheckItem>"},
+		{"/Options/_Read-Only", "", menuSig, IDM_READONLY, "<CheckItem>"},
+		{"/Options/sep1", NULL, NULL, 0, "<Separator>"},
+		{"/Options/Mode Terminal", NULL, menuSig, IDM_MODE_TERMINAL, "<CheckItem>"},
+		{"/Options/sep1", NULL, NULL, 0, "<Separator>"},
+		{"/Options/_Line End Characters", "", 0, 0, "<Branch>"},
+		{"/Options/Line End Characters/CR _+ LF", "", menuSig, IDM_EOL_CRLF, "<RadioItem>"},
+		{"/Options/Line End Characters/_CR", "", menuSig, IDM_EOL_CR, "/Options/Line End Characters/CR + LF"},
+		{"/Options/Line End Characters/_LF", "", menuSig, IDM_EOL_LF, "/Options/Line End Characters/CR + LF"},
+		{"/Options/_Convert Line End Characters", "", menuSig, IDM_EOL_CONVERT, 0},
+		{"/Options/sep2", NULL, NULL, 0, "<Separator>"},
+		{"/Options/Change Inden_tation Settings", "<control><shift>I", menuSig, IDM_TABSIZE, 0},
+		{"/Options/Use _Monospaced Font", "<control>F11", menuSig, IDM_MONOFONT, "<CheckItem>"},
+		{"/Options/sep3", NULL, NULL, 0, "<Separator>"},
+		{"/Options/Open Local _Options File", "", menuSig, IDM_OPENLOCALPROPERTIES, 0},
+		{"/Options/Open _Directory Options File", "", menuSig, IDM_OPENDIRECTORYPROPERTIES, 0},
+		{"/Options/Open _User Options File", "", menuSig, IDM_OPENUSERPROPERTIES, 0},
+		{"/Options/Open _Global Options File", "", menuSig, IDM_OPENGLOBALPROPERTIES, 0},
+		{"/Options/Open A_bbreviations File", "", menuSig, IDM_OPENABBREVPROPERTIES, 0},
+		{"/Options/Open Lua Startup Scr_ipt", "", menuSig, IDM_OPENLUAEXTERNALFILE, 0},
+		{"/Options/sep4", NULL, NULL, 0, "<Separator>"},
+		{"/Options/_Edit Properties", "", 0, 0, "<Branch>"},
+	};
 
 	SciTEItemFactoryEntry menuItemsLanguage[] = {
-	            {"/_Language", NULL, NULL, 0, "<Branch>"},
-	        };
+		{"/_Language", NULL, NULL, 0, "<Branch>"},
+	};
 
 	SciTEItemFactoryEntry menuItemsBuffer[] = {
-	                                            {"/_Buffers", NULL, NULL, 0, "<Branch>"},
-	                                            {"/Buffers/_Previous", "<shift>F6", menuSig, IDM_PREVFILE, 0},
-	                                            {"/Buffers/_Next", "F6", menuSig, IDM_NEXTFILE, 0},
-	                                            {"/Buffers/_Close All", "", menuSig, IDM_CLOSEALL, 0},
-	                                            {"/Buffers/_Save All", "", menuSig, IDM_SAVEALL, 0},
-	                                            {"/Buffers/sep2", NULL, NULL, 0, "<Separator>"},
-	                                            {"/Buffers/Buffer0", "<alt>1", menuSig, bufferCmdID + 0, "<RadioItem>"},
-	                                            {"/Buffers/Buffer1", "<alt>2", menuSig, bufferCmdID + 1, "/Buffers/Buffer0"},
-	                                            {"/Buffers/Buffer2", "<alt>3", menuSig, bufferCmdID + 2, "/Buffers/Buffer0"},
-	                                            {"/Buffers/Buffer3", "<alt>4", menuSig, bufferCmdID + 3, "/Buffers/Buffer0"},
-	                                            {"/Buffers/Buffer4", "<alt>5", menuSig, bufferCmdID + 4, "/Buffers/Buffer0"},
-	                                            {"/Buffers/Buffer5", "<alt>6", menuSig, bufferCmdID + 5, "/Buffers/Buffer0"},
-	                                            {"/Buffers/Buffer6", "<alt>7", menuSig, bufferCmdID + 6, "/Buffers/Buffer0"},
-	                                            {"/Buffers/Buffer7", "<alt>8", menuSig, bufferCmdID + 7, "/Buffers/Buffer0"},
-	                                            {"/Buffers/Buffer8", "<alt>9", menuSig, bufferCmdID + 8, "/Buffers/Buffer0"},
-	                                            {"/Buffers/Buffer9", "<alt>0", menuSig, bufferCmdID + 9, "/Buffers/Buffer0"},
-	                                        };
+		{"/_Buffers", NULL, NULL, 0, "<Branch>"},
+		{"/Buffers/_Previous", "<shift>F6", menuSig, IDM_PREVFILE, 0},
+		{"/Buffers/_Next", "F6", menuSig, IDM_NEXTFILE, 0},
+		{"/Buffers/_Close All", "", menuSig, IDM_CLOSEALL, 0},
+		{"/Buffers/_Save All", "", menuSig, IDM_SAVEALL, 0},
+		{"/Buffers/sep2", NULL, NULL, 0, "<Separator>"},
+		{"/Buffers/Buffer0", "<alt>1", menuSig, bufferCmdID + 0, "<RadioItem>"},
+		{"/Buffers/Buffer1", "<alt>2", menuSig, bufferCmdID + 1, "/Buffers/Buffer0"},
+		{"/Buffers/Buffer2", "<alt>3", menuSig, bufferCmdID + 2, "/Buffers/Buffer0"},
+		{"/Buffers/Buffer3", "<alt>4", menuSig, bufferCmdID + 3, "/Buffers/Buffer0"},
+		{"/Buffers/Buffer4", "<alt>5", menuSig, bufferCmdID + 4, "/Buffers/Buffer0"},
+		{"/Buffers/Buffer5", "<alt>6", menuSig, bufferCmdID + 5, "/Buffers/Buffer0"},
+		{"/Buffers/Buffer6", "<alt>7", menuSig, bufferCmdID + 6, "/Buffers/Buffer0"},
+		{"/Buffers/Buffer7", "<alt>8", menuSig, bufferCmdID + 7, "/Buffers/Buffer0"},
+		{"/Buffers/Buffer8", "<alt>9", menuSig, bufferCmdID + 8, "/Buffers/Buffer0"},
+		{"/Buffers/Buffer9", "<alt>0", menuSig, bufferCmdID + 9, "/Buffers/Buffer0"},
+	};
 
 	SciTEItemFactoryEntry menuItemsHelp[] = {
-	                                          {"/_Help", NULL, NULL, 0, "<Branch>"},
-	                                          {"/Help/Help", "F1", menuSig, IDM_HELP, 0},
-	                                          {"/Help/"APP_NAME" Help" , "", menuSig, IDM_HELP_GOAT, 0},
-	                                          {"/Help/About " APP_NAME, "", menuSig, IDM_ABOUT, 0},
-	                                      };
+		{"/_Help", NULL, NULL, 0, "<Branch>"},
+		{"/Help/Help", "F1", menuSig, IDM_HELP, 0},
+		{"/Help/"APP_NAME" Help" , "", menuSig, IDM_HELP_GOAT, 0},
+		{"/Help/About " APP_NAME, "", menuSig, IDM_ABOUT, 0},
+	};
 
 	accelGroup = gtk_accel_group_new();
 
@@ -4280,10 +4356,10 @@ void FindStrip::Creation(GtkWidget *container) {
 	gtk_widget_show(GTK_WIDGET(GetID()));
 
 	g_signal_connect(G_OBJECT(wComboFind.Entry()), "key-press-event",
-		G_CALLBACK(EscapeSignal), this);
+	                 G_CALLBACK(EscapeSignal), this);
 
 	g_signal_connect(G_OBJECT(wComboFind.Entry()), "activate",
-		G_CALLBACK(ActivateSignal), this);
+	                 G_CALLBACK(ActivateSignal), this);
 
 	gtk_label_set_mnemonic_widget(GTK_LABEL(wStaticFind.GetID()), GTK_WIDGET(wComboFind.Entry()));
 
@@ -4297,7 +4373,7 @@ void FindStrip::Creation(GtkWidget *container) {
 
 	gtk_widget_ensure_style(wButton);
 
-	for (int i=0;i<checks;i++) {
+	for (int i=0; i<checks; i++) {
 #if GTK_CHECK_VERSION(3,0,0)
 		wCheck[i].Create(xpmImages[i], localiser->Text(toggles[i].label), gtk_widget_get_style(wButton.Pointer()));
 #else
@@ -4377,13 +4453,13 @@ gboolean FindStrip::EscapeSignal(GtkWidget *w, GdkEventKey *event, FindStrip *pS
 void FindStrip::GrabFields() {
 	pSearcher->SetFind(wComboFind.Text());
 
-	for (int i=0;i<checks;i++) {
+	for (int i=0; i<checks; i++) {
 		pSearcher->FlagFromCmd(toggles[i].cmd) = wCheck[i].Active();
 	}
 }
 
 void FindStrip::SetToggles() {
-	for (int i=0;i<checks;i++) {
+	for (int i=0; i<checks; i++) {
 		wCheck[i].SetActive(pSearcher->FlagFromCmd(toggles[i].cmd));
 	}
 }
@@ -4448,26 +4524,26 @@ void ReplaceStrip::Creation(GtkWidget *container) {
 	wComboFind.Show();
 
 	g_signal_connect(G_OBJECT(wComboFind.Entry()), "key-press-event",
-		G_CALLBACK(EscapeSignal), this);
+	                 G_CALLBACK(EscapeSignal), this);
 
 	g_signal_connect(G_OBJECT(wComboFind.Entry()), "activate",
-		G_CALLBACK(ActivateSignal), this);
+	                 G_CALLBACK(ActivateSignal), this);
 
 	gtk_label_set_mnemonic_widget(GTK_LABEL(wStaticFind.GetID()), GTK_WIDGET(wComboFind.Entry()));
 
 	static ObjectSignal<ReplaceStrip, &ReplaceStrip::FindCmd> sigFindNext;
 	wButtonFind.Create(localiser->Text(textFindNext),
-			G_CALLBACK(sigFindNext.Function), this);
+	                   G_CALLBACK(sigFindNext.Function), this);
 	tableReplace.Add(wButtonFind, 1, false, 0, 0);
 
 	static ObjectSignal<ReplaceStrip, &ReplaceStrip::ReplaceAllCmd> sigReplaceAll;
 	wButtonReplaceAll.Create(localiser->Text("Replace _All"),
-			G_CALLBACK(sigReplaceAll.Function), this);
+	                         G_CALLBACK(sigReplaceAll.Function), this);
 	tableReplace.Add(wButtonReplaceAll, 1, false, 0, 0);
 
 	gtk_widget_ensure_style(wButtonFind);
 
-	for (int i=0;i<checks;i++) {
+	for (int i=0; i<checks; i++) {
 #if GTK_CHECK_VERSION(3,0,0)
 		wCheck[i].Create(xpmImages[i], localiser->Text(toggles[i].label), gtk_widget_get_style(wButtonFind.Pointer()));
 #else
@@ -4487,21 +4563,21 @@ void ReplaceStrip::Creation(GtkWidget *container) {
 	tableReplace.Add(wComboReplace, 1, true, 0, 0);
 
 	g_signal_connect(G_OBJECT(wComboReplace.Entry()), "key-press-event",
-		G_CALLBACK(EscapeSignal), this);
+	                 G_CALLBACK(EscapeSignal), this);
 
 	g_signal_connect(G_OBJECT(wComboReplace.Entry()), "activate",
-		G_CALLBACK(ActivateSignal), this);
+	                 G_CALLBACK(ActivateSignal), this);
 
 	gtk_label_set_mnemonic_widget(GTK_LABEL(wStaticReplace.GetID()), GTK_WIDGET(wComboReplace.Entry()));
 
 	static ObjectSignal<ReplaceStrip, &ReplaceStrip::ReplaceCmd> sigReplace;
 	wButtonReplace.Create(localiser->Text(textReplace),
-			G_CALLBACK(sigReplace.Function), this);
+	                      G_CALLBACK(sigReplace.Function), this);
 	tableReplace.Add(wButtonReplace, 1, false, 0, 0);
 
 	static ObjectSignal<ReplaceStrip, &ReplaceStrip::ReplaceInSelectionCmd> sigReplaceInSelection;
 	wButtonReplaceInSelection.Create(localiser->Text(textInSelection),
-			G_CALLBACK(sigReplaceInSelection.Function), this);
+	                                 G_CALLBACK(sigReplaceInSelection.Function), this);
 	tableReplace.Add(wButtonReplaceInSelection, 1, false, 0, 0);
 
 	tableReplace.Add(wCheck[SearchOption::tBackslash], 1, false, 0, 0);
@@ -4605,13 +4681,13 @@ void ReplaceStrip::GrabFields() {
 	pSearcher->SetFind(wComboFind.Text());
 	pSearcher->SetReplace(wComboReplace.Text());
 
-	for (int i=0;i<checks;i++) {
+	for (int i=0; i<checks; i++) {
 		pSearcher->FlagFromCmd(toggles[i].cmd) = wCheck[i].Active();
 	}
 }
 
 void ReplaceStrip::SetToggles() {
-	for (int i=0;i<checks;i++) {
+	for (int i=0; i<checks; i++) {
 		wCheck[i].SetActive(pSearcher->FlagFromCmd(toggles[i].cmd));
 	}
 }
@@ -4948,7 +5024,7 @@ bool SciTEGTK::StripHasFocus() {
 
 void SciTEGTK::LayoutUI() {
 	bool focusOutput = false;
-    bool focusConsole = false;
+	bool focusConsole = false;
 
 	if (splitPane) {
 #if GTK_CHECK_VERSION(2,16,0)
@@ -4961,7 +5037,7 @@ void SciTEGTK::LayoutUI() {
 #endif
 
 		focusOutput = wOutput.HasFocus();
-        focusConsole = wConsole.HasFocus();
+		focusConsole = wConsole.HasFocus();
 		gtk_container_remove(GTK_CONTAINER(splitPane), PWidget(wEditor));
 		gtk_container_remove(GTK_CONTAINER(splitPane), PWidget(wGroupTab));
 		gtk_widget_destroy(GTK_WIDGET(splitPane));
@@ -4988,10 +5064,10 @@ void SciTEGTK::LayoutUI() {
 	gtk_paned_pack2(GTK_PANED(splitPane), PWidget(wGroupTab), FALSE, TRUE);
 
 	g_signal_connect(GTK_WIDGET(splitPane), "button-release-event",
-	                   G_CALLBACK(PaneButtonRelease), reinterpret_cast<char *>(this));
+	                 G_CALLBACK(PaneButtonRelease), reinterpret_cast<char *>(this));
 
 	g_signal_connect(G_OBJECT(splitPane), "notify::position",
-	                   G_CALLBACK(PanePositionChanged), reinterpret_cast<char *>(this));
+	                 G_CALLBACK(PanePositionChanged), reinterpret_cast<char *>(this));
 
 	if (focusOutput) {
 		GroupSetCurrentTab(GOA_CON_HOST);
@@ -5006,12 +5082,12 @@ void SciTEGTK::LayoutUI() {
 }
 
 void SciTEGTK::GroupSetCurrentTab(int tab) {
-	if(wGroupTab.GetID())
+	if (wGroupTab.GetID())
 		gtk_notebook_set_current_page(GTK_NOTEBOOK(wGroupTab.GetID()),tab);
 }
 
 int SciTEGTK::GroupGetCurrentTab() {
-	if( wGroupTab.GetID())
+	if (wGroupTab.GetID())
 		return  gtk_notebook_get_current_page(GTK_NOTEBOOK(wGroupTab.GetID()));
 	else
 		return 0;
@@ -5030,16 +5106,16 @@ void SciTEGTK::CreateUI() {
 	                      | GDK_BUTTON_RELEASE_MASK
 	                     );
 	g_signal_connect(G_OBJECT(PWidget(wSciTE)), "delete_event",
-	                   G_CALLBACK(QuitSignal), gthis);
+	                 G_CALLBACK(QuitSignal), gthis);
 
 	g_signal_connect(G_OBJECT(PWidget(wSciTE)), "key_press_event",
-	                   G_CALLBACK(KeyPress), gthis);
+	                 G_CALLBACK(KeyPress), gthis);
 
 	g_signal_connect(G_OBJECT(PWidget(wSciTE)), "key-release-event",
-	                   G_CALLBACK(KeyRelease), gthis);
+	                 G_CALLBACK(KeyRelease), gthis);
 
 	g_signal_connect(G_OBJECT(PWidget(wSciTE)), "button_press_event",
-	                   G_CALLBACK(MousePress), gthis);
+	                 G_CALLBACK(MousePress), gthis);
 
 	gtk_window_set_title(GTK_WINDOW(PWidget(wSciTE)), appName);
 	const int useDefault = 0x10000000;
@@ -5082,7 +5158,7 @@ void SciTEGTK::CreateUI() {
 	gtk_container_add(GTK_CONTAINER(PWidget(wSciTE)), boxMain);
 	WIDGET_SET_NO_FOCUS(boxMain);
 
- 	// The Menubar
+	// The Menubar
 	CreateMenu();
 	gtk_box_pack_start(GTK_BOX(boxMain), menuBar, FALSE, FALSE, 0);
 
@@ -5107,9 +5183,9 @@ void SciTEGTK::CreateUI() {
 	WIDGET_SET_NO_FOCUS(PWidget(wTabBar));
 	gtk_box_pack_start(GTK_BOX(boxMain),PWidget(wTabBar),FALSE,FALSE,0);
 	g_signal_connect(G_OBJECT(PWidget(wTabBar)),
-		"button-release-event", G_CALLBACK(TabBarReleaseSignal), gthis);
+	                 "button-release-event", G_CALLBACK(TabBarReleaseSignal), gthis);
 	g_signal_connect(G_OBJECT(PWidget(wTabBar)),
-		"scroll-event", G_CALLBACK(TabBarScrollSignal), gthis);
+	                 "scroll-event", G_CALLBACK(TabBarScrollSignal), gthis);
 	gtk_notebook_set_scrollable(GTK_NOTEBOOK(PWidget(wTabBar)), TRUE);
 	tabVisible = false;
 
@@ -5125,9 +5201,9 @@ void SciTEGTK::CreateUI() {
 	WIDGET_SET_NO_FOCUS(PWidget(wGroupTab));
 
 	g_signal_connect(G_OBJECT(PWidget(wGroupTab)),
-		"button-release-event", G_CALLBACK(TabGroupReleaseSignal), gthis);
+	                 "button-release-event", G_CALLBACK(TabGroupReleaseSignal), gthis);
 	g_signal_connect(G_OBJECT(PWidget(wGroupTab)),
-		"scroll-event", G_CALLBACK(TabGroupScrollSignal), gthis);
+	                 "scroll-event", G_CALLBACK(TabGroupScrollSignal), gthis);
 	gtk_notebook_set_scrollable(GTK_NOTEBOOK(PWidget(wGroupTab)), TRUE);
 
 
@@ -5137,9 +5213,9 @@ void SciTEGTK::CreateUI() {
 	wEditor.Call(SCI_USEPOPUP, 0);
 
 	g_signal_connect(G_OBJECT(PWidget(wEditor)), "command",
-	                   G_CALLBACK(CommandSignal), this);
+	                 G_CALLBACK(CommandSignal), this);
 	g_signal_connect(G_OBJECT(PWidget(wEditor)), SCINTILLA_NOTIFY,
-	                   G_CALLBACK(NotifySignal), this);
+	                 G_CALLBACK(NotifySignal), this);
 
 
 	wOutput.SetID(scintilla_new());
@@ -5147,17 +5223,17 @@ void SciTEGTK::CreateUI() {
 	scintilla_set_id(SCINTILLA(PWidget(wOutput)), IDM_RUNWIN);
 	wOutput.Call(SCI_USEPOPUP, 0);
 	g_signal_connect(G_OBJECT(PWidget(wOutput)), "command",
-	                   G_CALLBACK(CommandSignal), this);
+	                 G_CALLBACK(CommandSignal), this);
 	g_signal_connect(G_OBJECT(PWidget(wOutput)), SCINTILLA_NOTIFY,
-	                   G_CALLBACK(NotifySignal), this);
+	                 G_CALLBACK(NotifySignal), this);
 
 	wConsole.SetID(scintilla_new());
 	g_object_ref(G_OBJECT(PWidget(wConsole)));
 	scintilla_set_id(SCINTILLA(PWidget(wConsole)), IDM_CONSOLEWIN);
 	wConsole.Call(SCI_USEPOPUP, 0);
 	g_signal_connect(G_OBJECT(PWidget(wConsole)), SCINTILLA_NOTIFY,
-	                   G_CALLBACK(NotifySignal), this);
-	   
+	                 G_CALLBACK(NotifySignal), this);
+
 
 	LayoutUI();
 
@@ -5187,13 +5263,13 @@ void SciTEGTK::CreateUI() {
 	gtk_statusbar_push(GTK_STATUSBAR(PWidget(wStatusBar)), sbContextID, "Initial");
 	sbVisible = false;
 
-	static const GtkTargetEntry dragtypes[] = { { (gchar*)"text/uri-list", 0, 0 } };
+	static const GtkTargetEntry dragtypes[] = { { (gchar *)"text/uri-list", 0, 0 } };
 	static const gint n_dragtypes = ELEMENTS(dragtypes);
 
 	gtk_drag_dest_set(PWidget(wSciTE), GTK_DEST_DEFAULT_ALL, dragtypes,
 	                  n_dragtypes, GDK_ACTION_COPY);
 	g_signal_connect(G_OBJECT(PWidget(wSciTE)), "drag_data_received",
-	                         G_CALLBACK(DragDataReceived), this);
+	                 G_CALLBACK(DragDataReceived), this);
 
 	SetFocus(wOutput);
 
@@ -5225,7 +5301,7 @@ void SciTEGTK::CreateUI() {
 
 	gtk_notebook_append_page(GTK_NOTEBOOK(wGroupTab.GetID()), tabcontent1, tablabel1);
 	gtk_notebook_append_page(GTK_NOTEBOOK(wGroupTab.GetID()), tabcontent2, tablabel2);
-	
+
 	UIAvailable();
 }
 
@@ -5353,7 +5429,7 @@ void SciTEGTK::SetStartupTime(const char *timestamp) {
 // Make the path absolute if it is not already.
 // If filename is empty, we send a message to the existing instance to tell
 // it to present itself (ie. the window should come to the front)
-void SciTEGTK::SendFileName(int sendPipe, const char* filename) {
+void SciTEGTK::SendFileName(int sendPipe, const char *filename) {
 
 	SString command;
 	const char *pipeData;
@@ -5494,15 +5570,15 @@ void SciTEGTK::Run(int argc, char *argv[]) {
 	ProcessCommandLine(args, 0);
 
 	// Check if SciTE is already running.
-	if ((props.Get("ipc.director.name").size() == 0) && props.GetInt ("check.if.already.open")) {
-		if (CheckForRunningInstance (argc, argv)) {
+	if ((props.Get("ipc.director.name").size() == 0) && props.GetInt("check.if.already.open")) {
+		if (CheckForRunningInstance(argc, argv)) {
 			// Returning from this function exits the program.
 			return;
 		}
 	}
 
 	CreateUI();
-	if ((props.Get("ipc.director.name").size() == 0) && props.GetInt ("check.if.already.open"))
+	if ((props.Get("ipc.director.name").size() == 0) && props.GetInt("check.if.already.open"))
 		unlink(uniqueInstance); // Unlock.
 
 	// Process remaining switches and files
@@ -5516,27 +5592,38 @@ void SciTEGTK::Run(int argc, char *argv[]) {
 	gtk_widget_grab_focus(GTK_WIDGET(PWidget(wSciTE)));
 
 	// XXX MAIN() is here
-    if (props.Get("serial.port").size() != 0)
-    	serial->SetPort(props.Get("serial.port").c_str());
-    else
-    	serial->SetPort();
+	if (props.Get("serial.port").size() != 0)
+		serial->SetPort(props.Get("serial.port").c_str());
+	else
+		serial->SetPort();
 
-    serial->SetSpeed(props.GetInt("serial.speed",115200));
-    serial->SetNumBits(props.GetInt("serial.nbits",8));
-    serial->SetNumStop(props.GetInt("serial.nstop",1));
-    serial->SetParity(props.GetInt("serial.parity",0));
+	serial->SetSpeed(props.GetInt("serial.speed",115200));
+	serial->SetNumBits(props.GetInt("serial.nbits",8));
+	serial->SetNumStop(props.GetInt("serial.nstop",1));
+	serial->SetParity(props.GetInt("serial.parity",0));
 
-    term.SetSerial(serial);
-   	term.SetTermWin(&wConsole, props.GetInt("term.columns") ,props.GetInt("term.lines"));
+	if (props.Get("serial.eol").size() != 0) {
+		if (strcmp(props.Get("serial.eol").c_str(), "CRLF") == 0) {
+			serial->SetEOL(UART_EOL_CRLF);
+		} else if (strcmp(props.Get("serial.eol").c_str(), "CR") == 0) {
+			serial->SetEOL(UART_EOL_CR);
+		} else {
+			serial->SetEOL(UART_EOL_LF);
+		}
+	}
+
+	term.SetSerial(serial);
+	term.SetTermWin(&wConsole, props.GetInt("term.columns") ,props.GetInt("term.lines"));
+	serial->SetTargetConsoleWin(&wConsole);
 
 	PerformOnNewThreadOnConsole(this);
 
-	g_idle_add_full (G_PRIORITY_DEFAULT_IDLE, &ProcessChars, NULL, NULL);
+	g_idle_add_full(G_PRIORITY_DEFAULT_IDLE, &ProcessChars, NULL, NULL);
 
 	term.Clear();
 
-    root = GetExeDirectory(ExeName).Directory().AsUTF8();
-    if (root.size() > 1 ) {
+	root = GetExeDirectory(ExeName).Directory().AsUTF8();
+	if (root.size() > 1) {
 		root.erase(root.find_last_of("/"),root.length());
 		root.append("/");
 		props.Set(GOAT_DIR_P, root.c_str());
@@ -5558,17 +5645,17 @@ void SciTEGTK::Run(int argc, char *argv[]) {
 		tmp.append(EXAMPLES_DIR);
 		props.Set(EXAMPLES_DIR_P,tmp.c_str());
 
-    }
+	}
 
-    if (props.Get("target.board").size() != 0)
-    	props.Set(TARGET_BOARD_P,props.Get("target.board").c_str());
-    else
-    	props.Set(TARGET_BOARD_P,"none");
+	if (props.Get("target.board").size() != 0)
+		props.Set(TARGET_BOARD_P,props.Get("target.board").c_str());
+	else
+		props.Set(TARGET_BOARD_P,"none");
 
-    if (props.Get("target.cpu").size() != 0)
-    	props.Set(TARGET_CPU_P,props.Get("target.cpu").c_str());
-    else
-    	props.Set(TARGET_CPU_P,"none");
+	if (props.Get("target.cpu").size() != 0)
+		props.Set(TARGET_CPU_P,props.Get("target.cpu").c_str());
+	else
+		props.Set(TARGET_CPU_P,"none");
 
 
 	gtk_widget_grab_focus(GTK_WIDGET(PWidget(wSciTE)));
@@ -5597,25 +5684,32 @@ int SciTEGTK::PollTool(SciTEGTK *scitew) {
 	return TRUE;
 }
 
-gboolean SciTEGTK::DoItLater(SciTEGTK *scite)
-{
+gboolean SciTEGTK::DoItLater(SciTEGTK *scite) {
 
 	if ((scite->props.Get("serial.autoconnect").size() == 0) ||
-					scite->props.GetInt ("serial.autoconnect") == 0) {
+	        scite->props.GetInt("serial.autoconnect") == 0) {
 		scite->GroupSetCurrentTab(GOA_CON_HOST);
 		return FALSE;
 	}
 
-	if(scite->serial->Start()) {
-		if ((scite->props.Get("serial.tx1cr").size() != 0) &&
-						scite->props.GetInt ("serial.tx1cr") == 1) {
-			scite->serial->OutByte('\r'); /* Send the first \r in order to get Target prompt */
+	if (scite->serial->Start()) {
+		if ((scite->props.Get("serial.tx1eol").size() != 0) && scite->props.GetInt("serial.tx1eol") == 1) {
+			if (scite->props.Get("serial.eol").size() != 0) {
+				/* Send the first EOL in order to get Target prompt */
+				if (strcmp(scite->props.Get("serial.eol").c_str(),"CRLF") == 0) {
+					scite->serial->OutByte('\r');
+					scite->serial->OutByte('\n');
+				} else if (strcmp(scite->props.Get("serial.eol").c_str(),"CR") == 0) {
+					scite->serial->OutByte('\n');
+				} else {
+					scite->serial->OutByte('\r');
+				}
+			}
 		}
 		scite->GroupSetCurrentTab(GOA_CON_TARGET);
 	}
 
-	if ((scite->props.Get("term.terminal").size() != 0) &&
-				scite->props.GetInt ("term.terminal") == 1) {
+	if ((scite->props.Get("term.terminal").size() != 0) && scite->props.GetInt("term.terminal") == 1) {
 		scite->term.setTermActiveOn();
 		scite->term.Clear();
 	}
@@ -5644,7 +5738,7 @@ int main(int argc, char *argv[]) {
 
 	signal(SIGCHLD, SciTEGTK::ChildSignal);
 
-	// Initialise threads	
+	// Initialise threads
 	g_thread_init(NULL);
 	gdk_threads_init();
 

@@ -33,15 +33,15 @@ public:
 	}
 	bool Contains(Point pt) const {
 		return (pt.x >= left) && (pt.x <= right) &&
-			(pt.y >= top) && (pt.y <= bottom);
+		       (pt.y >= top) && (pt.y <= bottom);
 	}
 	int Width() const { return right - left; }
 	int Height() const { return bottom - top; }
 	bool operator==(const Rectangle &other) const {
 		return (left == other.left) &&
-			(top == other.top) &&
-			(right == other.right) &&
-			(bottom == other.bottom);
+		       (top == other.top) &&
+		       (right == other.right) &&
+		       (bottom == other.bottom);
 	}
 };
 
@@ -142,7 +142,7 @@ public:
 		ptr = 0;
 		if (wid) {
 			fn = reinterpret_cast<SciFnDirect>(
-				Send(SCI_GETDIRECTFUNCTION, 0, 0));
+			         Send(SCI_GETDIRECTFUNCTION, 0, 0));
 			ptr = Send(SCI_GETDIRECTPOINTER, 0, 0);
 		}
 	}

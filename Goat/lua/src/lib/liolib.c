@@ -22,8 +22,34 @@
 
 #define IO_INPUT	1
 #define IO_OUTPUT	2
+#ifdef NOT_DEF
+#ifndef GTK
+#include <windows.h>
+FILE *scite_lua_fopen(const char *, const char *);
+FILE *scite_lua_popen(const char *, const char *);
 
+FILE *scite_lua_fopen(const char *filename, const char *mode) {
+typedef FILE* ( *Pff)(const char *, const char *);
+Pff fp;
+FILE *ret;
+fp = (Pff) GetProcAddress(GetModuleHandle(NULL), "scite_lua_fopen");
+ret = fp(filename,mode);
+return ret;
+}
 
+FILE *scite_lua_popen(const char *filename, const char *mode) {
+typedef FILE* (*Pfp)(const char *, const char *);	
+FILE *ret;
+Pfp fp;
+fp =  (Pfp) GetProcAddress(GetModuleHandle(NULL), "scite_lua_popen");
+ret = fp(filename,mode);
+return ret;
+}
+
+#define fopen 	scite_lua_fopen
+#define _popen 	scite_lua_popen
+#endif	
+#endif
 static const char *const fnames[] = {"input", "output"};
 
 

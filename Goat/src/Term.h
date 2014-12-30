@@ -1,9 +1,9 @@
-/*
- * Term.h
- *
- *  Created on: 09/dic/2011
- *      Author: nuccio
- */
+// Goat - Scintilla based Text Editor
+/** @file Term.h
+ ** Interface to TERM facilities.
+ **/
+// Copyright 2011-2015 by Nunzio Raciti <nunzio.raciti@gmail.com>
+// The License.txt file describes the conditions under which this software may be distributed.
 
 #ifndef TERM_H_
 #define TERM_H_
@@ -17,6 +17,7 @@
 #define TERM_MIN_ROW 		15
 
 #define TERM_ESC			0x1b
+#define TERM_BS				8
 #define TERM_CR				13
 #define TERM_LF				10
 #define TERM_TAB			'\t'
@@ -57,8 +58,7 @@ protected:
 	int 	state;
 	int     col;
 	int     row;
-	char  	*buffer1;
-	char  	*buffer2;
+	char  	*buffer;
 
 public:
 

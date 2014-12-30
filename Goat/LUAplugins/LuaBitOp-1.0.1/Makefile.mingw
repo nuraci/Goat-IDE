@@ -10,17 +10,16 @@ LUA= lua
 INCLUDES= "-I.."
 
 # Path of lua51.dll:
-LUADLLPATH= "..\lua51.dll"
+LUADLLPATH= "..\..\bin\libgoatlua.dll"
 
 # Path where C modules for Lua should be installed:
-LUACMODPATH= ".."
+LUACMODPATH= "..\..\..\bin"
 
 CC= gcc
-SOCC= $(CC) -shared $(LUADLLPATH)
 CFLAGS= -Wall -O2 -fomit-frame-pointer $(INCLUDES)
-RM= del
+RM= rm
 STRIP= strip --strip-unneeded
-INSTALL= copy
+INSTALL= cp
 
 MODNAME= bit
 MODSO= $(MODNAME).dll
@@ -28,7 +27,7 @@ MODSO= $(MODNAME).dll
 all: $(MODSO)
 
 $(MODSO): $(MODNAME).o
-	$(SOCC) -o $@ $<
+	$(CC) -shared $(LUADLLPATH) -o $@ $<
 	$(STRIP) $@
 
 install: $(MODSO)

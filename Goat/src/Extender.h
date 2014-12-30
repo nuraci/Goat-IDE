@@ -37,7 +37,7 @@ public:
 	virtual void SelectConsoleTab(int tab)=0;
 	virtual void AskQuestion(const char *str) = 0;
 	virtual void AskForFile(const char *dirName, const char *filter) = 0;
-	virtual int SerialXmodemTxFile(const char *name)=0;
+	virtual int SerialSendFile(const char *name, int type)=0;
 	virtual int SerialSend(const char *string, int length)=0;
 };
 

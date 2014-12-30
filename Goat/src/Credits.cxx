@@ -35,16 +35,16 @@
 #include "SciTEBase.h"
 
 const char License [] = { "\nLicense:\n\
-Copyright 2012 by Nuccio Raciti <raciti.nuccio@gmail.com>\n\
+Copyright 2011-2015 by Nunzio Raciti <nunzio.raciti@gmail.com>\n\
 All Rights Reserved.\n\n\
 Permission to use, copy, modify, and distribute this software and its\n\
 documentation for any purpose and without fee is hereby granted, \n\
 provided that the above copyright notice appear in all copies and that\n\
 both that copyright notice and this permission notice appear in \n\
 supporting documentation.\n\n\
-NUCCIO RACITI DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS\n\
+NUNZIO RACITI DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS\n\
 SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY\n\
-AND FITNESS, IN NO EVENT SHALL NEIL HODGSON BE LIABLE FOR ANY\n\
+AND FITNESS, IN NO EVENT SHALL NUNZIO RACITI BE LIABLE FOR ANY\n\
 SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES\n\
 WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,\n\
 WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER\n\
@@ -112,8 +112,8 @@ void SciTEBase::SetAboutMessage(GUI::ScintillaWindow &wsci, const char *appTitle
 		AddStyledText(wsci," - " __DATE__ " " __TIME__ "\n", 1);
         SetAboutStyle(wsci, 2, ColourRGB(0, 0, 0));
 		AddStyledText(wsci, GetTranslationToAbout("by").c_str(), trsSty);
-		AddStyledText(wsci, " Nuccio Raciti  ", 1);
-  	    AddStyledText(wsci, "(raciti.nuccio@gmail.com)\n", 1);
+		AddStyledText(wsci, " Nunzio Raciti  ", 1);
+  	    AddStyledText(wsci, "(nunzio.raciti@gmail.com)\n", 1);
   	    SetAboutStyle(wsci, 2, ColourRGB(255, 0, 0));
 		wsci.Send(SCI_STYLESETITALIC, 2, 1);
 		AddStyledText(wsci, GetTranslationToAbout("\nInfinite thanks to").c_str(), trsSty);
