@@ -71,7 +71,10 @@ some features:
 ## Quick start.
 * If your Linux is "Ubuntu" you can find "Goat" on menu: applications for development
 * Then after you have connected one target board, please set the serial port name on Goat, using the menu: "Options" -> ""Open User Options File", and put this line inside it:
-* serial.port="port" (some examples Windows: serial.port=COM6, Linux: serial.port=/dev/ttyACM0
+*
+* serial.port="port"
+* some examples, Windows: serial.port=COM6, Linux: serial.port=/dev/ttyACM0
+*
 * save the "GoatUser.properties" (Windows) or the ".GoatUser.properties" (Linux) file
 * After each change to the settings, you need to exit and reopen Goat again...
 * Now you should have the target prompt on the "Target Console" window.
@@ -91,11 +94,10 @@ Enjoy with the "Go @ IDE" and thank you for testing, improving and leaving your 
 
 * Target boards that running eLua firmware should be built using some optional modules:
 
-* \#define BUILD_XMODEM
-* \#define BUILD_SHELL
-* \#define BUILD_TERM
-and if it is avaliable on our hardware:
-* \#define BUILD_MMCFS
+*\#define BUILD_XMODEM
+*\#define BUILD_SHELL
+*\#define BUILD_TERM
+*\#define BUILD_MMCFS
 
 * Goat for windows will install a directory "usb-driver" here: "C:\Program Files (x86)\The Go @ IDE\usb-driver" which contains:
 
