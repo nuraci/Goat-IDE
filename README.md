@@ -3,10 +3,10 @@
 some features:
 
 * Its editor (which is based on the wonderful library "scintilla" http://www.scintilla.org/), is lightweight and powerful.
-* Has additional features such as "syntax highlighting", "code folding" and "code completion" based on the eLua API.
-* Includes the capability to connect with the real hardware (through the serial or the USB port) obtaining the prompt of Elua inside it.
+* Has additional features such as "syntax highlighting", "code folding" and "code completion" based on the used language API.
+* Includes the capability to connect with the real hardware (through the serial or the USB port) obtaining the console of the Target inside it.
 * It's able to run the .py file on the Hardware (using the raw REPL interface).
-* It's able to send the .lua/.lc file on the Hardware (using the eLua xmodem protocol).
+* It's able to send the .lua/.lc file on the Hardware (using the XMODEM protocol).
 * Supports some terminal commands (standard ansi/vt100), so it's able to play games like "hanoi" or "hungman" (using the TERM capability).
 * Supports the FLASH (on the target) programming through the DFU/Arduino boot loader.
 * Supports easily the "libusb" through Lua scripts (experimental).
@@ -81,7 +81,7 @@ some features:
 * The last step, press "F5" or menu "Tools" -> "Run" will send the program directly on memory of the target board and will run it.
 * Try it and please report problems and suggestions.
 
-(*) just a note, some examples ("hanoi" and "hungman") requiring a special configuration of the "eLua Console" window, so don't forget to select the menu: "Tools" -> "Mode Terminal".
+(*) just a note, some examples ("hanoi" and "hungman") requiring a special configuration of the "Target Console" window, so don't forget to select the menu: "Tools" -> "Mode Terminal".
 
 Enjoy with the "Go @ IDE" and thank you for testing, improving and leaving your feedback for it.
 
