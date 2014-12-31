@@ -7,7 +7,7 @@ some features:
 * Includes the capability to connect with the real hardware (through the serial or the USB port) obtaining the console of the Target inside it.
 * It's able to run the .py file on the Hardware (using the raw REPL interface).
 * It's able to send the .lua/.lc file on the Hardware (using the XMODEM protocol).
-* Supports some terminal commands (standard ansi/vt100), so it's able to play games like "hanoi" or "hungman" (using the TERM capability).
+* Supports some terminal commands (standard ansi/vt100), so it's able to play games like "hanoi" or "hungman".
 * Supports the FLASH (on the target) programming through the DFU/Arduino boot loader.
 * Supports easily the "libusb" through Lua scripts (experimental).
 * It's easily extensible through Lua scripts.
@@ -71,9 +71,7 @@ some features:
 ## Quick start.
 * If your Linux is "Ubuntu" you can find "Goat" on menu: applications for development
 * Then after you have connected one target board, please set the serial port name on Goat, using the menu: "Options" -> ""Open User Options File", and put this line inside it:
-* serial.port=<serial_port>
-*                              Windows esample: serial.port=COM6
-*                              Linux   example: serial.port=/dev/ttyACM0
+* serial.port="port" (some examples Windows: serial.port=COM6, Linux: serial.port=/dev/ttyACM0
 * save the "GoatUser.properties" (Windows) or the ".GoatUser.properties" (Linux) file
 * After each change to the settings, you need to exit and reopen Goat again...
 * Now you should have the target prompt on the "Target Console" window.
@@ -93,11 +91,11 @@ Enjoy with the "Go @ IDE" and thank you for testing, improving and leaving your 
 
 * Target boards that running eLua firmware should be built using some optional modules:
 
-* #define BUILD_XMODEM
-* #define BUILD_SHELL
-* #define BUILD_TERM
+* \#define BUILD_XMODEM
+* \#define BUILD_SHELL
+* \#define BUILD_TERM
 and if it is avaliable on our hardware:
-* #define BUILD_MMCFS
+* \#define BUILD_MMCFS
 
 * Goat for windows will install a directory "usb-driver" here: "C:\Program Files (x86)\The Go @ IDE\usb-driver" which contains:
 
