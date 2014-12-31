@@ -40,13 +40,8 @@ some features:
 
 ## How to install on Windows:
 
-* Download it from here: https://app.box.com/s/ry1p5gkgobmq82bum0ea
-* Install as a Windows application.
-* Try it and please report problems and suggestions.
-* ps.  Goat will install a directory "usb-driver" here:
-*      "C:\Program Files (x86)\The Go @ IDE\usb-driver" which contains:
-*      a) the eLua Windows driver of the USB UART (...\dfu-driver directory).
-*      b) the Windows driver of the DFU Programmer (...\uart-driver directory).
+* Download it from here: https://app.box.com/s/a15aw3gxi6gf7ubptarz
+* Install as a Windows application and run it.
 
 ## How to build and install on Windows:
 
@@ -75,23 +70,39 @@ some features:
 
 ## Quick start.
 * If your Linux is "Ubuntu" you can find "Goat" on menu: applications for development
-* Then after you have connected one target board, please set the serial port name on Goat, using the menu: "Options" -> "Open Global Options File", un-commenting the right choice for you system. 
+* Then after you have connected one target board, please set the serial port name on Goat, using the menu: "Options" -> ""Open User Options File", and put this line inside it:
+* serial.port=<serial_port>
+*                              Windows esample: serial.port=COM6
+*                              Linux   example: serial.port=/dev/ttyACM0
+* save the "GoatUser.properties" (Windows) or the ".GoatUser.properties" (Linux) file
 * After each change to the settings, you need to exit and reopen Goat again...
 * Now you should have the target prompt on the "Target Console" window.
 * Well, try to use the menu: "Open Example" and load some program (eg. helloworld.py or hello.lua)
 * The last step, press "F5" or menu "Tools" -> "Run" will send the program directly on memory of the target board and will run it.
+* Try it and please report problems and suggestions.
 
 (*) just a note, some examples ("hanoi" and "hungman") requiring a special configuration of the "eLua Console" window, so don't forget to select the menu: "Tools" -> "Mode Terminal".
 
 Enjoy with the "Go @ IDE" and thank you for testing, improving and leaving your feedback for it.
 
-## Target boards that running eLua firmware should be built using some optional modules:
+## Note for MicroPython users
+* the micropython firmware for the pyb board is here: http://micropython.org/download/
+* the "firmware.bin", useful to install MP on the "Nucleo STM32F401" is available here: https://app.box.com/s/a15aw3gxi6gf7ubptarz
+
+## Note for eLua users
+
+* Target boards that running eLua firmware should be built using some optional modules:
 
 * #define BUILD_XMODEM
 * #define BUILD_SHELL
 * #define BUILD_TERM
 and if it is avaliable on our hardware:
 * #define BUILD_MMCFS
+
+* Goat for windows will install a directory "usb-driver" here: "C:\Program Files (x86)\The Go @ IDE\usb-driver" which contains:
+
+* a) the eLua Windows driver of the USB UART (...\dfu-driver directory).
+* b) the Windows driver of the DFU Programmer (...\uart-driver directory).
 
 nunzio.raciti(AT)gmail.com 
 
